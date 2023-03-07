@@ -2,13 +2,24 @@
 
 #include "types.h"
 
-enum TTFlag {HFNONE, HFEXACT, HFBETA, HFALPHA};
-
 struct TTEntry {
     int depth = 0;
     int score = 0;
     int eval = 0;
-    TTFlag flag = HFNONE;
+    int flag = HFNONE;
+    int age = 0;
     Move move = NO_MOVE;
+    U64 key = 0ULL;
 };
 
+class TranspositionTable {
+    private:
+    std::vector<TTEntry>entries;
+
+    public:
+    int currentAge = 0;
+    void Initialize(int usersize);
+    void storeEntry(U64 key, int f, Move move, int depth, int score, int eval, int ply);
+    bool probeEntry(U64 key, TTEntry *entry, int ply);
+    void clear();
+};

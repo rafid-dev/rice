@@ -2,7 +2,7 @@ SRCS=$(wildcard *.cpp)
 NAME=rice50
 
 all:
-	g++ -Wall -Wextra -Ofast $(SRCS) -o $(NAME)
+	g++ -Wall -Wextra -O3 $(SRCS) -o $(NAME)
 
 debug:
-	g++ -Wall -Wextra -Ofast $(SRCS) -o $(NAME) -g
+	g++ -Wall -Wextra -O3 $(SRCS) -o $(NAME) -g

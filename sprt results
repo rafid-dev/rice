@@ -45,3 +45,39 @@ Score of Rice 2.0 Dev vs Rice 2.0+NMP: 249 - 177 - 272  [0.552] 698
 Elo difference: 36.0 +/- 20.2, LOS: 100.0 %, DrawRatio: 39.0 %
 SPRT: llr 2.95 (100.1%), lbound -2.94, ubound 2.94 - H1 was accepted
 Finished match
+
+Transposition Table
+Score of Rice 2.0 Dev vs Rice 2.0 Master: 99 - 37 - 86  [0.640] 222
+...      Rice 2.0 Dev playing White: 46 - 20 - 45  [0.617] 111
+...      Rice 2.0 Dev playing Black: 53 - 17 - 41  [0.662] 111
+...      White vs Black: 63 - 73 - 86  [0.477] 222
+Elo difference: 99.7 +/- 36.4, LOS: 100.0 %, DrawRatio: 38.7 %
+SPRT: llr 2.96 (100.5%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+Null move pruning
+Score of Rice 2.0 Dev vs Rice 2.0 Master: 266 - 185 - 189  [0.563] 640
+...      Rice 2.0 Dev playing White: 124 - 92 - 104  [0.550] 320
+...      Rice 2.0 Dev playing Black: 142 - 93 - 85  [0.577] 320
+...      White vs Black: 217 - 234 - 189  [0.487] 640
+Elo difference: 44.2 +/- 22.7, LOS: 100.0 %, DrawRatio: 29.5 %
+SPRT: llr 2.96 (100.4%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+PVS (Principal Variation Search)
+Score of Rice 2.0 Dev vs Rice 2.0 Master: 154 - 79 - 98  [0.613] 331
+...      Rice 2.0 Dev playing White: 77 - 40 - 48  [0.612] 165
+...      Rice 2.0 Dev playing Black: 77 - 39 - 50  [0.614] 166
+...      White vs Black: 116 - 117 - 98  [0.498] 331
+Elo difference: 80.1 +/- 31.9, LOS: 100.0 %, DrawRatio: 29.6 %
+SPRT: llr 2.95 (100.1%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+RFP and store bestscore instead of score in tt
+Score of Rice 2.0 Dev vs Rice 2.0 Master: 128 - 51 - 60  [0.661] 239
+...      Rice 2.0 Dev playing White: 59 - 27 - 33  [0.634] 119
+...      Rice 2.0 Dev playing Black: 69 - 24 - 27  [0.688] 120
+...      White vs Black: 83 - 96 - 60  [0.473] 239
+Elo difference: 116.1 +/- 39.6, LOS: 100.0 %, DrawRatio: 25.1 %
+SPRT: llr 2.95 (100.3%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match

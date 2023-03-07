@@ -17,7 +17,7 @@ int mvv_lva[12][12] = {
     100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600};
 
 // Move scoring
-void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info)
+void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info, Move tt_move)
 {
 
     // Loop through moves in movelist.
@@ -25,7 +25,12 @@ void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info
     {
         Piece victim = board.pieceAtB(to(list->list[i].move));
         Piece attacker = board.pieceAtB(from(list->list[i].move));
-        if (victim != None)
+
+        // Score tt moves.
+        if (list->list[i].move == tt_move){
+            list->list[i].value = 20000000;
+        }
+        else if (victim != None)
         {
             // If it's a capture move, we score using MVVLVA (Most valuable victim, Least Valuable Attacker)
             // Indexed by [victim][attacker]

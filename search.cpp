@@ -1,8 +1,22 @@
 #include <iostream>
+#include <cmath>
 #include "search.h"
 #include "eval.h"
 #include "misc.h"
 #include "movescore.h"
+
+int LMRTable[MAXDEPTH][MAXDEPTH];
+
+void InitSearch()
+{
+    for (int depth = 1; depth < MAXDEPTH; depth++)
+    {
+        for (int played = 1; played < MAXDEPTH; played++)
+        {
+            LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2.25;
+        }
+    }
+}
 
 static void CheckUp(SearchInfo &info)
 {
@@ -12,7 +26,7 @@ static void CheckUp(SearchInfo &info)
     }
 }
 
-void ClearForSearch(SearchInfo &info)
+void ClearForSearch(SearchInfo &info, TranspositionTable *table)
 {
     info.nodes = 0;
     info.stopped = false;
@@ -25,6 +39,8 @@ void ClearForSearch(SearchInfo &info)
             info.searchHistory[x][i] = 0;
         }
     }
+
+    table->currentAge++;
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
@@ -111,7 +127,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
     return bestscore;
 }
 
-int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss)
+int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss, TranspositionTable *table)
 {
 
     // init pv length
@@ -128,41 +144,69 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         CheckUp(info);
     }
 
+    bool isRoot = (info.ply == 0);
+    bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
+    bool isPvNode = (beta - alpha) > 1;
+    int score = -INF_BOUND;
+    int eval = 0;
+    // /bool improving = false;
+
     /* We return static evaluation if we exceed max depth */
     if (info.ply > MAXPLY - 1)
     {
         return Evaluate(board);
     }
 
-    /* Repetition check */
-    if (board.isRepetition())
+    /* Repetition & Fifty move check */
+    if ((board.isRepetition()) && info.ply)
     {
         return 0;
     }
 
-    bool isRoot = (info.ply == 0);
-    bool inCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
-    bool isPvNode = (beta - alpha) > 1;
-    int score = -INF_BOUND;
+    TTEntry tte;
+    bool ttHit = table->probeEntry(board.hashKey, &tte, info.ply);
 
-    ss->static_eval = inCheck ? 0 : Evaluate(board);
+    if (!isPvNode && ttHit && tte.depth >= depth)
+    {
+        if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
+            return tte.score;
+    }
+
+    ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
+    // improving = !inCheck && (ss->static_eval > (ss - 2)->static_eval || (ss - 2)->static_eval == 0);
 
     /* In check extension */
     if (inCheck)
     {
+        ss->static_eval = eval = 0;
         depth++;
     }
 
-    if (!isPvNode)
+    if (!isPvNode && !inCheck && info.ply)
     {
-        // Null move pruning
-        if (!inCheck && info.ply && board.nonPawnMat(board.sideToMove) && (depth >= 3) && ((ss - 1)->move != NULL_MOVE) && ss->static_eval >= beta)
+
+        // we can use tt score
+        if (ttHit)
         {
+            eval = tte.score;
+        }
+
+        // Reverse Futility Pruning (RFP)
+        // If the eval is well above beta by a margin, then we assume the eval will hold above beta.
+        if (depth <= 5 && eval >= beta && eval - (depth * 75) >= beta)
+        {
+            return eval;
+        }
+
+        // Null move pruning
+        if (eval >= beta && ss->static_eval >= beta && board.nonPawnMat(board.sideToMove) && (depth >= 3) && ((ss - 1)->move != NULL_MOVE))
+        {
+            int R = 3 + depth / 3 + std::min((eval - beta) / 200, 3);
             board.makeNullMove();
             ss->move = NULL_MOVE;
             info.ply++;
 
-            score = -AlphaBeta(-beta, -beta + 1, depth - 2, board, info, ss + 1);
+            score = -AlphaBeta(-beta, -beta + 1, depth - R, board, info, ss + 1, table);
 
             info.ply--;
             board.unmakeNullMove();
@@ -175,7 +219,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
             if (score >= beta)
             {
                 // dont return mate scores
-                if (score >= ISMATE)
+                if (score > ISMATE)
                     score = beta;
 
                 return score;
@@ -186,6 +230,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     /* Initialize variables */
     int bestscore = -INF_BOUND;
     int MovesSearched = 0;
+    int oldAlpha = alpha;
+    Move bestmove = NO_MOVE;
 
     // Reset score
     score = -INF_BOUND;
@@ -196,7 +242,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     Movegen::legalmoves<ALL>(board, list);
 
     // Score moves
-    score_moves(board, &list, ss, &info);
+    score_moves(board, &list, ss, &info, tte.move);
 
     /* Move loop */
     for (int i = 0; i < list.size; i++)
@@ -217,7 +263,36 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         info.nodes++;
         MovesSearched++;
 
-        score = -AlphaBeta(-beta, -alpha, depth - 1, board, info, ss + 1);
+        bool do_fullsearch = false;
+
+        // Late move reductions
+        // Reduce the search if the criteria met below
+        if (!inCheck && depth >= 3 && MovesSearched >= 5 && isQuiet)
+        {
+            int reduction = LMRTable[std::min(depth, 63)][std::max(MovesSearched, 63)];
+            reduction += !isPvNode;
+            reduction = std::min(depth - 1, std::max(1, reduction));
+
+            score = -AlphaBeta(-alpha - 1, -alpha, depth - reduction, board, info, ss + 1, table);
+
+            do_fullsearch = score > alpha && reduction != 1;
+        }
+        else
+        {
+            do_fullsearch = !isPvNode || MovesSearched > 1;
+        }
+
+        // Full depth search on a null window
+        if (do_fullsearch)
+        {
+            score = -AlphaBeta(-alpha - 1, -alpha, depth - 1, board, info, ss + 1, table);
+        }
+
+        // Principal variation search
+        if (isPvNode && ((score > alpha && score < beta) || MovesSearched == 1))
+        {
+            score = -AlphaBeta(-beta, -alpha, depth - 1, board, info, ss + 1, table);
+        }
 
         // Undo move on board
         board.unmakeMove(move);
@@ -238,7 +313,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
                 // Record PV
                 alpha = score;
 
-                info.pv_table.array[info.ply][info.ply] = move;
+                bestmove = move;
+
+                info.pv_table.array[info.ply][info.ply] = bestmove;
                 for (int next_ply = info.ply + 1; next_ply < info.pv_table.length[info.ply + 1]; next_ply++)
                 {
                     info.pv_table.array[info.ply][next_ply] = info.pv_table.array[info.ply + 1][next_ply];
@@ -281,12 +358,17 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         }
     }
 
+    int flag = bestscore >= beta ? HFBETA : (alpha != oldAlpha) ? HFEXACT
+                                                                : HFALPHA;
+
+    table->storeEntry(board.hashKey, flag, bestmove, depth, bestscore, ss->static_eval, info.ply);
+
     return bestscore;
 }
 
-void SearchPosition(Board &board, SearchInfo &info)
+void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table)
 {
-    ClearForSearch(info);
+    ClearForSearch(info, table);
 
     // Initialize search stack
 
@@ -300,7 +382,7 @@ void SearchPosition(Board &board, SearchInfo &info)
 
     for (int current_depth = 1; current_depth <= info.depth; current_depth++)
     {
-        score = AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info, ss);
+        score = AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info, ss, table);
         if (info.stopped == true)
         {
             break;
@@ -310,7 +392,7 @@ void SearchPosition(Board &board, SearchInfo &info)
 
         for (int i = 0; i < info.pv_table.length[0]; i++)
         {
-            std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]) << " ";
+            std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]);
         }
         std::cout << "\n";
     }

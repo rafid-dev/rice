@@ -7,6 +7,7 @@
 #include "search.h"
 #include "misc.h"
 #include "movescore.h"
+#include "tt.h"
 
 static void uci_send_id()
 {
@@ -23,21 +24,11 @@ void uci_loop()
 
     Board board;
     SearchInfo info;
+    TranspositionTable TTable;
 
-    // board.applyFen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+    TTable.Initialize(16);
 
-    // Movelist list;
-    // Movegen::legalmoves<CAPTURE>(board, list);
-
-    // SearchStack ss[MAXPLY];
-
-    // score_moves(board, &list, ss, &info);
-
-    // for (int i = 0; i < list.size;i++){
-    //     pickNextMove(i, &list);
-
-    //     printf("%d %d\n", i, list.list[i].value);
-    // }
+    TranspositionTable *table = &TTable;
 
     std::string command;
     std::string token;
@@ -190,7 +181,7 @@ void uci_loop()
 
             std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
 
-            SearchPosition(board, info);
+            SearchPosition(board, info, table);
             continue;
         }
 
@@ -209,4 +200,6 @@ void uci_loop()
             std::cout << (board.sideToMove == White ? "White" : "Black\n") << std::endl;
         }
     }
+
+    TTable.clear();
 }

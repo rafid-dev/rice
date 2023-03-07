@@ -1,6 +1,7 @@
 #pragma once
 
 #include "types.h"
+#include "tt.h"
 
 struct PVTable {
     int length[MAXPLY];
@@ -30,8 +31,10 @@ struct SearchStack {
     Move killers[2] = {NO_MOVE, NO_MOVE};
 };
 
+void InitSearch();
+
 void ClearForSearch(SearchInfo& info);
 
-void SearchPosition(Board& board, SearchInfo& info);
-int AlphaBeta(int alpha, int beta, int depth, Board& board, SearchInfo& info, SearchStack *ss);
+void SearchPosition(Board& board, SearchInfo& info, TranspositionTable *table);
+int AlphaBeta(int alpha, int beta, int depth, Board& board, SearchInfo& info, SearchStack *ss, TranspositionTable *table);
 int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss);

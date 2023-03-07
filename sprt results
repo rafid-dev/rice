@@ -1,0 +1,47 @@
+Qsearch
+
+Score of Rice 2.0+Qs vs Rice 2.0+Ab: 106 - 16 - 10  [0.841] 132
+...      Rice 2.0+Qs playing White: 56 - 6 - 4  [0.879] 66
+...      Rice 2.0+Qs playing Black: 50 - 10 - 6  [0.803] 66
+...      White vs Black: 66 - 56 - 10  [0.538] 132
+Elo difference: 289.2 +/- 78.0, LOS: 100.0 %, DrawRatio: 7.6 %
+SPRT: llr 2.96 (100.6%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+
+MVVLVA
+Score of Rice 2.0+MVVLVA vs Rice 2.0+Qs: 69 - 7 - 23  [0.813] 99
+...      Rice 2.0+MVVLVA playing White: 35 - 4 - 11  [0.810] 50
+...      Rice 2.0+MVVLVA playing Black: 34 - 3 - 12  [0.816] 49
+...      White vs Black: 38 - 38 - 23  [0.500] 99
+Elo difference: 255.4 +/- 71.0, LOS: 100.0 %, DrawRatio: 23.2 %
+SPRT: llr 2.96 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+Killers
+Score of Rice 2.0+Killer vs Rice 2.0+MVVLVA: 203 - 129 - 171  [0.574] 503
+...      Rice 2.0+Killer playing White: 78 - 71 - 102  [0.514] 251
+...      Rice 2.0+Killer playing Black: 125 - 58 - 69  [0.633] 252
+...      White vs Black: 136 - 196 - 171  [0.440] 503
+Elo difference: 51.5 +/- 24.8, LOS: 100.0 %, DrawRatio: 34.0 %
+SPRT: llr 2.95 (100.2%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+
+MVVLVA Fix and history added
+Score of Rice 2.0+Hist vs Rice 2.0+Killer: 151 - 76 - 95  [0.616] 322
+...      Rice 2.0+Hist playing White: 67 - 44 - 51  [0.571] 162
+...      Rice 2.0+Hist playing Black: 84 - 32 - 44  [0.662] 160
+...      White vs Black: 99 - 128 - 95  [0.455] 322
+Elo difference: 82.4 +/- 32.4, LOS: 100.0 %, DrawRatio: 29.5 %
+SPRT: llr 2.95 (100.3%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+
+Fail soft added
+Score of Rice 2.0 Dev vs Rice 2.0+NMP: 249 - 177 - 272  [0.552] 698
+...      Rice 2.0 Dev playing White: 117 - 90 - 142  [0.539] 349
+...      Rice 2.0 Dev playing Black: 132 - 87 - 130  [0.564] 349
+...      White vs Black: 204 - 222 - 272  [0.487] 698
+Elo difference: 36.0 +/- 20.2, LOS: 100.0 %, DrawRatio: 39.0 %
+SPRT: llr 2.95 (100.1%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match

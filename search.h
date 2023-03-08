@@ -27,6 +27,7 @@ struct SearchInfo {
 struct SearchStack {
     int static_eval = 0;
 
+    Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
 };

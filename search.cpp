@@ -9,7 +9,7 @@ int LMRTable[MAXDEPTH][MAXDEPTH];
 
 void InitSearch()
 {
-    for (int depth = 1; depth < MAXDEPTH; depth++)
+    for (int depth = 1; depth <= MAXDEPTH; depth++)
     {
         for (int played = 1; played < MAXDEPTH; played++)
         {
@@ -263,24 +263,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         info.nodes++;
         MovesSearched++;
 
-        bool do_fullsearch = false;
-        int R = 0;
-        if (!inCheck && MovesSearched > 3 && depth >= 3 && isQuiet)
-        {
-            R += LMRTable[std::min(depth, 63)][std::min(MovesSearched, 63)];
-
-            R = std::min(depth - 1, std::max(1, R));
-
-            score = -AlphaBeta(-alpha - 1, -alpha, depth - R, board, info, ss + 1, table);
-
-            do_fullsearch = score > alpha && R < depth;
-        }
-        else
-        {
-            do_fullsearch = !isPvNode || MovesSearched > 1;
-        }
         // Full depth search on a null window
-        if (do_fullsearch)
+        if (!isPvNode || MovesSearched > 1)
         {
             score = -AlphaBeta(-alpha - 1, -alpha, depth - 1, board, info, ss + 1, table);
         }

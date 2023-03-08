@@ -5,15 +5,15 @@
 #include "misc.h"
 #include "movescore.h"
 
-int LMRTable[MAXDEPTH][MAXDEPTH];
+int LMRTable[MAXDEPTH][256];
 
 void InitSearch()
 {
-    for (int depth = 1; depth <= MAXDEPTH; depth++)
+    for (int depth = 1; depth < MAXDEPTH; depth++)
     {
-        for (int played = 1; played < MAXDEPTH; played++)
+        for (int played = 1; played < 256; played++)
         {
-            LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2.25;
+            LMRTable[depth][played] = 1 + log(depth)*log(played)/2;
         }
     }
 }
@@ -149,7 +149,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     bool isPvNode = (beta - alpha) > 1;
     int score = -INF_BOUND;
     int eval = 0;
-    bool improving = false;
+    //bool improving = false;
 
     /* We return static evaluation if we exceed max depth */
     if (info.ply > MAXPLY - 1)
@@ -173,7 +173,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     }
 
     ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
-    improving = !inCheck && (ss->static_eval > (ss - 2)->static_eval || (ss - 2)->static_eval == 0);
+    //improving = !inCheck && (ss->static_eval > (ss - 2)->static_eval || (ss - 2)->static_eval == 0);
 
     /* In check extension */
     if (inCheck)
@@ -263,8 +263,22 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         info.nodes++;
         MovesSearched++;
 
+        bool do_fullsearch = false;
+
+        if (!inCheck && depth >= 3 && MovesSearched > (2 + 2*isPvNode) && isQuiet){
+            int reduction = LMRTable[std::min(depth, 63)][MovesSearched];
+
+            reduction = std::min(depth - 1, std::max(1, reduction));
+
+            score = -AlphaBeta(-alpha-1, -alpha, depth - reduction, board, info, ss+1, table);
+            
+            do_fullsearch = score > alpha && reduction != 1;
+        }else{
+            do_fullsearch = !isPvNode || MovesSearched > 1;
+        }
+
         // Full depth search on a null window
-        if (!isPvNode || MovesSearched > 1)
+        if (do_fullsearch)
         {
             score = -AlphaBeta(-alpha - 1, -alpha, depth - 1, board, info, ss + 1, table);
         }

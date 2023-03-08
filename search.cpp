@@ -149,7 +149,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     bool isPvNode = (beta - alpha) > 1;
     int score = -INF_BOUND;
     int eval = 0;
-    // /bool improving = false;
+    bool improving = false;
 
     /* We return static evaluation if we exceed max depth */
     if (info.ply > MAXPLY - 1)
@@ -173,7 +173,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     }
 
     ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
-    // improving = !inCheck && (ss->static_eval > (ss - 2)->static_eval || (ss - 2)->static_eval == 0);
+    improving = !inCheck && (ss->static_eval > (ss - 2)->static_eval || (ss - 2)->static_eval == 0);
 
     /* In check extension */
     if (inCheck)
@@ -252,11 +252,11 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
 
         // Initialize move variable
         Move move = list.list[i].move;
-
         bool isQuiet = (!promoted(move) && !is_capture(board, move));
 
         // Make the move on board
         board.makeMove(move);
+
         ss->move = move;
         // Increment ply and nodes
         info.ply++;
@@ -264,32 +264,29 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         MovesSearched++;
 
         bool do_fullsearch = false;
-
-        // Late move reductions
-        // Reduce the search if the criteria met below
-        if (!inCheck && depth >= 3 && MovesSearched >= 5 && isQuiet)
+        int R = 0;
+        if (!inCheck && MovesSearched > 3 && depth >= 3 && isQuiet)
         {
-            int reduction = LMRTable[std::min(depth, 63)][std::max(MovesSearched, 63)];
-            reduction += !isPvNode;
-            reduction = std::min(depth - 1, std::max(1, reduction));
+            R += LMRTable[std::min(depth, 63)][std::min(MovesSearched, 63)];
 
-            score = -AlphaBeta(-alpha - 1, -alpha, depth - reduction, board, info, ss + 1, table);
+            R = std::min(depth - 1, std::max(1, R));
 
-            do_fullsearch = score > alpha && reduction != 1;
+            score = -AlphaBeta(-alpha - 1, -alpha, depth - R, board, info, ss + 1, table);
+
+            do_fullsearch = score > alpha && R < depth;
         }
         else
         {
             do_fullsearch = !isPvNode || MovesSearched > 1;
         }
-
         // Full depth search on a null window
         if (do_fullsearch)
         {
             score = -AlphaBeta(-alpha - 1, -alpha, depth - 1, board, info, ss + 1, table);
         }
 
-        // Principal variation search
-        if (isPvNode && ((score > alpha && score < beta) || MovesSearched == 1))
+        // Principal Variation Search (PVS)
+        if (isPvNode && (MovesSearched == 1 || (score > alpha && score < beta)))
         {
             score = -AlphaBeta(-beta, -alpha, depth - 1, board, info, ss + 1, table);
         }
@@ -334,8 +331,10 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
 
                     break;
                 }
-
-                info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
+                if (isQuiet)
+                {
+                    info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
+                }
             }
         }
 

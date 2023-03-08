@@ -14,7 +14,7 @@ using namespace Chess;
 #define ISMATE 29000
 
 static inline bool is_capture(Board& board, Move move){
-    return !(board.pieceAtB(to(move)) == None);
+    return (board.pieceAtB(to(move)) != None);
 }
 
 enum {HFNONE, HFBETA, HFALPHA, HFEXACT};

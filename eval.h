@@ -8,6 +8,7 @@
 
 extern const int piece_values[12];
 
+void InitEvaluationMasks();
 void InitPestoTables();
 
 int Evaluate(Board& board);

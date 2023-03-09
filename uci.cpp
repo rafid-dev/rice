@@ -102,7 +102,7 @@ void uci_loop()
             int depth = -1;
             int time = -1;
             int inc = 0;
-            int movestogo = 30;
+            int movestogo = 20;
             int movetime = -1;
 
             if (token == "depth")
@@ -171,7 +171,7 @@ void uci_loop()
                 time /= movestogo;
 
                 // Have some over head.
-                if (time > 1500) time -= 50;
+                time -= 50;
 
                 info.end_time = info.start_time + time + inc;
             }

@@ -287,20 +287,26 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
 
         if (!isRoot && bestscore > -ISMATE)
         {
-            // // Movecount pruning
-            // if (isQuiet && !isPvNode && !inCheck && depth < 5 && (quietsSearched >= depth * 8))
-            // {
-            //     continue;
-            // }
-            
-            // See pruning
+
+            // SEE pruning
             if (isQuiet)
             {
+                // Late Move Pruning/Movecount pruning
+                if (!isPvNode && !inCheck && depth < 4 && (quietsSearched >= depth * depth * 4))
+                {
+                    continue;
+                }
+
+                // SEE pruning for quiets
                 if (depth < 6 && !see(board, move, -50 * depth))
                 {
                     continue;
                 }
-            }else{
+            }
+            else
+            {
+
+                // SEE pruning for non quiets
                 if (depth < 4 && !see(board, move, -45 * depth))
                 {
                     continue;
@@ -326,9 +332,11 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
 
         bool do_fullsearch = false;
 
+        // Late move reduction
         if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet)
         {
             int reduction = LMRTable[std::min(depth, 63)][moveCount];
+
 
             reduction = std::min(depth - 1, std::max(1, reduction));
 

@@ -66,5 +66,6 @@ bool TranspositionTable::probeEntry(U64 key, TTEntry *entry, int ply)
 
 void TranspositionTable::clear()
 {
+    currentAge = 0;
     entries.clear();
 }

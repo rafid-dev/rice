@@ -1,17 +1,59 @@
 #include "eval.h"
 
-// Middlegame, Endgame
+#define SETBIT(bitboard, square) ((bitboard) |= (1ULL << (square)))
 
-// Bishop pair bonus
-const int BISHOP_PAIR_BONUS[2] = {0, 15};
+U64 FileMasks[64];
+U64 RankMasks[64];
 
-// Mobility bonuses
+U64 SetFileRankMask(int file_number, int rank_number)
+{
+    U64 mask = 0ULL;
+    
+    for (int rank = 0; rank < 8; rank++)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
+            
+            if (file_number != -1)
+            {
+                if (file == file_number)
+                    mask |= SETBIT(mask, square);
+            }
+            
+            else if (rank_number != -1)
+            {
+                if (rank == rank_number)
+                    mask |= SETBIT(mask, square);
+            }
+        }
+    }
+    
+    return mask;
+}
 
-const int BISHOP_MOBILITY_BONUS[2] = {2, 3};
-const int QUEEN_MOBILITY_BONUS[2] = {1, 2};
+void InitEvaluationMasks()
+{
+    for (int rank = 0; rank < 8; rank++)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
 
+            FileMasks[square] |= SetFileRankMask(file, -1);
+        }
+    }
 
-const int ROOK_MOBILITY_BONUS[2] = {3, 10};
+    for (int rank = 0; rank < 8; rank++)
+    {
+        for (int file = 0; file < 8; file++)
+        {
+            int square = rank * 8 + file;
+
+            RankMasks[square] |= SetFileRankMask(-1, rank);
+        }
+    }
+}
 
 int mg_table[12][64];
 int eg_table[12][64];
@@ -200,6 +242,7 @@ int Evaluate(Board& board){
 
     U64 white = board.Us(White);
     U64 black = board.Us(Black);
+    
 
     while (white){
         Square sq = poplsb(white);
@@ -208,6 +251,8 @@ int Evaluate(Board& board){
         mg[White] += mg_table[p][sq^56];
         eg[White] += eg_table[p][sq^56];
         gamePhase += gamephaseInc[p];
+
+        
     }
 
     while (black){
@@ -217,6 +262,8 @@ int Evaluate(Board& board){
         mg[Black] += mg_table[p][sq^56];
         eg[Black] += eg_table[p][sq^56];
         gamePhase += gamephaseInc[p];
+
+        
     }
 
     // tapered eval //

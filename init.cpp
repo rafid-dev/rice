@@ -5,4 +5,5 @@
 void init_all(){
     InitSearch();
     InitPestoTables();
+    InitEvaluationMasks();
 }

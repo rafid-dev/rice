@@ -993,6 +993,9 @@ class Board
     /// @return
     bool isSquareAttacked(Color c, Square sq) const;
 
+    U64 allAttackers(Square sq, U64 occupiedBB);
+    U64 attackersForSide(Color attackerColor, Square sq, U64 occupiedBB);
+
     /// @brief plays the move on the internal board
     /// @param move
     void makeMove(Move move);
@@ -1518,6 +1521,32 @@ inline void Board::unmakeMove(Move move)
         placePiece(capture, to_sq);
     }
 }
+
+inline U64 Board::allAttackers(Square sq, U64 occupiedBB)
+{
+    return attackersForSide(White, sq, occupiedBB) | attackersForSide(Black, sq, occupiedBB);
+}
+
+inline U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB)
+{
+    U64 attackingBishops = pieces(BISHOP, attackerColor);
+    U64 attackingRooks = pieces(ROOK, attackerColor);
+    U64 attackingQueens = pieces(QUEEN, attackerColor);
+    U64 attackingKnights = pieces(KNIGHT, attackerColor);
+    U64 attackingKing = pieces(KING, attackerColor);
+    U64 attackingPawns = pieces(PAWN, attackerColor);
+
+    U64 interCardinalRays = BishopAttacks(sq, occupiedBB);
+    U64 cardinalRaysRays = RookAttacks(sq, occupiedBB);
+
+    U64 attackers = interCardinalRays & (attackingBishops | attackingQueens);
+    attackers |= cardinalRaysRays & (attackingRooks | attackingQueens);
+    attackers |= KnightAttacks(sq) & attackingKnights;
+    attackers |= KingAttacks(sq) & attackingKing;
+    attackers |= PawnAttacks(sq, ~attackerColor) & attackingPawns;
+    return attackers;
+}
+
 
 inline void Board::makeNullMove()
 {

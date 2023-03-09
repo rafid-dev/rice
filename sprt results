@@ -99,3 +99,9 @@ Score of Rice 2.0 Dev vs Rice 2.0 Master: 229 - 148 - 145  [0.578] 522
 Elo difference: 54.4 +/- 25.5, LOS: 100.0 %, DrawRatio: 27.8 %
 SPRT: llr 2.96 (100.6%), lbound -2.94, ubound 2.94 - H1 was accepted
 Finished match
+
+SEE pruning
+Elo difference: 18.8 +/- 13.4, LOS: 99.7 %, DrawRatio: 35.7 %
+SPRT: llr 2.96 (100.7%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match
+PS E:\Projects\Ric

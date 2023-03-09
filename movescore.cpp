@@ -41,6 +41,9 @@ void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info
         }else if (list->list[i].move == ss->killers[1]){
             // Score for killer 2
             list->list[i].value = 8000000;
+        // }else if (list->list[i].move == info->searchCounters[from(ss->move)][to(ss->move)]){
+        //     // score for counters
+        //     list->list[i].value = 6000000;
         }else{
             list->list[i].value = info->searchHistory[attacker][to(list->list[i].move)];
         }

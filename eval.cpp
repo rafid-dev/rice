@@ -1,11 +1,24 @@
 #include "eval.h"
 
+// Middlegame, Endgame
+
+// Bishop pair bonus
+const int BISHOP_PAIR_BONUS[2] = {0, 15};
+
+// Mobility bonuses
+
+const int BISHOP_MOBILITY_BONUS[2] = {2, 3};
+const int QUEEN_MOBILITY_BONUS[2] = {1, 2};
+
+
+const int ROOK_MOBILITY_BONUS[2] = {3, 10};
+
 int mg_table[12][64];
 int eg_table[12][64];
-int values[6] = {100,300, 300, 500, 900, 0};
 int gamephaseInc[12] = {0,0,1,1,1,1,2,2,4,4,0,0};
 int mg_value[6] = { 82, 337, 365, 477, 1025,  0};
 int eg_value[6] = { 94, 281, 297, 512,  936,  0};
+
 int mg_pawn_table[64] = {
       0,   0,   0,   0,   0,   0,  0,   0,
      98, 134,  61,  95,  68, 126, 34, -11,
@@ -158,7 +171,7 @@ int* eg_pesto_table[6] =
     eg_king_table
 };
 
-const int piece_values[12] = {100, 320, 330, 500, 900, 0};
+const int piece_values[12] = {100, 300, 300, 500, 900, 0};
 
 void InitPestoTables(){
     for (Piece pc = WhitePawn;pc < BlackPawn; pc++){
@@ -195,7 +208,6 @@ int Evaluate(Board& board){
         mg[White] += mg_table[p][sq^56];
         eg[White] += eg_table[p][sq^56];
         gamePhase += gamephaseInc[p];
-
     }
 
     while (black){
@@ -206,7 +218,6 @@ int Evaluate(Board& board){
         eg[Black] += eg_table[p][sq^56];
         gamePhase += gamephaseInc[p];
     }
-
 
     // tapered eval //
     int mgScore = mg[side2move] - mg[otherSide];

@@ -199,6 +199,12 @@ void uci_loop()
         if (token == "side"){
             std::cout << (board.sideToMove == White ? "White" : "Black\n") << std::endl;
         }
+        if (token == "run"){
+            info.depth = MAXDEPTH;
+            info.timeset = false;
+
+            SearchPosition(board, info, table);
+        }
     }
 
     TTable.clear();

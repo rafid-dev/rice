@@ -36,8 +36,9 @@ Rice is not a complete chess program and requires a <a href="https://www.chesspr
 
 I would specially like to thank <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his<a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
 
-* <a href="https://github.com/raklaptudirm">Rak</a>, author of <a href="https://github.com/raklaptudirm/mess">Mess</a>.
+Below are some really nice people who has helped me during the development of Rice.
 * <a href="https://github.com/pgg106">Zuppa</a>, author of <a href="https://github.com/PGG106/Alexandria/">Alexandria</a>.
+* <a href="https://github.com/raklaptudirm">Rak</a>, author of <a href="https://github.com/raklaptudirm/mess">Mess</a>.
 * <a href="https://github.com/AndyGrant">Andy Grant</a>, author of <a href="https://github.com/AndyGrant/Ethereal/">Ethereal</a>
 
 * and many more.

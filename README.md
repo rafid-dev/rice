@@ -1,8 +1,10 @@
 ﻿<div align="center">
   <a href=".">
-    <img src="./images/logo.png" height="200"/>
+    <img src="./imgs/logo.png" height="200"/>
   </a>
 </div>
+[![MIT License][license-shield]][license-url]
+
 
 # Overview
 
@@ -34,7 +36,7 @@ Rice is not a complete chess program and requires a <a href="https://www.chesspr
 
 # Acknowledgements
 
-I would specially like to thank <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his<a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
+I would specially like to thank <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his <a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
 
 Below are some really nice people who has helped me during the development of Rice.
 * <a href="https://github.com/pgg106">Zuppa</a>, author of <a href="https://github.com/PGG106/Alexandria/">Alexandria</a>.

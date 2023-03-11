@@ -18,9 +18,6 @@ static void uci_send_id()
 
 void uci_loop()
 {
-    uci_send_id();
-
-    
 
     Board board;
     SearchInfo info;

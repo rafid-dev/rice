@@ -2,6 +2,17 @@
 
 #define SETBIT(bitboard, square) ((bitboard) |= (1ULL << (square)))
 
+// double pawn penalties
+const int double_pawn_penalty[2] = {0, 0};
+
+// rook open file bonus
+const int rook_semi_open_file[2] = {8, 7};
+const int rook_open_file[2] = {16, 14};
+
+// king open file penalty
+const int king_semi_open_file[2] = {0, 0};
+const int king_open_file[2] = {0, 0};
+
 U64 FileMasks[64];
 U64 RankMasks[64];
 
@@ -242,7 +253,8 @@ int Evaluate(Board& board){
 
     U64 white = board.Us(White);
     U64 black = board.Us(Black);
-    
+
+    int double_pawns = 0;
 
     while (white){
         Square sq = poplsb(white);
@@ -252,18 +264,76 @@ int Evaluate(Board& board){
         eg[White] += eg_table[p][sq^56];
         gamePhase += gamephaseInc[p];
 
-        
+        if (p == WhitePawn){
+            double_pawns = popcount(board.piecesBB[p] & FileMasks[sq]);
+            if (double_pawns > 1){
+                mg[White] += (double_pawns - 1) * double_pawn_penalty[MIDDLEGAME];
+                eg[White] += (double_pawns - 1) * double_pawn_penalty[ENDGAME];
+            }
+        }else if (p == WhiteRook){
+
+            // Rook semi open file bonus
+            if ((board.piecesBB[WhitePawn] & FileMasks[sq]) == 0){
+                mg[White] += rook_semi_open_file[MIDDLEGAME];
+                eg[White] += rook_semi_open_file[ENDGAME];
+            }
+            // Rook open file bonus
+            if (((board.piecesBB[WhitePawn] | board.piecesBB[BlackPawn]) & FileMasks[sq]) == 0){
+                mg[White] += rook_open_file[MIDDLEGAME];
+                eg[White] += rook_open_file[ENDGAME];
+            }
+        }else if (p == WhiteKing){
+            // King semi open file penalty
+            if ((board.piecesBB[WhitePawn] & FileMasks[sq]) == 0){
+                mg[White] += king_semi_open_file[MIDDLEGAME];
+                eg[White] += king_semi_open_file[ENDGAME];
+            }
+            // King open file penalty
+            if (((board.piecesBB[WhitePawn] | board.piecesBB[BlackPawn]) & FileMasks[sq]) == 0){
+                mg[White] += king_open_file[MIDDLEGAME];
+                eg[White] += king_open_file[ENDGAME];
+            }
+        }
     }
+
 
     while (black){
         Square sq = poplsb(black);
         Piece p = board.pieceAtB(sq);
-        
+
         mg[Black] += mg_table[p][sq^56];
         eg[Black] += eg_table[p][sq^56];
         gamePhase += gamephaseInc[p];
 
-        
+        if (p == BlackPawn){
+            double_pawns = popcount(board.piecesBB[p] & FileMasks[sq]);
+            if (double_pawns > 1){
+                mg[Black] += (double_pawns - 1) * double_pawn_penalty[MIDDLEGAME];
+                eg[Black] += (double_pawns - 1) * double_pawn_penalty[ENDGAME];
+            }
+        }else if (p == BlackRook){
+            // Rook semi open file bonus
+            if ((board.piecesBB[BlackPawn] & FileMasks[sq]) == 0){
+                mg[Black] += rook_semi_open_file[MIDDLEGAME];
+                eg[Black] += rook_semi_open_file[ENDGAME];
+            }
+            // Rook open file bonus
+            if (((board.piecesBB[WhitePawn] | board.piecesBB[BlackPawn]) & FileMasks[sq]) == 0){
+                mg[Black] += rook_open_file[MIDDLEGAME];
+                eg[Black] += rook_open_file[ENDGAME];
+            }
+        }else if (p == BlackKing){
+            // King semi open file penalty
+            if ((board.piecesBB[BlackPawn] & FileMasks[sq]) == 0){
+                mg[Black] += king_semi_open_file[MIDDLEGAME];
+                eg[Black] += king_semi_open_file[ENDGAME];
+            }
+            // King open file penalty
+            if (((board.piecesBB[WhitePawn] | board.piecesBB[BlackPawn]) & FileMasks[sq]) == 0){
+                mg[Black] += king_open_file[MIDDLEGAME];
+                eg[Black] += king_open_file[ENDGAME];
+            }
+        }
     }
 
     // tapered eval //

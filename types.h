@@ -4,7 +4,7 @@
 
 using namespace Chess;
 
-#define NAME "Rice 2.0 Master"
+#define NAME "Rice 2.0 Dev"
 #define AUTHOR "Slender"
 
 #define MAXPLY 64

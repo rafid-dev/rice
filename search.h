@@ -22,7 +22,6 @@ struct SearchInfo {
 
     PVTable pv_table;
     int searchHistory[12][64];
-    //Move searchCounters[64][64];
 };
 
 struct SearchStack {

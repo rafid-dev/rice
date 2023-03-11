@@ -14,7 +14,7 @@ void InitSearch()
     {
         for (int played = 1; played < 256; played++)
         {
-            LMRTable[depth][played] = 1 + log(depth) * log(played) / 2;
+            LMRTable[depth][played] = 0.75 + log(depth) * log(played) / 2;
         }
     }
 }
@@ -151,7 +151,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     bool isPvNode = (beta - alpha) > 1;
     int score = -INF_BOUND;
     int eval = 0;
-    // bool improving = false;
+    bool improving = false;
 
     /* We return static evaluation if we exceed max depth */
     if (info.ply > MAXPLY - 1)
@@ -177,7 +177,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     }
 
     ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
-    // improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
+    improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
 
     /* In check extension */
     if (inCheck)
@@ -337,7 +337,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         {
             int reduction = LMRTable[std::min(depth, 63)][moveCount];
 
-
+            reduction += !improving;
+            reduction += !isPvNode;
+            
             reduction = std::min(depth - 1, std::max(1, reduction));
 
             score = -AlphaBeta(-alpha - 1, -alpha, newDepth - reduction, board, info, ss + 1, table);

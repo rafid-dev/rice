@@ -113,3 +113,12 @@ Score of Rice 2.0 Dev vs Rice 2.0 Master: 465 - 382 - 534  [0.530] 1381
 Elo difference: 20.9 +/- 14.3, LOS: 99.8 %, DrawRatio: 38.7 %
 SPRT: llr 2.97 (100.9%), lbound -2.94, ubound 2.94 - H1 was accepted
 Finished match
+
+Rook semi open file and open file bonus in evaluation
+Score of Rice 2.0 Dev vs Rice 2.0 Master: 899 - 796 - 1059  [0.519] 2754
+...      Rice 2.0 Dev playing White: 444 - 400 - 533  [0.516] 1377
+...      Rice 2.0 Dev playing Black: 455 - 396 - 526  [0.521] 1377
+...      White vs Black: 840 - 855 - 1059  [0.497] 2754
+Elo difference: 13.0 +/- 10.2, LOS: 99.4 %, DrawRatio: 38.5 %
+SPRT: llr 2.97 (100.8%), lbound -2.94, ubound 2.94 - H1 was accepted
+Finished match

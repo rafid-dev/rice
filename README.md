@@ -3,8 +3,8 @@
     <img src="./imgs/logo.png" height="200"/>
   </a>
 </div>
-[![MIT License][license-shield]][license-url]
 
+# License: <a href="https://github.com/rafid-dev/rice-2.0/blob/main/LICENSE">MIT License</a>
 
 # Overview
 

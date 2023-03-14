@@ -1,10 +1,5 @@
 #include "tt.h"
 
-uint32_t reduce_hash(uint32_t x, uint32_t N)
-{
-    return ((uint64_t)x * (uint64_t)N) >> 32;
-}
-
 void TranspositionTable::Initialize(int MB)
 {
     this->entries.resize((MB * 1024 * 1024) / sizeof(TTEntry), TTEntry());

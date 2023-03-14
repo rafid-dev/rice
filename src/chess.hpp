@@ -873,6 +873,7 @@ class Board
 
     // current hashkey
     U64 hashKey;
+    U64 pawnKey;
 
     U64 piecesBB[12] = {};
     Piece board[MAX_SQ];
@@ -910,6 +911,7 @@ class Board
     // keeps track of previous hashes, used for
     // repetition detection
     std::vector<U64> hashHistory;
+    std::vector<U64> pawnKeyHistory;
 
     std::vector<State> stateHistory;
 
@@ -1028,6 +1030,8 @@ class Board
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c) const;
 
+    U64 updateKeyPiece(Piece piece, Square sq) const;
+
     friend inline std::ostream &operator<<(std::ostream &os, const Board &b);
 
   private:
@@ -1040,7 +1044,6 @@ class Board
 
     // update the hash
 
-    U64 updateKeyPiece(Piece piece, Square sq) const;
     U64 updateKeyCastling() const;
     U64 updateKeyEnPassant(Square sq) const;
     U64 updateKeySideToMove() const;
@@ -1054,6 +1057,7 @@ inline Board::Board(std::string fen)
     initializeLookupTables();
     stateHistory.reserve(MAX_PLY);
     hashHistory.reserve(512);
+    pawnKeyHistory.reserve(512);
 
     sideToMove = White;
     enPassantSquare = NO_SQ;
@@ -1104,6 +1108,8 @@ inline void Board::applyFen(const std::string &fen)
         piecesBB[p] = 0ULL;
     }
 
+    pawnKey = 0ULL;
+
     const std::vector<std::string> params = splitInput(fen);
 
     const std::string position = params[0];
@@ -1126,6 +1132,10 @@ inline void Board::applyFen(const std::string &fen)
         {
             const Piece piece = charToPiece[curr];
             placePiece(piece, square);
+
+            if (type_of_piece(piece) == PAWN){
+                pawnKey ^= updateKeyPiece(piece, square);
+            }
 
             square = Square(square + 1);
         }
@@ -1164,9 +1174,11 @@ inline void Board::applyFen(const std::string &fen)
     hashKey = zobristHash();
 
     hashHistory.clear();
+    pawnKeyHistory.clear();
     stateHistory.clear();
 
     hashHistory.push_back(hashKey);
+    pawnKeyHistory.push_back(pawnKey);
 }
 
 inline std::string Board::getFen() const
@@ -1334,6 +1346,7 @@ inline void Board::makeMove(Move move)
 
     hashHistory.emplace_back(hashKey);
     stateHistory.emplace_back(State(enPassantSquare, castlingRights, halfMoveClock, capture));
+    pawnKeyHistory.emplace_back(pawnKey);
 
     halfMoveClock++;
     fullMoveNumber++;
@@ -1403,11 +1416,20 @@ inline void Board::makeMove(Move move)
 
         hashKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from_sq);
         hashKey ^= updateKeyPiece(p, to_sq);
+
+        if (pt == PAWN){
+            pawnKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from_sq);
+            pawnKey ^= updateKeyPiece(p, to_sq);
+        }
     }
     else
     {
         hashKey ^= updateKeyPiece(p, from_sq);
         hashKey ^= updateKeyPiece(p, to_sq);
+        if (pt == PAWN){
+            pawnKey ^= updateKeyPiece(p, from_sq);
+            pawnKey ^= updateKeyPiece(p, to_sq);
+        }
     }
 
     hashKey ^= updateKeySideToMove();
@@ -1439,6 +1461,10 @@ inline void Board::makeMove(Move move)
     {
         assert(pieceAtB(to_sq) != None);
 
+        if (capture == WhitePawn || capture == BlackPawn){
+            pawnKey ^= updateKeyPiece(capture, to_sq);
+        }
+
         removePiece(capture, to_sq);
     }
 
@@ -1466,6 +1492,8 @@ inline void Board::unmakeMove(Move move)
 
     hashKey = hashHistory.back();
     hashHistory.pop_back();
+    pawnKey = pawnKeyHistory.back();
+    pawnKeyHistory.pop_back();
 
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
@@ -1658,6 +1686,7 @@ inline U64 Board::zobristHash() const
     {
         Square sq = poplsb(wPieces);
         hash ^= updateKeyPiece(pieceAtB(sq), sq);
+        
     }
     while (bPieces)
     {

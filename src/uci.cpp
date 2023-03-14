@@ -23,7 +23,7 @@ void uci_loop()
     SearchInfo info;
     TranspositionTable TTable;
 
-    TTable.Initialize(16);
+    TTable.Initialize(64);
 
     TranspositionTable *table = &TTable;
 
@@ -190,7 +190,7 @@ void uci_loop()
         }
         if (token == "eval")
         {
-            std::cout << Evaluate(board) << std::endl;
+            std::cout << Evaluate(board, info.pawnTable) << std::endl;
             continue;
         }
         if (token == "side"){
@@ -205,4 +205,5 @@ void uci_loop()
     }
 
     TTable.clear();
+    info.pawnTable.clear();
 }

@@ -57,7 +57,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
     /* We return static evaluation if we exceed max depth */
     if (info.ply > MAXPLY - 1)
     {
-        return Evaluate(board);
+        return Evaluate(board, info.pawnTable);
     }
 
     /* Repetition check */
@@ -66,7 +66,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
         return 0;
     }
 
-    int score = Evaluate(board);
+    int score = Evaluate(board, info.pawnTable);
     if (score >= beta)
     {
         return beta;
@@ -105,6 +105,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
         score = -Quiescence(-beta, -alpha, board, info, ss + 1);
         // Undo move on board
         board.unmakeMove(move);
+
         // Decrement ply
         info.ply--;
 
@@ -151,12 +152,12 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
     bool isPvNode = (beta - alpha) > 1;
     int score = -INF_BOUND;
     int eval = 0;
-    bool improving = false;
+    // bool improving = false;
 
     /* We return static evaluation if we exceed max depth */
     if (info.ply > MAXPLY - 1)
     {
-        return Evaluate(board);
+        return Evaluate(board, info.pawnTable);
     }
 
     /* Repetition & Fifty move check */
@@ -176,8 +177,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
             return tte.score;
     }
 
-    ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
-    improving = !inCheck && eval > (ss - 2)->static_eval;
+    ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board, info.pawnTable);
+    // improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
 
     /* In check extension */
     if (inCheck)
@@ -282,13 +283,17 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         //     }
         // }
 
+        // if (!isRoot && bestscore > -ISMATE)
+        //{
+
         if (!isRoot && bestscore > -ISMATE)
         {
 
+            // SEE pruning
             if (isQuiet)
             {
                 // Late Move Pruning/Movecount pruning
-                if (!isPvNode && !inCheck && depth < 4 && quietsSearched >= (depth * depth * 4))
+                if (!isPvNode && !inCheck && depth < 4 && (quietsSearched >= depth * depth * 4))
                 {
                     continue;
                 }
@@ -332,6 +337,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
         if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet)
         {
             int reduction = LMRTable[std::min(depth, 63)][moveCount];
+
 
             reduction = std::min(depth - 1, std::max(1, reduction));
 

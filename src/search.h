@@ -2,6 +2,7 @@
 
 #include "types.h"
 #include "tt.h"
+#include "pawns.h"
 
 struct PVTable {
     int length[MAXPLY];
@@ -11,6 +12,7 @@ struct PVTable {
 struct SearchInfo {
     int ply = 0;
     int depth = 0;
+    int searchHistory[12][64];
 
     long nodes = 0l;
 
@@ -21,7 +23,7 @@ struct SearchInfo {
     bool stopped = false;
 
     PVTable pv_table;
-    int searchHistory[12][64];
+    PawnTable pawnTable = PawnTable();
 };
 
 struct SearchStack {

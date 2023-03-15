@@ -2,3 +2,14 @@
 binaries
 pgns
 incbin
+obj
+debug
+tests
+sprt.bat
+*.d
+*.o
+*.obj
+*.exe
+*.bat
+*.out
+*.app

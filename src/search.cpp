@@ -79,15 +79,15 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
     }
 
     /* Probe Tranpsosition Table */
-    // TTEntry tte;
-    // bool isPvNode = (beta - alpha) > 1;
-    // bool ttHit = table->probeEntry(board.hashKey, &tte, info.ply);
+    TTEntry tte;
+    bool isPvNode = (beta - alpha) > 1;
+    bool ttHit = table->probeEntry(board.hashKey, &tte, info.ply);
 
-    // /* Return TT score if we found a TT entry*/
-    // if (!isPvNode && ttHit){
-    //     if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
-    //         return tte.score;
-    // }
+    /* Return TT score if we found a TT entry*/
+    if (!isPvNode && ttHit){
+        if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
+            return tte.score;
+    }
 
     /* Move generation */
     /* Generate capture moves for current position*/
@@ -101,7 +101,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
     Movelist list;
     Movegen::legalmoves<CAPTURE>(board, list);
 
-    score_moves(board, &list, NO_MOVE);
+    score_moves(board, &list, tte.move);
 
     /* Move loop */
     for (int i = 0; i < list.size; i++)
@@ -110,10 +110,10 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
 
         Move move = list.list[i].move;
 
-        // //SEE pruning
-        // if (list.list[i].value < GoodCaptureScore && moveCount >= 1){
-        //     continue;
-        // }
+        //SEE pruning
+        if (list.list[i].value < GoodCaptureScore && moveCount >= 1){
+            continue;
+        }
 
         // Make the move on board
         board.makeMove(move);
@@ -153,9 +153,9 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
         }
     }
 
-    // int flag = bestscore >= beta ? HFBETA : HFALPHA;
+    int flag = bestscore >= beta ? HFBETA : HFALPHA;
     
-    // table->storeEntry(board.hashKey, flag, bestmove, 0, bestscore, standing_pat, info.ply);
+    table->storeEntry(board.hashKey, flag, bestmove, 0, bestscore, standing_pat, info.ply);
 
     return bestscore;
 }

@@ -16,7 +16,7 @@ Score king_semi_open_file(0, 0);
 Score king_open_file(0, 0);
 
 // bishop pair
-Score bishop_pair_bonus(33, 88);
+Score bishop_pair_bonus(44, 88);
 
 U64 FileMasks[64];
 U64 RankMasks[64];
@@ -25,11 +25,11 @@ U64 WhitePassedMasks[64];
 U64 BlackPassedMasks[64];
 
 int gamephaseInc[12] = {0, 0, 1, 1, 1, 1, 2, 2, 4, 4, 0, 0};
-int mg_value[6] = {82, 337, 365, 477, 1025, 0};
-int eg_value[6] = {94, 281, 297, 512, 936, 0};
+// int mg_value[6] = {82, 337, 365, 477, 1025, 0};
+// int eg_value[6] = {94, 281, 297, 512, 936, 0};
 
-// int mg_value[6] = {80, 335, 364, 475, 1025, 0};
-// int eg_value[6] = { 91, 280, 296, 509, 940, 0};
+int mg_value[6] = {80, 335, 364, 475, 1025, 0};
+int eg_value[6] = { 91, 280, 296, 509, 940, 0};
 
 const int piece_values[12] = {100, 300, 300, 500, 900, 0};
 
@@ -270,3 +270,4 @@ int Evaluate(Board &board, PawnTable& pawnTable)
 
     return (mgScore * mgPhase + egScore * egPhase) / 24;
 }
+

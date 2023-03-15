@@ -449,8 +449,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table)
 
     // Initialize search stack
 
-    SearchStack stack[MAXPLY + 10];
-    SearchStack *ss = stack + 7; // Have some safety overhead.
+   
 
     int score = 0;
 
@@ -459,7 +458,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table)
 
     for (int current_depth = 1; current_depth <= info.depth; current_depth++)
     {
-        score = AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info, ss, table);
+        score = AspirationWindowSearch(score, current_depth, board, info, table);//AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info, ss, table);
         if (info.stopped == true)
         {
             break;
@@ -475,4 +474,43 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table)
     }
 
     std::cout << "bestmove " << convertMoveToUci(bestmove) << "\n";
+}
+
+int AspirationWindowSearch(int prevEval, int depth, Board& board, SearchInfo& info, TranspositionTable *table){
+    int score = 0;
+
+    SearchStack stack[MAXPLY + 10];
+    SearchStack *ss = stack + 7; // Have some safety overhead.
+
+    int delta = 12;
+
+    int alpha = -INF_BOUND;
+    int beta = INF_BOUND;
+
+    if (depth >= 3) {
+		alpha = std::max(-INF_BOUND, prevEval - delta);
+		beta = std::min(prevEval + delta, INF_BOUND);
+	}
+
+    while (true){
+        score = AlphaBeta(alpha, beta, depth, board, info, ss, table);
+
+        CheckUp(info);
+        if (info.stopped){
+            break;
+        }
+
+        if ((score <= alpha)){
+            beta = (alpha + beta)/2;
+            alpha = std::max(-INF_BOUND, score - delta);
+        }
+        else if ((score >= beta)){
+            beta = std::min(score + delta, INF_BOUND);
+        }
+        else{
+            break;
+        }
+        delta += delta/2;
+    }
+    return score;
 }

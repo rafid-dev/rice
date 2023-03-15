@@ -40,5 +40,5 @@ void ClearForSearch(SearchInfo& info);
 
 void SearchPosition(Board& board, SearchInfo& info, TranspositionTable *table);
 int AlphaBeta(int alpha, int beta, int depth, Board& board, SearchInfo& info, SearchStack *ss, TranspositionTable *table);
-int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss);
+int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss, TranspositionTable *table);
 int AspirationWindowSearch(int prevEval, int depth, Board& board, SearchInfo& info, TranspositionTable *table);

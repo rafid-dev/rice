@@ -16,7 +16,7 @@ Score king_semi_open_file(0, 0);
 Score king_open_file(0, 0);
 
 // bishop pair
-Score bishop_pair_bonus(44, 88);
+Score bishop_pair_bonus(33, 70);
 
 U64 FileMasks[64];
 U64 RankMasks[64];
@@ -247,6 +247,7 @@ int Evaluate(Board &board, PawnTable& pawnTable)
         }
     }
 
+    // Bishop pair bonus
     // if (popcount(board.piecesBB[WhiteBishop]) > 1)
     // {
     //     score[White] += bishop_pair_bonus;

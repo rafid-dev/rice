@@ -46,7 +46,7 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table)
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
-int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss)
+int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss, TranspositionTable *table)
 {
     /* Checking for time every 2048 nodes */
     if ((info.nodes & 2047) == 0)
@@ -66,26 +66,42 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
         return 0;
     }
 
-    int score = Evaluate(board, info.pawnTable);
-    if (score >= beta)
+    int standing_pat = Evaluate(board, info.pawnTable);
+
+    if (standing_pat >= beta)
     {
         return beta;
     }
-    if (score > alpha)
+
+    if (standing_pat > alpha)
     {
-        alpha = score;
+        alpha = standing_pat;
     }
+
+    /* Probe Tranpsosition Table */
+    // TTEntry tte;
+    // bool isPvNode = (beta - alpha) > 1;
+    // bool ttHit = table->probeEntry(board.hashKey, &tte, info.ply);
+
+    // /* Return TT score if we found a TT entry*/
+    // if (!isPvNode && ttHit){
+    //     if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
+    //         return tte.score;
+    // }
 
     /* Move generation */
     /* Generate capture moves for current position*/
 
-    int bestscore = score;
-    score = -INF_BOUND;
+    int bestscore = standing_pat;
+    int moveCount = 0;
+    int score = -INF_BOUND;
+
+    Move bestmove = NO_MOVE;
 
     Movelist list;
     Movegen::legalmoves<CAPTURE>(board, list);
 
-    score_moves(board, &list);
+    score_moves(board, &list, NO_MOVE);
 
     /* Move loop */
     for (int i = 0; i < list.size; i++)
@@ -94,15 +110,21 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
 
         Move move = list.list[i].move;
 
+        // //SEE pruning
+        // if (list.list[i].value < GoodCaptureScore && moveCount >= 1){
+        //     continue;
+        // }
+
         // Make the move on board
         board.makeMove(move);
         // Increment ply and nodes
         info.ply++;
         info.nodes++;
+        moveCount++;
 
         // Call Quiescence on current position
         ss->move = move;
-        score = -Quiescence(-beta, -alpha, board, info, ss + 1);
+        score = -Quiescence(-beta, -alpha, board, info, ss + 1, table);
         // Undo move on board
         board.unmakeMove(move);
 
@@ -116,10 +138,13 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
 
         if (score > bestscore)
         {
+            bestmove = move;
             bestscore = score;
+
             if (score > alpha)
             {
                 alpha = score;
+                
                 if (score >= beta)
                 {
                     break;
@@ -127,6 +152,11 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack 
             }
         }
     }
+
+    // int flag = bestscore >= beta ? HFBETA : HFALPHA;
+    
+    // table->storeEntry(board.hashKey, flag, bestmove, 0, bestscore, standing_pat, info.ply);
+
     return bestscore;
 }
 
@@ -138,7 +168,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info, Se
 
     if (depth <= 0)
     {
-        return Quiescence(alpha, beta, board, info, ss);
+        return Quiescence(alpha, beta, board, info, ss, table);
     }
 
     /* Checking for time every 2048 nodes */
@@ -487,7 +517,7 @@ int AspirationWindowSearch(int prevEval, int depth, Board& board, SearchInfo& in
     int alpha = -INF_BOUND;
     int beta = INF_BOUND;
 
-    if (depth >= 3) {
+    if (depth > 3) {
 		alpha = std::max(-INF_BOUND, prevEval - delta);
 		beta = std::min(prevEval + delta, INF_BOUND);
 	}

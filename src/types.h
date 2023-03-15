@@ -4,7 +4,7 @@
 
 using namespace Chess;
 
-#define NAME "Rice 2.0 Master"
+#define NAME "Rice 2.0 Dev"
 #define AUTHOR "Slender"
 
 #define MAXPLY 64
@@ -53,3 +53,9 @@ struct Score{
 };
 
 enum {HFNONE, HFBETA, HFALPHA, HFEXACT};
+
+enum {
+    GoodCaptureScore = 10000000,
+    Killer1Score = 9000000,
+    Killer2Score = 8000000
+};

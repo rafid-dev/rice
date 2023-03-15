@@ -1,5 +1,6 @@
 #include "movescore.h"
 #include "eval.h"
+#include "see.h"
 
 int mvv_lva[12][12] = {
     105, 205, 305, 405, 505, 605, 105, 205, 305, 405, 505, 605,
@@ -33,22 +34,24 @@ void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info
         else if (victim != None)
         {
             // If it's a capture move, we score using MVVLVA (Most valuable victim, Least Valuable Attacker)
-            // Indexed by [victim][attacker]
-            list->list[i].value = mvv_lva[attacker][victim] + 10000000;
+            // and if SEE a move, we add additional bonus
+            
+            list->list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list->list[i].move, -107));
+
         }else if (list->list[i].move == ss->killers[0]){
             // Score for killer 1
-            list->list[i].value = 9000000;
+            list->list[i].value = Killer1Score;
         }else if (list->list[i].move == ss->killers[1]){
             // Score for killer 2
-            list->list[i].value = 8000000;
+            list->list[i].value = Killer2Score;
         }else{
             list->list[i].value = info->searchHistory[attacker][to(list->list[i].move)];
         }
     }
 }
 
-// This is used to score only mvv lva.
-void score_moves(Board &board, Movelist *list)
+// Used for Qsearch move scoring
+void score_moves(Board &board, Movelist *list, Move tt_move)
 {
 
     // Loop through moves in movelist.
@@ -56,10 +59,13 @@ void score_moves(Board &board, Movelist *list)
     {
         Piece victim = board.pieceAtB(to(list->list[i].move));
         Piece attacker = board.pieceAtB(from(list->list[i].move));
-        if (victim != None)
+        if (list->list[i].move == tt_move){
+            list->list[i].value = 20000000;
+        }
+        else if (victim != None)
         {
             // If it's a capture move, we score using MVVLVA (Most valuable victim, Least Valuable Attacker)
-            list->list[i].value = mvv_lva[attacker][victim] + 10000000;
+            list->list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list->list[i].move, -107));
         }
     }
 }

@@ -4,5 +4,5 @@
 #include "search.h"
 
 void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info, Move tt_move);
-void score_moves(Board &board, Movelist *list);
+void score_moves(Board &board, Movelist *list, Move tt_move);
 void pickNextMove(int moveNum, Movelist *list);

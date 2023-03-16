@@ -13,3 +13,4 @@ sprt.bat
 *.bat
 *.out
 *.app
+*.stackdump

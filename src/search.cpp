@@ -160,13 +160,14 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     CheckUp(info);
   }
 
+  /* Initialize helper variables */
   bool isRoot = (info.ply == 0);
   bool inCheck =
       board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
   bool isPvNode = (beta - alpha) > 1;
   int score = -INF_BOUND;
   int eval = 0;
-  // bool improving = false;
+  bool improving = false;
 
   /* We return static evaluation if we exceed max depth */
   if (info.ply > MAXPLY - 1) {
@@ -192,7 +193,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   }
 
   ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board, info.pawnTable);
-  // improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
+
+  /* If we our static evaluation is better than what it was 2 plies ago, we are improving*/
+  improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
 
   /* In check extension */
   if (inCheck) {
@@ -207,14 +210,17 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       eval = tte.score;
     }
 
-    // Reverse Futility Pruning (RFP)
-    // If the eval is well above beta by a margin, then we assume the eval will
-    // hold above beta.
-    if (depth <= 5 && eval >= beta && eval - (depth * 75) >= beta) {
+    /* Reverse Futility Pruning (RFP)
+    * If the eval is well above beta by a margin, then we assume the eval will
+    * hold above beta.
+    */
+    if (depth <= 5 && eval >= beta && eval - ((depth - improving) * 75) >= beta) {
       return eval;
     }
 
-    // Null move pruning
+    /* Null move pruning 
+    * If we give our opponent a free move and still maintain beta, we prune some nodes.
+    */
     if (eval >= beta && ss->static_eval >= beta &&
         board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
         ((ss - 1)->move != NULL_MOVE)) {
@@ -315,7 +321,10 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     bool do_fullsearch = false;
 
-    // Late move reduction
+    /* Late move reduction 
+    * Later moves will be searched in a reduced depth. 
+    * If they beat alpha, It will be researched in a reduced window.
+    */
     if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet) {
       int reduction = LMRTable[std::min(depth, 63)][moveCount];
 

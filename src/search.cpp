@@ -6,13 +6,12 @@
 #include <cmath>
 #include <iostream>
 
-
 int LMRTable[MAXDEPTH][256];
 
 void InitSearch() {
   for (int depth = 1; depth < MAXDEPTH; depth++) {
     for (int played = 1; played < 256; played++) {
-      LMRTable[depth][played] = 1 + log(depth) * log(played) / 2;
+      LMRTable[depth][played] = 1 + log(depth) * log(played) / 1.9;
     }
   }
 }
@@ -140,7 +139,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
   int flag = bestscore >= beta ? HFBETA : HFALPHA;
 
   table->storeEntry(board.hashKey, flag, bestmove, 0, bestscore, standing_pat,
-                    info.ply);
+                    info.ply, isPvNode);
 
   return bestscore;
 }
@@ -169,6 +168,10 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   int eval = 0;
   bool improving = false;
 
+  if (inCheck){
+    depth++;
+  }
+
   /* We return static evaluation if we exceed max depth */
   if (info.ply > MAXPLY - 1) {
     return Evaluate(board, info.pawnTable);
@@ -194,16 +197,17 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
   ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board, info.pawnTable);
 
-  /* If we our static evaluation is better than what it was 2 plies ago, we are improving*/
+  /* If we our static evaluation is better than what it was 2 plies ago, we are
+   * improving*/
   improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
 
-  /* In check extension */
-  if (inCheck) {
+  if (inCheck || ss->excluded) {
     ss->static_eval = eval = 0;
-    depth++;
+    improving = false;
+    goto movesloop;
   }
 
-  if (!isPvNode && !inCheck && info.ply) {
+  if (!isPvNode && !inCheck && info.ply && !ss->excluded) {
 
     // we can use tt score
     if (ttHit) {
@@ -211,16 +215,18 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     }
 
     /* Reverse Futility Pruning (RFP)
-    * If the eval is well above beta by a margin, then we assume the eval will
-    * hold above beta.
-    */
-    if (depth <= 5 && eval >= beta && eval - ((depth - improving) * 75) >= beta) {
+     * If the eval is well above beta by a margin, then we assume the eval will
+     * hold above beta.
+     */
+    if (depth <= 5 && eval >= beta &&
+        eval - ((depth - improving) * 75) >= beta) {
       return eval;
     }
 
-    /* Null move pruning 
-    * If we give our opponent a free move and still maintain beta, we prune some nodes.
-    */
+    /* Null move pruning
+     * If we give our opponent a free move and still maintain beta, we prune
+     * some nodes.
+     */
     if (eval >= beta && ss->static_eval >= beta &&
         board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
         ((ss - 1)->move != NULL_MOVE)) {
@@ -249,6 +255,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     }
   }
 
+  movesloop:
   /* Initialize variables */
   int bestscore = -INF_BOUND;
   int moveCount = 0;
@@ -275,6 +282,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     // Initialize move variable
     Move move = list.list[i].move;
 
+    // Skip excluded moves from extension
     if (move == ss->excluded)
       continue;
 
@@ -283,7 +291,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     if (!isRoot && bestscore > -ISMATE) {
 
-      // SEE pruning
+      // Various pruning techniques
       if (isQuiet) {
         // Late Move Pruning/Movecount pruning
         if (!isPvNode && !inCheck && depth < 4 &&
@@ -321,12 +329,14 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     bool do_fullsearch = false;
 
-    /* Late move reduction 
-    * Later moves will be searched in a reduced depth. 
-    * If they beat alpha, It will be researched in a reduced window.
-    */
-    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet) {
-      int reduction = LMRTable[std::min(depth, 63)][moveCount];
+    /* Late move reduction
+     * Later moves will be searched in a reduced depth.
+     * If they beat alpha, It will be researched in a reduced window.
+     */
+    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet)  {
+      int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
+
+      reduction += !improving;
 
       reduction = std::min(depth - 1, std::max(1, reduction));
 
@@ -419,7 +429,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
   if (ss->excluded == NO_MOVE) {
     table->storeEntry(board.hashKey, flag, bestmove, depth, bestscore,
-                      ss->static_eval, info.ply);
+                      ss->static_eval, info.ply, isPvNode);
   }
 
   return bestscore;

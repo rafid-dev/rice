@@ -9,7 +9,7 @@ void TranspositionTable::Initialize(int MB)
     std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)\n";
 }
 
-void TranspositionTable::storeEntry(U64 key, int f, Move move, int depth, int score, int eval, int ply)
+void TranspositionTable::storeEntry(U64 key, int f, Move move, int depth, int score, int eval, int ply, bool pv)
 {
     int index = reduce_hash(key, entries.size());
 
@@ -43,6 +43,7 @@ void TranspositionTable::storeEntry(U64 key, int f, Move move, int depth, int sc
     entries[index].score = score;
     entries[index].eval = eval;
     entries[index].age = currentAge;
+    entries[index].pv = pv;
 }
 
 bool TranspositionTable::probeEntry(U64 key, TTEntry *entry, int ply)

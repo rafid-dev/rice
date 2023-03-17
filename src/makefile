@@ -2,8 +2,8 @@ _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
 CXX       := g++
 TARGET    := Rice20
-CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wshadow -Wdouble-promotion -Wformat=2 -Wnull-dereference \
--Wlogical-op -Wunused -Wold-style-cast -Wundef -DNDEBUG
+CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference \
+-Wlogical-op -Wunused -Wundef -DNDEBUG
 NATIVE     = -march=native
 
 # engine name

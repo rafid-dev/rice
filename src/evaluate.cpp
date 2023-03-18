@@ -3,10 +3,6 @@
 
 #define SETBIT(bitboard, square) ((bitboard) |= (1ULL << (square)))
 
-// For indexing middle game and endgame values
-#define MIDDLEGAME 0
-#define ENDGAME 1
-
 // rook open file bonus
 Score rook_semi_open_file(8, 7);
 Score rook_open_file(16, 14);
@@ -16,7 +12,7 @@ Score king_semi_open_file(0, 0);
 Score king_open_file(0, 0);
 
 // bishop pair
-Score bishop_pair_bonus(33, 70);
+Score bishop_pair_bonus(30, 34);
 
 U64 FileMasks[64];
 U64 RankMasks[64];
@@ -247,7 +243,97 @@ int Evaluate(Board &board, PawnTable& pawnTable)
         }
     }
 
-    // Bishop pair bonus
+    //Bishop pair bonus
+    // if (popcount(board.piecesBB[WhiteBishop]) > 1)
+    // {
+    //     score[White] += bishop_pair_bonus;
+    // }
+    // if (popcount(board.piecesBB[BlackBishop]) > 1)
+    // {
+    //     score[Black] += bishop_pair_bonus;
+    // }
+
+    // tapered eval //
+    int mgScore = (score[side2move].mg - score[otherSide].mg);
+    int egScore = (score[side2move].eg - score[otherSide].eg);
+
+    // mgScore += pe->value.mg;
+    // egScore += pe->value.eg;
+
+    int mgPhase = gamePhase;
+    if (mgPhase > 24)
+        mgPhase = 24;
+    int egPhase = 24 - mgPhase;
+
+    return (mgScore * mgPhase + egScore * egPhase) / 24;
+}
+
+int Evaluate(Board &board)
+{
+    Score score[2];
+
+    int gamePhase = 0;
+
+    Color side2move = board.sideToMove;
+    Color otherSide = ~board.sideToMove;
+
+    U64 white_pieces = board.Us(White);
+    U64 black_pieces = board.Us(Black);
+
+    //PawnEntry *pe = pawnTable.probeEntry(board);
+
+    // U64 white_occupancies = board.Us(White);
+    // U64 black_occupancies = board.Us(Black);
+    // U64 all = board.All();
+
+    while (white_pieces)
+    {
+        Square sq = poplsb(white_pieces);
+        Piece p = board.pieceAtB(sq);
+
+        score[White] += PestoTable[p][sq];
+
+        gamePhase += gamephaseInc[p];
+        if (p == WhiteRook)
+        {
+            // Rook semi open file bonus
+            if (IsSemiOpenFile(board, sq, White))
+            {
+                score[White] += rook_semi_open_file;
+            }
+            // Rook open file bonus
+            else if (IsOpenFile(board, sq))
+            {
+                score[White] += rook_open_file;
+            }
+        }
+    }
+
+    while (black_pieces)
+    {
+        Square sq = poplsb(black_pieces);
+        Piece p = board.pieceAtB(sq);
+
+        score[Black] += PestoTable[p][sq];
+
+        gamePhase += gamephaseInc[p];
+        if (p == BlackRook)
+        {
+
+            // Rook semi open file bonus
+            if (IsSemiOpenFile(board, sq, Black))
+            {
+                score[Black] += rook_semi_open_file;
+            }
+            // Rook open file bonus
+            else if (IsOpenFile(board, sq))
+            {
+                score[Black] += rook_open_file;
+            }
+        }
+    }
+
+    //Bishop pair bonus
     // if (popcount(board.piecesBB[WhiteBishop]) > 1)
     // {
     //     score[White] += bishop_pair_bonus;

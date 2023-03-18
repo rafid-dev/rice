@@ -14,6 +14,7 @@ extern U64 BlackPassedMasks[64];
 void InitEvaluationMasks();
 void InitPestoTables();
 int Evaluate(Board& board, PawnTable& pawnTable);
+int Evaluate(Board& board);
 // parameters_t get_initial_parameters();
 // int get_fen_eval_result(const std::string& fen); 
 // void print_parameters(const parameters_t& parameters);

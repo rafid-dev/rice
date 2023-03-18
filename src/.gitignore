@@ -14,3 +14,4 @@ sprt.bat
 *.out
 *.app
 *.stackdump
+*.epd

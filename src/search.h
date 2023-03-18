@@ -13,7 +13,7 @@ struct SearchInfo {
     int ply = 0;
     int depth = 0;
     int searchHistory[12][64];
-
+    
     long nodes = 0l;
 
     long start_time = 0;

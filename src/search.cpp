@@ -6,11 +6,11 @@
 #include <cmath>
 #include <iostream>
 
-int LMRTable[MAXDEPTH][256];
+int LMRTable[MAXDEPTH][64];
 
 void InitSearch() {
   for (int depth = 1; depth < MAXDEPTH; depth++) {
-    for (int played = 1; played < 256; played++) {
+    for (int played = 1; played < 64; played++) {
       LMRTable[depth][played] = 1 + log(depth) * log(played) / 1.9;
     }
   }
@@ -30,7 +30,6 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
   for (int x = 0; x < 12; x++) {
     for (int i = 0; i < 64; i++) {
       info.searchHistory[x][i] = 0;
-      // info.searchCounters[i][i] = NO_MOVE;
     }
   }
 
@@ -195,6 +194,11 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       return tte.score;
   }
 
+  // // IIR (internal iterative reduction)
+  // if (depth >= 4 && tte.move == NO_MOVE && isPvNode){
+  //   depth--;
+  // }
+
   ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board, info.pawnTable);
 
   /* If we our static evaluation is better than what it was 2 plies ago, we are
@@ -230,7 +234,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     if (eval >= beta && ss->static_eval >= beta &&
         board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
         ((ss - 1)->move != NULL_MOVE)) {
+
       int R = 3 + depth / 3 + std::min((eval - beta) / 200, 3);
+      
       board.makeNullMove();
       ss->move = NULL_MOVE;
       info.ply++;
@@ -253,6 +259,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         return score;
       }
     }
+
+    
+    
   }
 
   movesloop:
@@ -293,8 +302,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
       // Various pruning techniques
       if (isQuiet) {
+
         // Late Move Pruning/Movecount pruning
-        if (!isPvNode && !inCheck && depth < 4 &&
+        if (!isPvNode && !inCheck && depth <= 4 &&
             (quietsSearched >= depth * depth * 4)) {
           continue;
         }
@@ -303,6 +313,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         if (depth < 6 && !see(board, move, -50 * depth)) {
           continue;
         }
+
       } else {
 
         // SEE pruning for non quiets
@@ -336,8 +347,10 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet)  {
       int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
-      reduction += !improving;
+      reduction += !improving; // Increase for not improving
 
+
+      // Adjust the reduction so we don't drop into Qsearch
       reduction = std::min(depth - 1, std::max(1, reduction));
 
       score = -AlphaBeta(-alpha - 1, -alpha, newDepth - reduction, board, info,
@@ -390,18 +403,15 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         if (score >= beta) {
           // Update killers
           if (isQuiet) {
-            // Move previous_move = (ss - 1)->move;
 
             ss->killers[1] = ss->killers[0];
             ss->killers[0] = move;
-
-            // info.searchCounters[from(previous_move)][to(previous_move)] =
-            // move;
           }
 
           break;
         }
         if (isQuiet) {
+          // Record history score
           info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
         }
       }

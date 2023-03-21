@@ -34,6 +34,12 @@ struct SearchStack {
     Move killers[2] = {NO_MOVE, NO_MOVE};
 };
 
+extern int RFPMargin;
+extern int RFPImprovingBonus;
+extern int RFPDepth;
+extern int LMRBase;
+extern int LMRDivision;
+
 void InitSearch();
 
 void ClearForSearch(SearchInfo& info);

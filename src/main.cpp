@@ -5,9 +5,9 @@
 int main (){
     init_all();
 
-    // uci_loop();
+    uci_loop();
 
-    Tuner tuner;
+    // Tuner tuner;
 
     return 0;
 }

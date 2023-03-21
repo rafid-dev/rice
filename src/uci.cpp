@@ -16,6 +16,28 @@ static void uci_send_id()
     std::cout << "uciok\n";
 }
 
+static void set_option (std::istream& is, std::string& token, std::string name, int& value){
+    if (token == name){
+        is >> std::skipws >> token;
+        is >> std::skipws >> token;
+
+        value = std::stoi(token);
+    }
+}
+
+
+static void set_option (std::istream& is, std::string& token, std::string name, float& value){
+    if (token == name){
+        is >> std::skipws >> token;
+        is >> std::skipws >> token;
+
+        value = std::stof(token);
+    }
+}
+
+int DefaultHashSize = 64;
+int CurrentHashSize = DefaultHashSize;
+
 void uci_loop()
 {
 
@@ -23,7 +45,7 @@ void uci_loop()
     SearchInfo info;
     TranspositionTable TTable;
 
-    TTable.Initialize(64);
+    TTable.Initialize(DefaultHashSize);
 
     TranspositionTable *table = &TTable;
 
@@ -53,6 +75,8 @@ void uci_loop()
         }
         if (token == "ucinewgame")
         {
+            TTable.clear();
+            TTable.Initialize(CurrentHashSize);
             std::cout << "readyok\n";
             continue;
         }
@@ -176,10 +200,25 @@ void uci_loop()
                 info.depth = MAXPLY;
             }
 
-            std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
+            //std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
 
             SearchPosition(board, info, table);
-            continue;
+        }
+
+        if (token == "setoption"){
+            is >> std::skipws >> token;
+            is >> std::skipws >> token;
+            set_option(is, token, "Hash", CurrentHashSize);
+            set_option(is, token, "RFPMargin", RFPMargin);
+            set_option(is, token, "RFPDepth", RFPDepth);
+            set_option(is, token, "LMRBase", LMRBase);
+            set_option(is, token, "LMRDivision", LMRDivision);
+            InitSearch();
+            if (DefaultHashSize != CurrentHashSize){
+                TTable.clear();
+                TTable.Initialize(DefaultHashSize);
+                
+            }
         }
 
         /* Debugging Commands */

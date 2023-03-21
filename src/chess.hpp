@@ -772,7 +772,7 @@ inline uint8_t diagonal_of(Square sq)
 
 inline uint8_t anti_diagonal_of(Square sq)
 {
-    return square_rank(sq) + square_file(sq);
+    return static_cast<uint8_t>(square_rank(sq)) + static_cast<uint8_t>(square_file(sq));
 }
 
 /// @brief manhatten distance between two squares

@@ -16,8 +16,6 @@ int LMRTable[MAXDEPTH][64];
 void InitSearch() {
   float b = static_cast<float>(static_cast<float>(LMRBase)/100);
   float d = static_cast<float>(static_cast<float>(LMRDivision)/100);
-  std::cout << b << "\n";
-  std::cout << d << "\n";
   for (int depth = 1; depth < MAXDEPTH; depth++) {
     for (int played = 1; played < 64; played++) {
       LMRTable[depth][played] = b + log(depth) * log(played) / d;
@@ -387,16 +385,20 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     /* A condition for full search.*/
     bool do_fullsearch = false;
+    
+    bool givesCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
 
     /* Late move reduction
      * Later moves will be searched in a reduced depth.
      * If they beat alpha, It will be researched in a reduced window but full depth.
      */
-    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode) && isQuiet)  {
+    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode))  {
       int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
       reduction += !improving; /* Increase reduction if we're not improving. */
-      reduction += !isPvNode;
+      reduction += !isPvNode; /* Increase for non pv nodes */
+      reduction += isQuiet && !see(board, move, -50*depth); // Increase for quiets and not winning captures
+      // reduction += givesCheck; /*Increase for moves that give check */
 
 
       /* Adjust the reduction so we don't drop into Qsearch or cause an extension*/

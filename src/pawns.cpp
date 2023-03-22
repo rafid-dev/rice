@@ -1,9 +1,19 @@
 #include "pawns.h"
 #include "eval.h"
 
+int DoublePenaltyMg = 1;
+int DoublePenaltyEg = 15;
+int IsolatedPenaltyMg = 8;
+int IsolatedPenaltyEg = 14;
+
 // Pawn Penalties
-Score double_pawn_penalty(-16, -37);
-Score IsolatedPenalty(-10, -19);
+Score DoublePawnPenalty(-DoublePenaltyMg, -DoublePenaltyEg);
+Score IsolatedPenalty(-IsolatedPenaltyMg, -IsolatedPenaltyEg);
+
+void  UpdatePawnTables(){
+    DoublePawnPenalty = Score(-DoublePenaltyMg, -DoublePenaltyEg);
+    IsolatedPenalty = Score(-IsolatedPenaltyMg, -IsolatedPenaltyEg);
+}
 
 static inline bool IsIsolatedPawn(const U64 pawn_bb, Square sq)
 {
@@ -28,7 +38,7 @@ static Score EvaluatePawns(U64 pawns_bb)
             
         }
         // if (CountDoublePawns(pawns_bb, sq) > 1){
-        //     score += double_pawn_penalty;
+        //     score += DoublePawnPenalty;
         // }
     }
     return score;

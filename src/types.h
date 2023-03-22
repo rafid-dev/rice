@@ -59,3 +59,4 @@ enum {
     Killer1Score = 9000000,
     Killer2Score = 8000000
 };
+

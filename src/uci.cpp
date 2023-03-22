@@ -213,11 +213,15 @@ void uci_loop()
             set_option(is, token, "RFPDepth", RFPDepth);
             set_option(is, token, "LMRBase", LMRBase);
             set_option(is, token, "LMRDivision", LMRDivision);
+            set_option(is, token, "IPMg", IsolatedPenaltyMg);
+            set_option(is, token, "IPEg", IsolatedPenaltyEg);
+            set_option(is, token, "DPMg", DoublePenaltyMg);
+            set_option(is, token, "DPEg", DoublePenaltyEg);
             InitSearch();
+            UpdatePawnTables();
             if (DefaultHashSize != CurrentHashSize){
                 TTable.clear();
                 TTable.Initialize(DefaultHashSize);
-                
             }
         }
 

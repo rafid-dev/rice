@@ -13,3 +13,10 @@ struct PawnTable{
     PawnEntry *probeEntry(const Board& board);
     void clear();
 };
+
+extern int DoublePenaltyMg;
+extern int DoublePenaltyEg;
+extern int IsolatedPenaltyMg;
+extern int IsolatedPenaltyEg;
+
+void UpdatePawnTables();

@@ -1776,6 +1776,11 @@ inline std::string convertMoveToUci(Move move)
     Square from_sq = from(move);
     Square to_sq = to(move);
 
+    if (piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
+    {
+        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+    }
+
     // Add the from and to squares to the string stream
     ss << squareToString[from_sq];
     ss << squareToString[to_sq];

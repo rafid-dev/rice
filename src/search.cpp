@@ -387,7 +387,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     
     bool givesCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
 
-    /* Late move reduction
+    /* Late move reduction (~125 elo)
      * Later moves will be searched in a reduced depth.
      * If they beat alpha, It will be researched in a reduced window but full depth.
      */
@@ -396,6 +396,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
       reduction += !improving; /* Increase reduction if we're not improving. */
       reduction += !isPvNode; /* Increase for non pv nodes */
+      
       reduction += isQuiet && !see(board, move, -50*depth); // Increase for quiets and not winning captures
 
       /* Adjust the reduction so we don't drop into Qsearch or cause an extension*/
@@ -522,7 +523,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
     F_number(info.nodes,info.uci, FANCY_Yellow);
     std::cout<< " time ";
     F_number((GetTimeMs() - startime),info.uci, FANCY_Cyan);
-    std::cout << "pv";
+    std::cout << " pv";
 
     for (int i = 0; i < info.pv_table.length[0]; i++) {
       std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]);

@@ -339,7 +339,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
       /* Various pruning techniques */
       if (isQuiet) {
-
         /* Late Move Pruning/Movecount pruning */
         /* If we have searched many moves, we can skip the rest. */
         if (!isPvNode && !inCheck && depth <= 4 &&
@@ -398,8 +397,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       reduction += !improving; /* Increase reduction if we're not improving. */
       reduction += !isPvNode; /* Increase for non pv nodes */
       reduction += isQuiet && !see(board, move, -50*depth); // Increase for quiets and not winning captures
-      // reduction += givesCheck; /*Increase for moves that give check */
-
 
       /* Adjust the reduction so we don't drop into Qsearch or cause an extension*/
       reduction = std::min(depth - 1, std::max(1, reduction));
@@ -460,13 +457,11 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
             ss->killers[1] = ss->killers[0];
             ss->killers[0] = move;
-          }
 
+            // Record history score
+            info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
+          }
           break;
-        }
-        if (isQuiet) {
-          // Record history score
-          info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
         }
       }
     }

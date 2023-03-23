@@ -8,8 +8,7 @@ Score rook_semi_open_file(8, 7);
 Score rook_open_file(16, 14);
 
 // king safety
-Score king_semi_open_file(0, 0);
-Score king_open_file(0, 0);
+Score king_shelter(30, -12);
 
 // bishop pair
 Score bishop_pair_bonus(30, 34);
@@ -192,8 +191,8 @@ int Evaluate(Board &board, PawnTable& pawnTable)
 
     // PawnEntry *pe = pawnTable.probeEntry(board);
 
-    // U64 white_occupancies = board.Us(White);
-    // U64 black_occupancies = board.Us(Black);
+    U64 white_occupancies = board.Us(White);
+    U64 black_occupancies = board.Us(Black);
     // U64 all = board.All();
 
     while (white_pieces)
@@ -216,6 +215,9 @@ int Evaluate(Board &board, PawnTable& pawnTable)
             {
                 score[White] += rook_open_file;
             }
+        // }else if (p == WhiteKing){
+        //     U64 pawnsInFront = (board.piecesBB[WhitePawn] | board.piecesBB[BlackPawn]) & WhitePassedMasks[sq];
+        //     U64 ourPawns = pawnsInFront & white_occupancies & ~PawnAttacks()
         }
     }
 

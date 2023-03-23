@@ -21,6 +21,7 @@ struct SearchInfo {
 
     bool timeset = false;
     bool stopped = false;
+    bool uci = false;
 
     PVTable pv_table;
     PawnTable pawnTable = PawnTable();

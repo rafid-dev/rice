@@ -25,7 +25,6 @@ static void set_option (std::istream& is, std::string& token, std::string name, 
     }
 }
 
-
 static void set_option (std::istream& is, std::string& token, std::string name, float& value){
     if (token == name){
         is >> std::skipws >> token;
@@ -37,6 +36,8 @@ static void set_option (std::istream& is, std::string& token, std::string name, 
 
 int DefaultHashSize = 64;
 int CurrentHashSize = DefaultHashSize;
+
+bool is_uci = false;
 
 void uci_loop()
 {
@@ -54,7 +55,6 @@ void uci_loop()
 
     while (true)
     {
-        std::cout.flush();
         token.clear();
 
         std::getline(std::cin, command);
@@ -82,6 +82,7 @@ void uci_loop()
         }
         if (token == "uci")
         {
+            is_uci = true;
             uci_send_id();
             continue;
         }
@@ -199,9 +200,9 @@ void uci_loop()
             if (depth == -1){
                 info.depth = MAXPLY;
             }
+            info.uci = is_uci;
 
             //std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
-
             SearchPosition(board, info, table);
         }
 
@@ -249,4 +250,5 @@ void uci_loop()
 
     TTable.clear();
     info.pawnTable.clear();
+    std::cout << "\n" << "\u001b[0m";
 }

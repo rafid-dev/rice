@@ -5,7 +5,6 @@
 
 // Initialize Search Parameters
 int RFPMargin = 75;
-int RFPImprovingBonus = 173;
 int RFPDepth = 5;
 int LMRBase = 77;
 int LMRDivision = 236;
@@ -14,5 +13,4 @@ void init_all(){
     InitSearch();
     InitPestoTables();
     InitEvaluationMasks();
-    
 }

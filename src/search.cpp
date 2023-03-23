@@ -5,7 +5,7 @@
 #include "see.h"
 #include <cmath>
 #include <iostream>
-
+#include "fancyterminal.h"
 
 /* Refer to init.cpp for search parameter values. */
 
@@ -519,9 +519,15 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
     }
     
     bestmove = info.pv_table.array[0][0];
-    std::cout << "info score cp " << score << " depth " << current_depth
-              << " nodes " << info.nodes << " time " << (GetTimeMs() - startime)
-              << " pv";
+    std::cout << "info score cp ";
+    F_number(score, info.uci, FANCY_Yellow);
+    std::cout << " depth ";
+    F_number(current_depth,info.uci, FANCY_Green);
+    std::cout << " nodes "; 
+    F_number(info.nodes,info.uci, FANCY_Yellow);
+    std::cout<< " time ";
+    F_number((GetTimeMs() - startime),info.uci, FANCY_Cyan);
+    std::cout << "pv";
 
     for (int i = 0; i < info.pv_table.length[0]; i++) {
       std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]);

@@ -16,8 +16,10 @@ static void uci_send_id()
     std::cout << "uciok\n";
 }
 
-static void set_option (std::istream& is, std::string& token, std::string name, int& value){
-    if (token == name){
+static void set_option(std::istream &is, std::string &token, std::string name, int &value)
+{
+    if (token == name)
+    {
         is >> std::skipws >> token;
         is >> std::skipws >> token;
 
@@ -25,8 +27,10 @@ static void set_option (std::istream& is, std::string& token, std::string name, 
     }
 }
 
-static void set_option (std::istream& is, std::string& token, std::string name, float& value){
-    if (token == name){
+static void set_option(std::istream &is, std::string &token, std::string name, float &value)
+{
+    if (token == name)
+    {
         is >> std::skipws >> token;
         is >> std::skipws >> token;
 
@@ -60,7 +64,8 @@ void uci_loop()
         std::getline(std::cin, command);
         std::istringstream is(command);
         is >> std::skipws >> token;
-        if (token == "stop"){
+        if (token == "stop")
+        {
             info.stopped = true;
         }
         if (token == "quit")
@@ -98,8 +103,36 @@ void uci_loop()
             }
             else if (option == "fen")
             {
-                std::string fen = command.erase(0, 13);
-                board.applyFen(fen);
+                std::string final_fen;
+                is >> std::skipws >> option;
+                final_fen = option;
+
+                // Record side to move
+                final_fen.push_back(' ');
+                is >> std::skipws >> option;
+                final_fen += option;
+
+                // Record castling
+                final_fen.push_back(' ');
+                is >> std::skipws >> option;
+                final_fen += option;
+
+                // record enpassant square
+                final_fen.push_back(' ');
+                is >> std::skipws >> option;
+                final_fen += option;
+
+                // record fifty move conter
+                final_fen.push_back(' ');
+                is >> std::skipws >> option;
+                final_fen += option;
+                
+                final_fen.push_back(' ');
+                is >> std::skipws >> option;
+                final_fen += option;
+
+                // Finally, apply the fen.
+                board.applyFen(final_fen);
             }
             is >> std::skipws >> option;
             if (option == "moves")
@@ -181,14 +214,16 @@ void uci_loop()
                 movetime = stoi(token);
                 is >> std::skipws >> token;
             }
-            if (movetime != -1){
+            if (movetime != -1)
+            {
                 time = movetime;
                 movestogo = 1;
             }
 
             info.start_time = GetTimeMs();
             info.depth = depth;
-            if (time != -1){
+            if (time != -1)
+            {
                 info.timeset = true;
                 time /= movestogo;
 
@@ -197,16 +232,18 @@ void uci_loop()
 
                 info.end_time = info.start_time + time + inc;
             }
-            if (depth == -1){
+            if (depth == -1)
+            {
                 info.depth = MAXPLY;
             }
             info.uci = is_uci;
 
-            //std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
+            // std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
             SearchPosition(board, info, table);
         }
 
-        if (token == "setoption"){
+        if (token == "setoption")
+        {
             is >> std::skipws >> token;
             is >> std::skipws >> token;
             set_option(is, token, "Hash", CurrentHashSize);
@@ -220,7 +257,8 @@ void uci_loop()
             set_option(is, token, "DPEg", DoublePenaltyEg);
             InitSearch();
             UpdatePawnTables();
-            if (DefaultHashSize != CurrentHashSize){
+            if (DefaultHashSize != CurrentHashSize)
+            {
                 TTable.clear();
                 TTable.Initialize(DefaultHashSize);
             }
@@ -237,10 +275,12 @@ void uci_loop()
             std::cout << Evaluate(board, info.pawnTable) << std::endl;
             continue;
         }
-        if (token == "side"){
+        if (token == "side")
+        {
             std::cout << (board.sideToMove == White ? "White" : "Black\n") << std::endl;
         }
-        if (token == "run"){
+        if (token == "run")
+        {
             info.depth = MAXDEPTH;
             info.timeset = false;
 
@@ -250,5 +290,6 @@ void uci_loop()
 
     TTable.clear();
     info.pawnTable.clear();
-    std::cout << "\n" << "\u001b[0m";
+    std::cout << "\n"
+              << "\u001b[0m";
 }

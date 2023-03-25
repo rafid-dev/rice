@@ -7,9 +7,9 @@ int IsolatedPenaltyMg = 8;
 int IsolatedPenaltyEg = 14;
 
 // Pawn Penalties
-Score PASSED_PAWN_BONUS(1, 16);
+Score PASSED_PAWN_BONUS(1, 19);
 Score BLOCKED_PASSED_PAWN_PENALTY(5, -20);
-Score ISOLATED_PAWN_PENALTY(-20, -13);
+Score ISOLATED_PAWN_PENALTY(-24, -13);
 
 void UpdatePawnTables(){
     // do juju
@@ -44,13 +44,13 @@ Score EvaluatePawns(U64 pawns_bb, U64 enemy, U64 all)
             if ((WhitePassedMasks[sq] & ~enemy) == 0)
             {
                 rank = square_rank(sq);
-                
+
                 score += PASSED_PAWN_BONUS * (7 - rank);
             }
-            // if ((WhitePassedMasks[sq] & all))
-            // {
-            //     score += BLOCKED_PASSED_PAWN_PENALTY;
-            // }
+            if ((WhitePassedMasks[sq] & ~all))
+            {
+                score += BLOCKED_PASSED_PAWN_PENALTY;
+            }
         }
         else
         {
@@ -59,10 +59,10 @@ Score EvaluatePawns(U64 pawns_bb, U64 enemy, U64 all)
                 rank = square_rank(sq);
                 score += PASSED_PAWN_BONUS * rank;
             }
-            // if ((BlackPassedMasks[sq] & all))
-            // {
-            //     score += BLOCKED_PASSED_PAWN_PENALTY;
-            // }
+            if ((BlackPassedMasks[sq] & ~all))
+            {
+                score += BLOCKED_PASSED_PAWN_PENALTY;
+            }
         }
         // if (CountDoublePawns(pawns_bb, sq) > 1){
         //     score += DoublePawnPenalty;

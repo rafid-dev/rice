@@ -23,9 +23,9 @@ static inline uint32_t reduce_hash(uint32_t x, uint32_t N)
 }
 
 struct Score{   
-    int mg = 0;
-    int eg = 0;
-    Score(int a, int b){
+    int16_t mg = 0;
+    int16_t eg = 0;
+    Score(int16_t a, int16_t b){
         mg = a;
         eg = b;
     }
@@ -39,7 +39,7 @@ struct Score{
     Score operator-(const Score x){
         return Score(mg - x.mg, eg - x.eg);
     }
-    Score operator*(int x){
+    Score operator*(int16_t x){
         return Score(mg*x, eg*x);
     }
     void operator+=(const Score x){
@@ -55,8 +55,8 @@ struct Score{
 enum {HFNONE, HFBETA, HFALPHA, HFEXACT};
 
 enum {
+    NSQUARES = 64,
     GoodCaptureScore = 10000000,
     Killer1Score = 9000000,
     Killer2Score = 8000000
 };
-

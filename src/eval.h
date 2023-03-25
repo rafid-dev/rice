@@ -1,7 +1,8 @@
 #pragma once
 
-#include "types.h"
 #include "pawns.h"
+#include "types.h"
+
 
 extern const int piece_values[12];
 
@@ -14,5 +15,6 @@ extern Score PestoTable[12][64];
 
 void InitEvaluationMasks();
 void InitPestoTables();
-int Evaluate(Board& board, PawnTable& pawnTable);
-int Evaluate(Board& board);
+int Evaluate(Board &board, PawnTable &pawnTable);
+int Evaluate(Board &board);
+

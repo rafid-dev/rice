@@ -19,7 +19,7 @@ U64 IsolatedMasks[64];
 U64 WhitePassedMasks[64];
 U64 BlackPassedMasks[64];
 
-int gamephaseInc[12] = {0, 0, 1, 1, 1, 1, 2, 2, 4, 4, 0, 0};
+int gamephaseInc[6] = {0, 1, 1, 2, 4, 0};
 
 int mg_value[6] = {80, 335, 364, 475, 1025, 0};
 int eg_value[6] = {91, 280, 296, 509, 940, 0};
@@ -27,88 +27,108 @@ int eg_value[6] = {91, 280, 296, 509, 940, 0};
 const int piece_values[12] = {100, 300, 300, 500, 900, 0};
 
 #define S Score
-Score material_values[6] = {S(64, 100),  S(245, 218), S(250, 236),
-                            S(323, 427), S(716, 786), S(0, 0)};
-Score psqt[6][64] = {
-    {// pawns
-     S(0, 0),     S(0, 0),     S(0, 0),     S(0, 0),     S(0, 0),
-     S(0, 0),     S(0, 0),     S(0, 0),     S(67, 122),  S(92, 115),
-     S(46, 107),  S(83, 80),   S(54, 93),   S(66, 77),   S(8, 116),
-     S(-32, 138), S(-11, 59),  S(-3, 67),   S(19, 47),   S(28, 29),
-     S(43, 19),   S(49, 15),   S(26, 45),   S(-6, 47),   S(-23, 9),
-     S(1, -1),    S(-1, -11),  S(8, -24),   S(17, -29),  S(10, -22),
-     S(13, -11),  S(-18, -8),  S(-32, -7),  S(-10, -12), S(-12, -24),
-     S(3, -31),   S(4, -32),   S(-2, -29),  S(6, -21),   S(-22, -22),
-     S(-32, -12), S(-12, -14), S(-12, -27), S(-17, -6),  S(-6, -17),
-     S(-4, -25),  S(19, -24),  S(-14, -28), S(-37, -7),  S(-10, -12),
-     S(-22, -17), S(-27, -5),  S(-19, -4),  S(9, -20),   S(23, -21),
-     S(-21, -25), S(0, 0),     S(0, 0),     S(0, 0),     S(0, 0),
-     S(0, 0),     S(0, 0),     S(0, 0),     S(0, 0)},
-    {// knights
-     S(-113, -38), S(-54, -22), S(-49, 6),   S(-12, -14), S(57, -19),
-     S(-65, -7),   S(-25, -32), S(-70, -71), S(-40, -8),  S(-23, 7),
-     S(50, -9),    S(29, 7),    S(25, 1),    S(56, -11),  S(9, -6),
-     S(1, -27),    S(-32, -4),  S(39, -2),   S(37, 17),   S(56, 12),
-     S(70, 3),     S(91, 2),    S(51, -5),   S(27, -21),  S(-3, 1),
-     S(8, 17),     S(18, 29),   S(43, 28),   S(26, 28),   S(55, 21),
-     S(14, 16),    S(24, -5),   S(-15, 6),   S(1, 9),     S(11, 29),
-     S(9, 32),     S(18, 30),   S(11, 29),   S(22, 11),   S(-7, 3),
-     S(-22, -3),   S(-10, 16),  S(6, 3),     S(5, 23),    S(16, 22),
-     S(9, 7),      S(13, 0),    S(-18, -3),  S(-28, -21), S(-29, 0),
-     S(-12, 5),    S(-7, 19),   S(-6, 12),   S(8, -3),    S(-6, -11),
-     S(-10, -21),  S(-91, -9),  S(-22, -25), S(-36, -5),  S(-26, -2),
-     S(-22, 1),    S(-18, -2),  S(-20, -10), S(-24, -37)},
-    {// bishops
-     S(-12, -6), S(-13, -9),  S(-67, 5),   S(-72, 8),  S(-46, 1),  S(-51, -1),
-     S(-12, -8), S(-28, -10), S(-12, -5),  S(11, 0),   S(-14, 4),  S(-17, -2),
-     S(28, -3),  S(25, -6),   S(18, -1),   S(-27, -9), S(-15, 3),  S(20, -1),
-     S(26, 3),   S(28, 0),    S(38, -4),   S(51, 0),   S(30, 1),   S(13, -3),
-     S(-8, 1),   S(-1, 11),   S(14, 14),   S(36, 13),  S(24, 15),  S(32, 6),
-     S(3, 3),    S(-8, 8),    S(-10, -3),  S(2, 9),    S(4, 12),   S(18, 16),
-     S(19, 11),  S(5, 6),     S(2, 5),     S(-10, -4), S(-2, -4),  S(9, -4),
-     S(5, 12),   S(8, 5),     S(7, 9),     S(9, 9),    S(5, 0),    S(2, -8),
-     S(5, -20),  S(4, -3),    S(11, -13),  S(-6, 9),   S(-1, 12),  S(12, -6),
-     S(18, -5),  S(0, -19),   S(-23, -16), S(-1, -9),  S(-16, -4), S(-18, -2),
-     S(-11, -4), S(-17, 2),   S(-8, -10),  S(-17, -13)},
-    {// rooks
-     S(11, 10),  S(28, 4),   S(-1, 17),  S(28, 6),   S(32, 6),   S(18, 8),
-     S(31, 1),   S(44, 0),   S(-2, 11),  S(0, 13),   S(19, 9),   S(33, 4),
-     S(46, -7),  S(52, -4),  S(5, 9),    S(17, 4),   S(-20, 9),  S(2, 8),
-     S(-2, 9),   S(7, 5),    S(3, 1),    S(45, -10), S(50, -9),  S(19, -6),
-     S(-27, 7),  S(0, -1),   S(-11, 10), S(-2, 3),   S(0, 0),    S(16, -1),
-     S(9, -6),   S(2, -3),   S(-32, 4),  S(-25, 5),  S(-22, 8),  S(-15, 4),
-     S(-2, -6),  S(-7, -4),  S(8, -8),   S(-9, -9),  S(-33, -2), S(-21, 1),
-     S(-22, -3), S(-20, -4), S(-15, -3), S(-4, -10), S(12, -16), S(-15, -17),
-     S(-35, -3), S(-19, -5), S(-21, -1), S(-19, 1),  S(-13, -6), S(0, -7),
-     S(5, -13),  S(-45, -4), S(-15, 0),  S(-14, 3),  S(-13, 6),  S(-4, -3),
-     S(-2, -5),  S(-5, 1),   S(-17, 0),  S(-14, -10)},
-    {// queens
-     S(-30, -1),  S(-14, 9),   S(-15, 29),  S(9, 14),    S(63, -11),
-     S(41, -2),   S(40, -11),  S(26, 10),   S(-10, -20), S(-28, 10),
-     S(-6, 24),   S(-16, 40),  S(-27, 65),  S(41, 5),    S(20, 5),
-     S(40, -14),  S(-4, -19),  S(-9, -7),   S(0, 7),     S(-2, 37),
-     S(37, 18),   S(59, 9),    S(54, -16),  S(41, -4),   S(-21, -3),
-     S(-17, 14),  S(-15, 14),  S(-12, 36),  S(-5, 44),   S(10, 38),
-     S(-1, 39),   S(0, 24),    S(-13, -1),  S(-19, 12),  S(-13, 11),
-     S(-17, 38),  S(-9, 24),   S(-8, 20),   S(3, 15),    S(-4, 10),
-     S(-18, -8),  S(-7, -8),   S(-10, 4),   S(-5, -16),  S(-3, -6),
-     S(0, -10),   S(7, -18),   S(0, -15),   S(-24, -23), S(-10, -14),
-     S(0, -10),   S(4, -46),   S(2, -30),   S(13, -41),  S(-1, -41),
-     S(8, -55),   S(-7, -28),  S(-23, -12), S(-14, -16), S(-3, 4),
-     S(-12, -18), S(-27, -19), S(-22, -27), S(-18, -57)},
-    {// kings
-     S(-15, -58), S(60, -33), S(75, -24), S(14, -9),  S(-64, 8),  S(-62, 25),
-     S(59, 5),    S(29, -13), S(77, -22), S(8, 20),   S(-24, 20), S(57, 7),
-     S(8, 20),    S(-20, 41), S(-1, 29),  S(-18, 16), S(-12, 9),  S(21, 18),
-     S(48, 16),   S(2, 20),   S(5, 25),   S(59, 33),  S(72, 30),  S(1, 14),
-     S(-7, 0),    S(-26, 27), S(-21, 29), S(-46, 35), S(-55, 37), S(-43, 39),
-     S(-25, 32),  S(-61, 16), S(-84, 6),  S(-13, 7),  S(-47, 30), S(-89, 43),
-     S(-92, 45),  S(-63, 35), S(-55, 24), S(-69, 9),  S(9, -12),  S(-12, 6),
-     S(-42, 22),  S(-70, 33), S(-54, 33), S(-51, 27), S(-15, 13), S(-27, 3),
-     S(37, -27),  S(17, -7),  S(-11, 10), S(-45, 19), S(-41, 21), S(-20, 13),
-     S(17, -3),   S(25, -17), S(27, -54), S(52, -41), S(30, -24), S(-52, 0),
-     S(4, -16),   S(-25, -4), S(34, -26), S(37, -49)}};
+
+// Bishop Bonuses
+Score BISHOP_PAIR_BONUS = S(32, 52);
+
+Score OPEN_FILE_BONUS[] = {S(0, 0),   S(0, 0), S(0, 0),
+                           S(59, -8), S(0, 0), S(0, 0)};
+Score SEMI_OPEN_FILE_BONUS[] = {S(0, 0),  S(0, 0), S(0, 0),
+                                S(19, 4), S(0, 0), S(0, 0)};
+
+Score PIECE_VALUES[6] = {
+    S(89, 77), S(379, 290), S(388, 307), S(533, 549), S(1163, 998), S(0, 0),
+};
+
+Score PAWN_TABLE[NSQUARES] = {
+    S(0, 0),    S(0, 0),    S(0, 0),     S(0, 0),     S(0, 0),    S(0, 0),
+    S(0, 0),    S(0, 0),    S(104, 149), S(145, 126), S(80, 115), S(129, 81),
+    S(93, 96),  S(159, 73), S(25, 128),  S(-25, 166), S(-2, 86),  S(3, 80),
+    S(32, 58),  S(39, 30),  S(77, 9),    S(89, 19),   S(27, 53),  S(-5, 68),
+    S(-14, 31), S(6, 15),   S(13, 5),    S(32, -18),  S(34, -11), S(24, -3),
+    S(17, 5),   S(-12, 15), S(-30, 17),  S(-15, 8),   S(-2, -2),  S(20, -14),
+    S(25, -10), S(15, -8),  S(4, -4),    S(-18, 2),   S(-27, 7),  S(-18, 4),
+    S(-1, -6),  S(-8, 3),   S(7, 3),     S(12, -4),   S(29, -14), S(-3, -7),
+    S(-39, 23), S(-17, 6),  S(-21, 15),  S(-24, 20),  S(-16, 19), S(32, 0),
+    S(32, -9),  S(-16, -1), S(0, 0),     S(0, 0),     S(0, 0),    S(0, 0),
+    S(0, 0),    S(0, 0),    S(0, 0),     S(0, 0),
+};
+Score KNIGHT_TABLE[NSQUARES] = {
+    S(-205, -40), S(-106, -30), S(-37, -4),   S(-38, -23), S(95, -37),
+    S(-110, -15), S(-15, -61),  S(-118, -91), S(-77, -17), S(-44, 1),
+    S(85, -26),   S(38, 4),     S(32, -5),    S(82, -28),  S(5, -19),
+    S(-6, -49),   S(-40, -21),  S(77, -20),   S(52, 14),   S(82, 11),
+    S(112, -9),   S(154, -14),  S(97, -23),   S(65, -47),  S(-5, -13),
+    S(30, 8),     S(31, 30),    S(71, 26),    S(55, 26),   S(90, 12),
+    S(33, 9),     S(33, -15),   S(-4, -11),   S(17, -1),   S(28, 22),
+    S(24, 33),    S(41, 22),    S(34, 22),    S(33, 10),   S(3, -13),
+    S(-14, -19),  S(1, 6),      S(25, 0),     S(24, 19),   S(33, 15),
+    S(33, -4),    S(39, -16),   S(-5, -25),   S(-23, -35), S(-54, -10),
+    S(-2, -3),    S(7, 2),      S(9, 6),      S(32, -18),  S(-8, -20),
+    S(-8, -43),   S(-128, -8),  S(-13, -46),  S(-57, -13), S(-31, -9),
+    S(-5, -19),   S(-19, -16),  S(-9, -44),   S(-13, -71)};
+Score BISHOP_TABLE[NSQUARES] = {
+    S(-33, -9), S(5, -17),  S(-121, 6),  S(-62, 1),  S(-47, 8),  S(-44, -1),
+    S(-2, -6),  S(-3, -23), S(-24, -2),  S(14, 0),   S(-15, 12), S(-25, -1),
+    S(41, -1),  S(65, -7),  S(20, 1),    S(-45, -7), S(-11, 6),  S(45, -6),
+    S(55, 2),   S(49, 1),   S(45, 1),    S(75, 4),   S(45, 3),   S(6, 7),
+    S(3, 1),    S(15, 13),  S(29, 16),   S(61, 14),  S(49, 17),  S(47, 11),
+    S(16, 5),   S(3, 7),    S(-2, -1),   S(22, 7),   S(22, 18),  S(35, 25),
+    S(46, 11),  S(22, 10),  S(18, 0),    S(10, -5),  S(7, -7),   S(25, 2),
+    S(22, 14),  S(25, 13),  S(22, 17),   S(39, 4),   S(27, -3),  S(16, -13),
+    S(13, -10), S(26, -20), S(26, -5),   S(7, 6),    S(18, 5),   S(27, -4),
+    S(46, -24), S(13, -30), S(-37, -17), S(2, -3),   S(-9, -12), S(-17, -1),
+    S(-11, -4), S(-7, -5),  S(-35, 2),   S(-23, -13)};
+Score ROOK_TABLE[NSQUARES] = {
+    S(49, 18),   S(70, 11),  S(40, 25),  S(96, 9),   S(92, 11),  S(11, 22),
+    S(28, 18),   S(51, 11),  S(48, 14),  S(44, 18),  S(88, 9),   S(92, 9),
+    S(115, -11), S(104, -1), S(36, 15),  S(62, 6),   S(-1, 17),  S(27, 15),
+    S(35, 12),   S(43, 13),  S(21, 12),  S(68, -5),  S(90, -9),  S(26, 1),
+    S(-23, 17),  S(-9, 14),  S(10, 23),  S(33, 8),   S(28, 10),  S(41, 5),
+    S(4, 4),     S(-15, 13), S(-43, 20), S(-27, 19), S(-11, 20), S(-0, 16),
+    S(8, 7),     S(-7, 5),   S(17, -2),  S(-25, 3),  S(-51, 14), S(-21, 13),
+    S(-14, 6),   S(-20, 13), S(3, 2),    S(-1, -1),  S(1, -0),   S(-33, -3),
+    S(-50, 9),   S(-13, 5),  S(-20, 12), S(-11, 15), S(0, 1),    S(8, 1),
+    S(-3, -3),   S(-74, 12), S(-23, 9),  S(-14, 16), S(1, 16),   S(12, 12),
+    S(15, 5),    S(-3, 6),   S(-31, 15), S(-24, -7)};
+Score QUEEN_TABLE[NSQUARES] = {
+    S(-38, 2),   S(-5, 34),   S(14, 34),   S(15, 35),   S(123, -14),
+    S(127, -30), S(67, -9),   S(49, 29),   S(-19, -18), S(-45, 31),
+    S(-8, 43),   S(3, 52),    S(-32, 86),  S(75, 15),   S(27, 37),
+    S(67, -7),   S(-3, -27),  S(-11, 5),   S(12, 7),    S(-1, 67),
+    S(31, 56),   S(76, 28),   S(62, 14),   S(64, 5),    S(-31, 14),
+    S(-27, 36),  S(-15, 31),  S(-15, 54),  S(-3, 73),   S(9, 62),
+    S(-2, 77),   S(-1, 55),   S(-5, -26),  S(-28, 39),  S(-7, 23),
+    S(-11, 62),  S(-2, 39),   S(0, 39),    S(2, 51),    S(2, 21),
+    S(-18, 3),   S(8, -32),   S(-8, 22),   S(3, -3),    S(-2, 16),
+    S(5, 19),    S(17, 12),   S(3, 24),    S(-35, -18), S(-4, -27),
+    S(17, -33),  S(7, -23),   S(15, -27),  S(24, -36),  S(1, -39),
+    S(8, -39),   S(-1, -34),  S(-15, -31), S(-5, -27),  S(13, -24),
+    S(-15, -3),  S(-28, -30), S(-42, -6),  S(-50, -46)};
+Score KING_TABLE[NSQUARES] = {
+    S(-76, -73), S(169, -68), S(150, -50), S(77, -38),  S(-150, 13),
+    S(-88, 28),  S(32, -2),   S(47, -24),  S(201, -54), S(53, 6),
+    S(19, 8),    S(102, -4),  S(31, 11),   S(29, 31),   S(-42, 28),
+    S(-138, 35), S(68, -7),   S(62, 9),    S(78, 9),    S(19, 11),
+    S(25, 10),   S(101, 29),  S(114, 24),  S(-19, 11),  S(12, -19),
+    S(-21, 22),  S(9, 22),    S(-58, 36),  S(-54, 33),  S(-53, 41),
+    S(-13, 28),  S(-87, 14),  S(-86, -10), S(9, -7),    S(-72, 33),
+    S(-125, 45), S(-131, 48), S(-87, 38),  S(-79, 21),  S(-100, 2),
+    S(-3, -23),  S(-19, -0),  S(-50, 19),  S(-89, 34),  S(-84, 37),
+    S(-74, 30),  S(-26, 10),  S(-48, -4),  S(4, -34),   S(7, -14),
+    S(-31, 11),  S(-96, 25),  S(-75, 25),  S(-45, 14),  S(6, -7),
+    S(15, -27),  S(-17, -63), S(41, -50),  S(5, -27),   S(-92, -2),
+    S(-9, -28),  S(-53, -8),  S(26, -37),  S(23, -62)};
+
+Score KNIGHT_MOBILITY = S(1, 0);
+Score BISHOP_MOBILITY = S(6, 3);
+Score ROOK_MOBILITY = S(5, 3);
+Score QUEEN_MOBILITY = S(2, 8);
+
 #undef S
+
+Score *psqt[6] = {PAWN_TABLE, KNIGHT_TABLE, BISHOP_TABLE,
+                  ROOK_TABLE, QUEEN_TABLE,  KING_TABLE};
 
 Score PestoTable[12][64];
 
@@ -201,27 +221,14 @@ void InitEvaluationMasks() {
 }
 
 void InitPestoTables() {
-  for (Piece pc = WhitePawn; pc < BlackPawn; pc++)
-  {
-      PieceType p = PieceToPieceType[pc];
-      for (Square sq = SQ_A1; sq < NO_SQ; sq++)
-      {
-          PestoTable[pc][sq].mg = mg_value[p] + mg_pesto_table[p][sq^56];
-          PestoTable[pc][sq].eg = eg_value[p] + eg_pesto_table[p][sq^56];
-          PestoTable[pc + 6][sq].mg = mg_value[p] + mg_pesto_table[p][sq];
-          PestoTable[pc + 6][sq].eg = eg_value[p] + eg_pesto_table[p][sq ];
-      }
-  }
 
-  /*
   for (Piece pc = WhitePawn; pc < BlackPawn; pc++) {
     PieceType p = PieceToPieceType[pc];
     for (Square sq = SQ_A1; sq < NO_SQ; sq++) {
-      PestoTable[pc][sq] = psqt[p][sq ^ 56];
-      PestoTable[pc + 6][sq] = psqt[p][sq];
+      PestoTable[pc][sq] = PIECE_VALUES[p] + psqt[p][sq ^ 56];
+      PestoTable[pc + 6][sq] = PIECE_VALUES[p] + psqt[p][sq];
     }
   }
-  */
 
   /*for (Piece i = WhitePawn; i < BlackPawn; i++){
 
@@ -282,11 +289,11 @@ int Evaluate(Board &board, PawnTable &pawnTable) {
   U64 white_pieces = board.Us(White);
   U64 black_pieces = board.Us(Black);
 
-  // PawnEntry *pe = pawnTable.probeEntry(board);
+  PawnEntry *pe = pawnTable.probeEntry(board);
 
-  // U64 white_occupancies = board.Us(White);
-  // U64 black_occupancies = board.Us(Black);
-  // U64 all = board.All();
+  U64 occ_white = board.Us(White);
+  U64 occ_black = board.Us(Black);
+  U64 all = board.All();
 
   while (white_pieces) {
     Square sq = poplsb(white_pieces);
@@ -294,21 +301,24 @@ int Evaluate(Board &board, PawnTable &pawnTable) {
 
     score[White] += PestoTable[p][sq];
 
-    gamePhase += gamephaseInc[p];
-    if (p == WhiteRook) {
-      // Rook semi open file bonus
-      if (IsSemiOpenFile(board, sq, White)) {
-        score[White] += rook_semi_open_file;
+    gamePhase += gamephaseInc[type_of_piece(p)];
+
+    /*if (p == WhiteKnight) {
+      score[White] += KNIGHT_MOBILITY * popcount(KnightAttacks(sq) & all);
+    } else if (p == WhiteRook) {
+      score[White] += ROOK_MOBILITY * popcount(RookAttacks(sq, all));
+
+      if (IsOpenFile(board, sq)) {
+        score[White] += OPEN_FILE_BONUS[ROOK];
+      } else if (IsSemiOpenFile(board, sq, White)) {
+        score[White] += SEMI_OPEN_FILE_BONUS[ROOK];
       }
-      // Rook open file bonus
-      else if (IsOpenFile(board, sq)) {
-        score[White] += rook_open_file;
-      }
-      // }else if (p == WhiteKing){
-      //     U64 pawnsInFront = (board.piecesBB[WhitePawn] |
-      //     board.piecesBB[BlackPawn]) & WhitePassedMasks[sq]; U64 ourPawns =
-      //     pawnsInFront & white_occupancies & ~PawnAttacks()
-    }
+
+    } else if (p == WhiteBishop) {
+      score[White] += BISHOP_MOBILITY * popcount(BishopAttacks(sq, all));
+    } else if (p == WhiteQueen) {
+      score[White] += QUEEN_MOBILITY * popcount(QueenAttacks(sq, all));
+    }*/
   }
 
   while (black_pieces) {
@@ -317,38 +327,43 @@ int Evaluate(Board &board, PawnTable &pawnTable) {
 
     score[Black] += PestoTable[p][sq];
 
-    gamePhase += gamephaseInc[p];
-    if (p == BlackRook) {
+    gamePhase += gamephaseInc[type_of_piece(p)];
+    /*if (p == BlackKnight) {
+      score[Black] += KNIGHT_MOBILITY * popcount((KnightAttacks(sq) & all));
+    } else if (p == BlackRook) {
+      score[Black] += ROOK_MOBILITY * popcount((RookAttacks(sq, all)));
 
-      // Rook semi open file bonus
-      if (IsSemiOpenFile(board, sq, Black)) {
-        score[Black] += rook_semi_open_file;
+      if (IsOpenFile(board, sq)) {
+        score[Black] += OPEN_FILE_BONUS[ROOK];
+      } else if (IsSemiOpenFile(board, sq, Black)) {
+        score[Black] += SEMI_OPEN_FILE_BONUS[ROOK];
       }
-      // Rook open file bonus
-      else if (IsOpenFile(board, sq)) {
-        score[Black] += rook_open_file;
-      }
-    }
+
+    } else if (p == BlackBishop) {
+      score[Black] += BISHOP_MOBILITY * popcount(BishopAttacks(sq, all));
+    } else if (p == BlackQueen) {
+      score[Black] += QUEEN_MOBILITY * popcount(QueenAttacks(sq, all));
+    }*/
   }
 
-  if (popcount(board.piecesBB[WhiteBishop]) > 1) {
-    score[White] += bishop_pair_bonus;
+  if (popcount(board.piecesBB[WhiteBishop]) >= 1) {
+    score[White] += BISHOP_PAIR_BONUS;
   }
-  if (popcount(board.piecesBB[BlackBishop]) > 1) {
-    score[Black] += bishop_pair_bonus;
+  if (popcount(board.piecesBB[BlackBishop]) >= 1) {
+    score[Black] += BISHOP_PAIR_BONUS;
   }
 
   // tapered eval //
-  int mgScore = (score[side2move].mg - score[otherSide].mg);
-  int egScore = (score[side2move].eg - score[otherSide].eg);
+  int16_t mgScore = (score[side2move].mg - score[otherSide].mg);
+  int16_t egScore = (score[side2move].eg - score[otherSide].eg);
 
-  // mgScore += pe->value.mg;
-  // egScore += pe->value.eg;
+  mgScore += pe->value.mg;
+  egScore += pe->value.eg;
 
-  int mgPhase = gamePhase;
+  int16_t mgPhase = gamePhase;
   if (mgPhase > 24)
     mgPhase = 24;
-  int egPhase = 24 - mgPhase;
+  int16_t egPhase = 24 - mgPhase;
 
   return (mgScore * mgPhase + egScore * egPhase) / 24;
 }

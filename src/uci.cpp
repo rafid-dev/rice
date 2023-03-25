@@ -160,6 +160,9 @@ void uci_loop()
             int movestogo = 20;
             int movetime = -1;
 
+            if (token == "infinite"){
+                depth = -1;
+            }
             if (token == "depth")
             {
                 is >> std::skipws >> token;
@@ -236,6 +239,7 @@ void uci_loop()
             {
                 info.depth = MAXPLY;
             }
+
             info.uci = is_uci;
 
             // std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
@@ -260,7 +264,8 @@ void uci_loop()
             if (DefaultHashSize != CurrentHashSize)
             {
                 TTable.clear();
-                TTable.Initialize(DefaultHashSize);
+                TTable.Initialize(CurrentHashSize);
+                CurrentHashSize = DefaultHashSize;
             }
         }
 

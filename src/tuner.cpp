@@ -1,4 +1,6 @@
-#include <cmath>
+// Probably in future
+
+/*#include <cmath>
 #include "tuner.h"
 
 #define S Score
@@ -78,6 +80,8 @@ void Tuner::tune(double K, int number_of_positions)
     while (improved)
     {
         improved = false;
+
+        
     }
 }
 
@@ -95,4 +99,4 @@ void Tuner::print_parameter(parameter_t param){
         }
     }
     std::cout << ";\n";
-}
+}*/

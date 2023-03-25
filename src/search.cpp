@@ -34,6 +34,13 @@ static void CheckUp(SearchInfo &info)
   }
 }
 
+static bool moveGivesCheck(Board& board, Move move){
+  board.makeMove(move);
+  bool givesCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
+  board.unmakeMove(move);
+  return givesCheck;
+}
+
 /* Clear helper variables for search */
 void ClearForSearch(SearchInfo &info, TranspositionTable *table)
 {
@@ -106,9 +113,6 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 
   /* Move generation */
   /* Generate capture moves for current position*/
-
-  /* Bestscore is our static evaluation in quiscence search */
-
   int bestscore = standing_pat;
   int moveCount = 0;
   int score = -INF_BOUND;
@@ -120,13 +124,13 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
   Movegen::legalmoves<CAPTURE>(board, list);
 
   /* Score moves */
-  score_moves(board, &list, tte.move);
+  score_moves(board, list, tte.move);
 
   /* Moves loop */
   for (int i = 0; i < list.size; i++)
   {
     /* Pick next move with highest score */
-    pickNextMove(i, &list);
+    pickNextMove(i, list);
 
     Move move = list.list[i].move;
 
@@ -267,19 +271,19 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
   /* We set static evaluation to 0 if we are in check or if we have hit an excluded move. */
   /* and also set improving to false. */
-  if (inCheck || ss->excluded)
+  if (inCheck || ss->excluded != NO_MOVE)
   {
     ss->static_eval = eval = 0;
     improving = false;
     goto movesloop;
   }
 
-  /* Reverse Futility Pruning || Null Move Pruning */
+  /* Reverse Futility Pruning || Null Move Pruning || Razoring */
   if (!isPvNode && !inCheck && info.ply && !ss->excluded)
   {
 
     /* We can use tt entry's score as score if we hit one.*/
-    /* This score is from search so this is more accurate */
+    /* This score is from search so this is likely to be more accurate */
     if (ttHit)
     {
       eval = tte.score;
@@ -351,13 +355,13 @@ movesloop:
   Movegen::legalmoves<ALL>(board, list);
 
   /* Score moves and pass the tt move so it can be sorted highest */
-  score_moves(board, &list, ss, &info, tte.move);
+  score_moves(board, list, ss, info, tte.move);
 
   /* Move loop */
   for (int i = 0; i < list.size; i++)
   {
     // Pick move with highest possible score
-    pickNextMove(i, &list);
+    pickNextMove(i, list);
 
     /* Initialize move variable */
     Move move = list.list[i].move;
@@ -368,7 +372,6 @@ movesloop:
 
     bool isQuiet = (!promoted(move) && !is_capture(board, move));
     int extension = 0;
-    
 
     if (!isRoot && bestscore > -ISMATE)
     {
@@ -426,7 +429,7 @@ movesloop:
     /* A condition for full search.*/
     bool do_fullsearch = false;
 
-    bool givesCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
+    int historyScore = isQuiet ? info.searchHistory[board.pieceAtB(from(move))][to(move)] : 0;
 
     /* Late move reduction (~125 elo)
      * Later moves will be searched in a reduced depth.
@@ -439,7 +442,7 @@ movesloop:
       reduction += !improving; /* Increase reduction if we're not improving. */
       reduction += !isPvNode;  /* Increase for non pv nodes */
 
-      reduction += isQuiet && !see(board, move, -50 * depth); // Increase for quiets and not winning captures
+      reduction += isQuiet && !see(board, move, -50 * depth); /* Increase for quiets and not winning captures */
 
       /* Adjust the reduction so we don't drop into Qsearch or cause an extension*/
       reduction = std::min(depth - 1, std::max(1, reduction));
@@ -464,7 +467,7 @@ movesloop:
                          table);
     }
 
-    // Principal Variation Search (PVS)
+    /* Principal Variation Search (PVS) */
     if (isPvNode && (moveCount == 1 || (score > alpha && score < beta)))
     {
       score =
@@ -512,7 +515,7 @@ movesloop:
             ss->killers[0] = move;
 
             // Record history score
-            info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
+            info.searchHistory[board.pieceAtB(from(move))][to(move)] = std::min(info.searchHistory[board.pieceAtB(from(move))][to(move)] + depth, 4000);
           }
           break;
         }
@@ -540,10 +543,12 @@ movesloop:
     }
   }
 
+  // TT Flag
   int flag = bestscore >= beta     ? HFBETA
              : (alpha != oldAlpha) ? HFEXACT
                                    : HFALPHA;
 
+  // Store TT entry
   if (ss->excluded == NO_MOVE)
   {
     table->storeEntry(board.hashKey, flag, bestmove, depth, bestscore,
@@ -581,7 +586,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table)
     std::cout << " depth ";
     F_number(current_depth, info.uci, FANCY_Green);
     std::cout << " nodes ";
-    F_number(info.nodes, info.uci, FANCY_Yellow);
+    F_number(info.nodes, info.uci, FANCY_Blue);
     std::cout << " time ";
     F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
     std::cout << " pv";

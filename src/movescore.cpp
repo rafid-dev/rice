@@ -19,59 +19,59 @@ int mvv_lva[12][12] = {
     100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600};
 
 // Move scoring
-void score_moves(Board &board, Movelist *list, SearchStack *ss, SearchInfo *info, Move tt_move)
+    void score_moves(Board &board, Movelist &list, SearchStack *ss, SearchInfo &info, Move tt_move)
 {
 
     // Loop through moves in movelist.
-    for (int i = 0; i < list->size;i++)
+    for (int i = 0; i < list.size;i++)
     {
-        Piece victim = board.pieceAtB(to(list->list[i].move));
-        Piece attacker = board.pieceAtB(from(list->list[i].move));
+        Piece victim = board.pieceAtB(to(list.list[i].move));
+        Piece attacker = board.pieceAtB(from(list.list[i].move));
 
         // Score tt moves.
-        if (list->list[i].move == tt_move){
-            list->list[i].value = 20000000;
+        if (list.list[i].move == tt_move){
+            list.list[i].value = 20000000;
         }
         else if (victim != None)
         {
             // If it's a capture move, we score using MVVLVA (Most valuable victim, Least Valuable Attacker)
             // and if SEE a move, we add additional bonus
             
-            list->list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list->list[i].move, -107));
+            list.list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list.list[i].move, -107));
 
-        }else if (list->list[i].move == ss->killers[0]){
+        }else if (list.list[i].move == ss->killers[0]){
             // Score for killer 1
-            list->list[i].value = Killer1Score;
-        }else if (list->list[i].move == ss->killers[1]){
+            list.list[i].value = Killer1Score;
+        }else if (list.list[i].move == ss->killers[1]){
             // Score for killer 2
-            list->list[i].value = Killer2Score;
+            list.list[i].value = Killer2Score;
         }else{
-            list->list[i].value = info->searchHistory[attacker][to(list->list[i].move)];
+            list.list[i].value = info.searchHistory[attacker][to(list.list[i].move)];
         }
     }
 }
 
 // Used for Qsearch move scoring
-void score_moves(Board &board, Movelist *list, Move tt_move)
+void score_moves(Board &board, Movelist &list, Move tt_move)
 {
 
     // Loop through moves in movelist.
-    for (int i = 0; i < list->size;i++)
+    for (int i = 0; i < list.size;i++)
     {
-        Piece victim = board.pieceAtB(to(list->list[i].move));
-        Piece attacker = board.pieceAtB(from(list->list[i].move));
-        if (list->list[i].move == tt_move){
-            list->list[i].value = 20000000;
+        Piece victim = board.pieceAtB(to(list.list[i].move));
+        Piece attacker = board.pieceAtB(from(list.list[i].move));
+        if (list.list[i].move == tt_move){
+            list.list[i].value = 20000000;
         }
         else if (victim != None)
         {
             // If it's a capture move, we score using MVVLVA (Most valuable victim, Least Valuable Attacker)
-            list->list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list->list[i].move, -107));
+            list.list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list.list[i].move, -107));
         }
     }
 }
 
-void pickNextMove(const int moveNum, Movelist *list)
+void pickNextMove(const int moveNum, Movelist &list)
 {
 
     ExtMove temp;
@@ -79,17 +79,17 @@ void pickNextMove(const int moveNum, Movelist *list)
     int bestscore = -INF_BOUND;
     int bestnum = moveNum;
 
-    for (index = moveNum; index < list->size; ++index)
+    for (index = moveNum; index < list.size; ++index)
     {
 
-        if (list->list[index].value > bestscore)
+        if (list.list[index].value > bestscore)
         {
-            bestscore = list->list[index].value;
+            bestscore = list.list[index].value;
             bestnum = index;
         }
     }
 
-    temp = list->list[moveNum];
-    list->list[moveNum] = list->list[bestnum];
-    list->list[bestnum] = temp;
+    temp = list.list[moveNum];
+    list.list[moveNum] = list.list[bestnum];
+    list.list[bestnum] = temp;
 }

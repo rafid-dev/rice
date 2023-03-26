@@ -78,9 +78,15 @@ PawnTable::PawnTable()
     std::fill(entries.begin(), entries.end(), &entry);
 }
 
+void PawnTable::Reinitialize(){
+     PawnEntry entry = PawnEntry();
+    this->entries.resize((512 * 1024) / sizeof(PawnEntry), &entry);
+    std::fill(entries.begin(), entries.end(), &entry);
+}
+
 PawnEntry *PawnTable::probeEntry(const Board &board)
 {
-    PawnEntry *pe = entries[board.pawnKey % entries.size()];
+    PawnEntry *pe = (entries[board.pawnKey % entries.size()]);
 
     if (pe->hashkey == board.pawnKey)
     {

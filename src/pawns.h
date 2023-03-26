@@ -12,6 +12,7 @@ struct PawnTable{
     PawnTable();
     PawnEntry *probeEntry(const Board& board);
     void clear();
+    void Reinitialize();
 };
 
 extern int DoublePenaltyMg;

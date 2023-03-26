@@ -41,6 +41,6 @@ I would specially like to thank <a href="https://github.com/Disservin">Disservin
 Below are some really nice people who has helped me during the development of Rice.
 * <a href="https://github.com/pgg106">Zuppa</a>, author of <a href="https://github.com/PGG106/Alexandria/">Alexandria</a>.
 * <a href="https://github.com/raklaptudirm">Rak</a>, author of <a href="https://github.com/raklaptudirm/mess">Mess</a>.
-* <a href="https://github.com/AndyGrant">Andy Grant</a>, author of <a href="https://github.com/AndyGrant/Ethereal/">Ethereal</a>
+* <a href="https://github.com/archishou">Archi</a>, author of <a href="https://github.com/archishou/MidnightChessEngine">MidnightChessEngine<a>.
 
 * and many more.

@@ -82,6 +82,8 @@ void uci_loop()
         {
             TTable.clear();
             TTable.Initialize(CurrentHashSize);
+            info.pawnTable.clear();
+            info.pawnTable.Reinitialize();
             std::cout << "readyok\n";
             continue;
         }

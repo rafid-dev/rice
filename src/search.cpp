@@ -526,10 +526,10 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
     std::cout << " depth ";
     F_number(current_depth,info.uci, FANCY_Green);
     std::cout << " nodes "; 
-    F_number(info.nodes,info.uci, FANCY_Yellow);
+    F_number(info.nodes,info.uci, FANCY_Blue);
     std::cout<< " time ";
     F_number((GetTimeMs() - startime),info.uci, FANCY_Cyan);
-    std::cout << "pv";
+    std::cout << " pv";
 
     for (int i = 0; i < info.pv_table.length[0]; i++) {
       std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]);

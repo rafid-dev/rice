@@ -350,9 +350,10 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
             (quietsSearched >= depth * depth * 4)) {
           continue;
         }
+        
 
         /* SEE Pruning
-        * if we don't SEE a good move by a given threshold, and we are under a certain depth, we can skip the moves.
+        * Dont search moves at low depths that seem to lose material
         */
 
         /* SEE Pruning for quiets */
@@ -391,8 +392,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     /* A condition for full search.*/
     bool do_fullsearch = false;
-    
-    bool givesCheck = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
 
     /* Late move reduction
      * Later moves will be searched in a reduced depth.

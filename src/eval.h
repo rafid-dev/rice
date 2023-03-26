@@ -11,10 +11,12 @@ extern U64 RankMasks[64];
 extern U64 IsolatedMasks[64];
 extern U64 WhitePassedMasks[64];
 extern U64 BlackPassedMasks[64];
-extern Score PestoTable[12][64];
+extern Score PsqTable[12][64];
+
+extern Score PAWN_PROTECTION[6];
 
 void InitEvaluationMasks();
-void InitPestoTables();
+void InitPsqTables();
 int Evaluate(Board &board, PawnTable &pawnTable);
 int Evaluate(Board &board);
 

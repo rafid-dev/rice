@@ -11,6 +11,6 @@ int LMRDivision = 236;
 
 void init_all(){
     InitSearch();
-    InitPestoTables();
+    InitPsqTables();
     InitEvaluationMasks();
 }

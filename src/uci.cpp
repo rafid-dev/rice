@@ -27,16 +27,6 @@ static void set_option(std::istream &is, std::string &token, std::string name, i
     }
 }
 
-static void set_option(std::istream &is, std::string &token, std::string name, float &value)
-{
-    if (token == name)
-    {
-        is >> std::skipws >> token;
-        is >> std::skipws >> token;
-
-        value = std::stof(token);
-    }
-}
 
 int DefaultHashSize = 64;
 int CurrentHashSize = DefaultHashSize;

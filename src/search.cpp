@@ -9,7 +9,6 @@
 
 /* Refer to init.cpp for search parameter values. */
 
-
 int LMRTable[MAXDEPTH][64];
 
 /* Initialize LMR table using the log formula */
@@ -45,6 +44,21 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
 
   /* Increment transposition table age */
   table->currentAge++;
+}
+
+void UpdateHH(Board& board, SearchInfo& info, Move bestmove, Movelist &quietList, int depth){
+
+  // Update best move score
+  info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] += depth;
+
+  for (int i = 0; i < quietList.size; i++){
+    Move move = quietList.list[i].move;
+
+    if (move == bestmove)continue; // Don't give penalty to our best move
+
+    // Penalize moves that didn't cause a beta cutoff.
+    info.searchHistory[board.pieceAtB(from(move))][to(move)] -= depth;
+  }
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
@@ -318,6 +332,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   Movelist list;
   Movegen::legalmoves<ALL>(board, list);
 
+  Movelist quietList; // Quiet moves list
+
   /* Score moves and pass the tt move so it can be sorted highest */
   score_moves(board, list, ss, info, tte.move);
 
@@ -348,7 +364,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         /* Late Move Pruning/Movecount pruning */
         /* If we have searched many moves, we can skip the rest. */
         if (!isPvNode && !inCheck && depth <= 4 &&
-            (quietsSearched >= depth * depth * 4)) {
+            (quietList.size >= depth * depth * 4)) {
           continue;
         }
         
@@ -371,14 +387,12 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       }
     }
 
-    
-
     /* Initialize new depth based on extension*/
     int newDepth = depth + extension;
 
     /* Make move on current board. */
     board.makeMove(move);
-    table->prefetchTT(board.hashKey);
+    table->prefetchTT(board.hashKey); // TT Prefetch
 
     ss->move = move;
     
@@ -387,9 +401,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     info.nodes++;
     moveCount++;
 
-    /* Increment quietsSearched variable if it's a quiet move. */
+    /* Add quiet to quiet list if it's a quiet move. */
     if (isQuiet) {
-      quietsSearched++;
+      quietList.Add(move);
     }
 
     /* A condition for full search.*/
@@ -467,7 +481,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
             ss->killers[0] = move;
 
             // Record history score
-            info.searchHistory[board.pieceAtB(from(move))][to(move)] += depth;
+            UpdateHH(board, info, bestmove, quietList, depth);
           }
           break;
         }

@@ -124,6 +124,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 
     /* Make move on board */
     board.makeMove(move);
+    table->prefetchTT(board.hashKey);
     
     /* Increment ply, nodes and movecount */
     info.ply++;
@@ -377,6 +378,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     /* Make move on current board. */
     board.makeMove(move);
+    table->prefetchTT(board.hashKey);
 
     ss->move = move;
     

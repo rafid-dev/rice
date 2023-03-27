@@ -23,5 +23,6 @@ class TranspositionTable {
     void Initialize(int usersize);
     void storeEntry(U64 key, int f, Move move, int depth, int score, int eval, int ply, bool pv);
     bool probeEntry(U64 key, TTEntry *entry, int ply);
+    void prefetchTT(const U64 key);
     void clear();
 };

@@ -49,7 +49,9 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
 void UpdateHH(Board& board, SearchInfo& info, Move bestmove, Movelist &quietList, int depth){
 
   // Update best move score
-  info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] += depth;
+  int bonus = std::min(depth * depth, 1200);
+  int score = std::min(info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] + bonus, 8192);
+  info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] = score;
 
   for (int i = 0; i < quietList.size; i++){
     Move move = quietList.list[i].move;
@@ -57,7 +59,9 @@ void UpdateHH(Board& board, SearchInfo& info, Move bestmove, Movelist &quietList
     if (move == bestmove)continue; // Don't give penalty to our best move
 
     // Penalize moves that didn't cause a beta cutoff.
-    info.searchHistory[board.pieceAtB(from(move))][to(move)] -= depth;
+    int penalty = std::max(info.searchHistory[board.pieceAtB(from(move))][to(move)] - bonus, -8192);
+    
+    info.searchHistory[board.pieceAtB(from(move))][to(move)] = penalty;
   }
 }
 
@@ -320,7 +324,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   /* Initialize variables */
   int bestscore = -INF_BOUND;
   int moveCount = 0;
-  int quietsSearched = 0;
   int oldAlpha = alpha;
   Move bestmove = NO_MOVE;
 
@@ -368,11 +371,10 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
           continue;
         }
         
-
         /* SEE Pruning
         * Dont search moves at low depths that seem to lose material
         */
-
+       
         /* SEE Pruning for quiets */
         if (depth < 6 && !see(board, move, -50 * depth)) {
           continue;

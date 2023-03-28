@@ -1,19 +1,11 @@
 #include "pawns.h"
 #include "eval.h"
 
-int DoublePenaltyMg = 1;
-int DoublePenaltyEg = 15;
-int IsolatedPenaltyMg = 8;
-int IsolatedPenaltyEg = 14;
-
 // Pawn Penalties
 Score PASSED_PAWN_BONUS(1, 19);
 Score BLOCKED_PASSED_PAWN_PENALTY(5, -20);
 Score ISOLATED_PAWN_PENALTY(-24, -13);
-
-void UpdatePawnTables(){
-    // do juju
-};
+Score DOUBLE_PAWN_PENATLY(-13, -32);
 
 static inline bool IsIsolatedPawn(const U64 pawn_bb, Square sq)
 {
@@ -22,7 +14,7 @@ static inline bool IsIsolatedPawn(const U64 pawn_bb, Square sq)
 
 static inline uint8_t CountDoublePawns(const U64 pawn_bb, Square sq)
 {
-    return popcount(pawn_bb & FileMasks[sq]);
+    return (popcount(pawn_bb & FileMasks[sq]));
 }
 
 template <Color c>
@@ -64,9 +56,7 @@ Score EvaluatePawns(U64 pawns_bb, U64 enemy, U64 all)
                 score += BLOCKED_PASSED_PAWN_PENALTY;
             }
         }
-        // if (CountDoublePawns(pawns_bb, sq) > 1){
-        //     score += DoublePawnPenalty;
-        // }
+        //score += DOUBLE_PAWN_PENATLY * (CountDoublePawns(pawns_bb, sq) - 1);
     }
     return score;
 }

@@ -12,12 +12,14 @@ struct PVTable {
 struct SearchInfo {
     int ply = 0;
     int depth = 0;
-    int searchHistory[12][64];
+    int searchHistory[NPIECES][NSQUARES];
     
     long nodes = 0l;
 
     long start_time = 0;
     long end_time = 0;
+    long stoptimeMax = 0;
+    long stoptimeOpt = 0;
 
     bool timeset = false;
     bool stopped = false;
@@ -33,6 +35,7 @@ struct SearchStack {
     Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
+    Move counter = NO_MOVE;
 };
 
 extern int RFPMargin;

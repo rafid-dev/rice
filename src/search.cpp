@@ -1,11 +1,12 @@
 #include "search.h"
 #include "eval.h"
+#include "fancyterminal.h"
 #include "misc.h"
 #include "movescore.h"
 #include "see.h"
 #include <cmath>
 #include <iostream>
-#include "fancyterminal.h"
+
 
 /* Refer to init.cpp for search parameter values. */
 
@@ -13,20 +14,27 @@ int LMRTable[MAXDEPTH][64];
 
 /* Initialize LMR table using the log formula */
 void InitSearch() {
-  float b = static_cast<float>(static_cast<float>(LMRBase)/100);
-  float d = static_cast<float>(static_cast<float>(LMRDivision)/100);
+  float base = static_cast<float>(static_cast<float>(LMRBase) / 100);
+  float division = static_cast<float>(static_cast<float>(LMRDivision) / 100);
   for (int depth = 1; depth < MAXDEPTH; depth++) {
     for (int played = 1; played < 64; played++) {
-      LMRTable[depth][played] = b + log(depth) * log(played) / d;
+      LMRTable[depth][played] = base + log(depth) * log(played) / division;
     }
   }
 }
 
-
 /* Function to check if time has ended and if we have to stop. */
 static void CheckUp(SearchInfo &info) {
-  if (info.timeset == true && GetTimeMs() > info.end_time) {
+  if (info.timeset && GetTimeMs() > info.stoptimeMax) {
     info.stopped = true;
+  }
+}
+
+static bool StopEarly(SearchInfo& info){
+  if (info.timeset && GetTimeMs() > info.stoptimeOpt){
+    return true;
+  }else{
+    return false;
   }
 }
 
@@ -44,25 +52,6 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
 
   /* Increment transposition table age */
   table->currentAge++;
-}
-
-void UpdateHH(Board& board, SearchInfo& info, Move bestmove, Movelist &quietList, int depth){
-
-  // Update best move score
-  int bonus = std::min(depth * depth, 1200);
-  int score = std::min(info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] + bonus, 8192);
-  info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] = score;
-
-  for (int i = 0; i < quietList.size; i++){
-    Move move = quietList.list[i].move;
-
-    if (move == bestmove)continue; // Don't give penalty to our best move
-
-    // Penalize moves that didn't cause a beta cutoff.
-    int penalty = std::max(info.searchHistory[board.pieceAtB(from(move))][to(move)] - bonus, -8192);
-    
-    info.searchHistory[board.pieceAtB(from(move))][to(move)] = penalty;
-  }
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
@@ -143,7 +132,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     /* Make move on board */
     board.makeMove(move);
     table->prefetchTT(board.hashKey);
-    
+
     /* Increment ply, nodes and movecount */
     info.ply++;
     info.nodes++;
@@ -165,7 +154,8 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
       return 0;
     }
 
-    /* If our score beats bestscore, bestmove is move that beat bestscore and bestscore is set to the current score*/
+    /* If our score beats bestscore, bestmove is move that beat bestscore and
+     * bestscore is set to the current score*/
     if (score > bestscore) {
       bestmove = move;
       bestscore = score;
@@ -182,7 +172,8 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
   }
 
   /* Transposition Table Entry Flag */
-  /* We don't store exact flag in quiescence search, only Beta flag (Lower Bound) and Alpha flag (Upper bound)*/
+  /* We don't store exact flag in quiescence search, only Beta flag (Lower
+   * Bound) and Alpha flag (Upper bound)*/
   int flag = bestscore >= beta ? HFBETA : HFALPHA;
 
   /* Store transposition table entry */
@@ -201,7 +192,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   /* Initialize our pv table lenght. */
   info.pv_table.length[info.ply] = info.ply;
 
-  /* We drop into quiescence search if depth is <= 0 to prevent horizon effect and also end recursion.*/
+  /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
+   * and also end recursion.*/
   if (depth <= 0) {
     return Quiescence(alpha, beta, board, info, ss, table);
   }
@@ -221,7 +213,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   bool improving = false;
 
   /* In check extension. We search an extra ply if we are in check. */
-  if (inCheck){
+  if (inCheck) {
     depth++;
   }
 
@@ -250,15 +242,19 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       return tte.score;
   }
 
-  /* Set static evaluation and evaluation to our current evaluation of the board*/
-  /* We can use the tt entry's evaluation if we have a tt hit so we don't have to re-evaluate from scratch */
+  /* Set static evaluation and evaluation to our current evaluation of the
+   * board*/
+  /* We can use the tt entry's evaluation if we have a tt hit so we don't have
+   * to re-evaluate from scratch */
 
   ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board, info.pawnTable);
 
-  /* If we our static evaluation is better than what it was 2 plies ago, we are improving */
+  /* If we our static evaluation is better than what it was 2 plies ago, we are
+   * improving */
   improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
 
-  /* We set static evaluation to 0 if we are in check or if we have hit an excluded move. */
+  /* We set static evaluation to 0 if we are in check or if we have hit an
+   * excluded move. */
   /* and also set improving to false. */
   if (inCheck || ss->excluded) {
     ss->static_eval = eval = 0;
@@ -279,8 +275,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
      * If the eval is well above beta by a margin, then we assume the eval will
      * hold above beta.
      */
-    if (depth <= RFPDepth &&
-        eval - ((depth - improving) * RFPMargin) >= beta) {
+    if (depth <= RFPDepth && eval - ((depth - improving) * RFPMargin) >= beta) {
       return eval;
     }
 
@@ -293,7 +288,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         ((ss - 1)->move != NULL_MOVE)) {
 
       int R = 3 + depth / 3 + std::min((eval - beta) / 200, 3);
-      
+
       board.makeNullMove();
       ss->move = NULL_MOVE;
       info.ply++;
@@ -309,17 +304,17 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       }
 
       if (score >= beta) {
-        
+
         /* We don't return mate scores because it can be a false mate. */
         if (score > ISMATE)
           score = beta;
 
         return score;
       }
-    }    
+    }
   }
 
-  movesloop:
+movesloop:
 
   /* Initialize variables */
   int bestscore = -INF_BOUND;
@@ -356,7 +351,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     bool skipQuiets = false;
     int extension = 0;
 
-    if (isQuiet && skipQuiets){
+    if (isQuiet && skipQuiets) {
       continue;
     }
 
@@ -370,11 +365,11 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
             (quietList.size >= depth * depth * 4)) {
           continue;
         }
-        
+
         /* SEE Pruning
-        * Dont search moves at low depths that seem to lose material
-        */
-       
+         * Dont search moves at low depths that seem to lose material
+         */
+
         /* SEE Pruning for quiets */
         if (depth < 6 && !see(board, move, -50 * depth)) {
           continue;
@@ -397,7 +392,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     table->prefetchTT(board.hashKey); // TT Prefetch
 
     ss->move = move;
-    
+
     /* Increment ply, nodes and movecount */
     info.ply++;
     info.nodes++;
@@ -413,16 +408,18 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     /* Late move reduction
      * Later moves will be searched in a reduced depth.
-     * If they beat alpha, It will be researched in a reduced window but full depth.
+     * If they beat alpha, It will be researched in a reduced window but full
+     * depth.
      */
-    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode))  {
+    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode)) {
       int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
       reduction += !improving; /* Increase reduction if we're not improving. */
-      reduction += !isPvNode; /* Increase for non pv nodes */
-      reduction += isQuiet && !see(board, move, -50*depth); // Increase for quiets and not winning captures
+      reduction += !isPvNode;  /* Increase for non pv nodes */
+      reduction += isQuiet && !see(board, move, -50 * depth); /* Increase for quiets and not winning captures */
 
-      /* Adjust the reduction so we don't drop into Qsearch or cause an extension*/
+      /* Adjust the reduction so we don't drop into Qsearch or cause an
+       * extension*/
       reduction = std::min(depth - 1, std::max(1, reduction));
 
       score = -AlphaBeta(-alpha - 1, -alpha, newDepth - reduction, board, info,
@@ -476,14 +473,16 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         info.pv_table.length[info.ply] = info.pv_table.length[info.ply + 1];
 
         if (score >= beta) {
-          // Update killers
           if (isQuiet) {
-
+            // Update killers
             ss->killers[1] = ss->killers[0];
             ss->killers[0] = move;
 
+            // Update counter (We set previous move as a counter)
+            //ss->counter = (ss-1)->move;
+
             // Record history score
-            UpdateHH(board, info, bestmove, quietList, depth);
+            UpdateHistory(board, info, bestmove, quietList, depth);
           }
           break;
         }
@@ -536,16 +535,16 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
     if (info.stopped == true) {
       break;
     }
-    
+
     bestmove = info.pv_table.array[0][0];
     std::cout << "info score cp ";
     F_number(score, info.uci, FANCY_Yellow);
     std::cout << " depth ";
-    F_number(current_depth,info.uci, FANCY_Green);
-    std::cout << " nodes "; 
-    F_number(info.nodes,info.uci, FANCY_Blue);
-    std::cout<< " time ";
-    F_number((GetTimeMs() - startime),info.uci, FANCY_Cyan);
+    F_number(current_depth, info.uci, FANCY_Green);
+    std::cout << " nodes ";
+    F_number(info.nodes, info.uci, FANCY_Blue);
+    std::cout << " time ";
+    F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
     std::cout << " pv";
 
     for (int i = 0; i < info.pv_table.length[0]; i++) {
@@ -577,8 +576,7 @@ int AspirationWindowSearch(int prevEval, int depth, Board &board,
   while (true) {
     score = AlphaBeta(alpha, beta, depth, board, info, ss, table);
 
-    CheckUp(info);
-    if (info.stopped) {
+    if (StopEarly(info)){
       break;
     }
 

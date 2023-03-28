@@ -332,22 +332,22 @@ Score EvaluateKings(Board &board)
 
 int Evaluate(Board &board, PawnTable &pawnTable)
 {
+  // Score //
   Score score[2];
 
+  // Game phase //
   int gamePhase = 0;
 
   Color side2move = board.sideToMove;
   Color otherSide = ~board.sideToMove;
 
-  U64 white_pieces = board.Us(White);
-  U64 black_pieces = board.Us(Black);
-
+  // Probe pawn evaluation entry ///
   PawnEntry *pe = pawnTable.probeEntry(board);
 
-  // U64 occ_white = board.Us(White);
-  // U64 occ_black = board.Us(Black);
+  // All occupancies on the board //
   U64 all = board.All();
 
+  // Evaluate white pieces //
   score[White] += EvaluatePawnPsqt<White>(board);
   score[White] += EvaluateKnights<White>(board, all, gamePhase);
   score[White] += EvaluateBishops<White>(board, all, gamePhase);
@@ -355,6 +355,8 @@ int Evaluate(Board &board, PawnTable &pawnTable)
   score[White] += EvaluateQueens<White>(board, all, gamePhase);
   score[White] += EvaluateKings<White>(board);
 
+
+  // Evaluate black pieces //
   score[Black] += EvaluatePawnPsqt<Black>(board);
   score[Black] += EvaluateKnights<Black>(board, all, gamePhase);
   score[Black] += EvaluateBishops<Black>(board, all, gamePhase);
@@ -366,6 +368,8 @@ int Evaluate(Board &board, PawnTable &pawnTable)
   int16_t mgScore = (score[side2move].mg - score[otherSide].mg);
   int16_t egScore = (score[side2move].eg - score[otherSide].eg);
 
+
+  // add pawn evaluation scores //
   mgScore += pe->value.mg;
   egScore += pe->value.eg;
 

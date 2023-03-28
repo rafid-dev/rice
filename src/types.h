@@ -56,7 +56,11 @@ enum {HFNONE, HFBETA, HFALPHA, HFEXACT};
 
 enum {
     NSQUARES = 64,
+    NPIECES = 12,
+    NPIECETYPES = 6,
+    PvMoveScore = 20000000,
     GoodCaptureScore = 10000000,
     Killer1Score = 9000000,
-    Killer2Score = 8000000
+    Killer2Score = 8000000,
+    CounterScore = 6000000,
 };

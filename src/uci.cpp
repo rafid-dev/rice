@@ -50,6 +50,7 @@ void uci_loop()
     while (true)
     {
         token.clear();
+        command.clear();
 
         std::getline(std::cin, command);
         std::istringstream is(command);
@@ -149,7 +150,7 @@ void uci_loop()
             int depth = -1;
             int time = -1;
             int inc = 0;
-            int movestogo = 20;
+            int movestogo = 40;
             int movetime = -1;
 
             if (token == "infinite"){
@@ -220,12 +221,22 @@ void uci_loop()
             if (time != -1)
             {
                 info.timeset = true;
-                time /= movestogo;
 
-                // Have some over head.
-                time -= 50;
+                int safety_overhead = 50;
 
-                info.end_time = info.start_time + time + inc;
+                time -= safety_overhead;
+
+                int time_slot = time / movestogo + inc;
+                int basetime = (time_slot);
+
+                // optime is the time we use to stop if we just cleared a depth
+                int optime = basetime * 0.6;
+
+                // max time is the time we can spend max on a search
+                int maxtime = std::min(time, basetime * 2);
+
+                info.stoptimeMax = info.start_time + maxtime;
+                info.stoptimeOpt = info.start_time + optime;
             }
             if (depth == -1)
             {
@@ -247,12 +258,7 @@ void uci_loop()
             set_option(is, token, "RFPDepth", RFPDepth);
             set_option(is, token, "LMRBase", LMRBase);
             set_option(is, token, "LMRDivision", LMRDivision);
-            set_option(is, token, "IPMg", IsolatedPenaltyMg);
-            set_option(is, token, "IPEg", IsolatedPenaltyEg);
-            set_option(is, token, "DPMg", DoublePenaltyMg);
-            set_option(is, token, "DPEg", DoublePenaltyEg);
             InitSearch();
-            UpdatePawnTables();
             if (DefaultHashSize != CurrentHashSize)
             {
                 TTable.clear();

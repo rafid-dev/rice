@@ -14,10 +14,3 @@ struct PawnTable{
     void clear();
     void Reinitialize();
 };
-
-extern int DoublePenaltyMg;
-extern int DoublePenaltyEg;
-extern int IsolatedPenaltyMg;
-extern int IsolatedPenaltyEg;
-
-void UpdatePawnTables();

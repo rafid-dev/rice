@@ -1,13 +1,13 @@
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
 CXX       := g++
-TARGET    := Rice20
+TARGET    := Rice
 CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wformat=2 -Wnull-dereference \
 -Wlogical-op -Wunused -Wundef -DNDEBUG
 NATIVE     = -march=native
 
 # engine name
-NAME      := Rice20
+NAME      := Rice
 
 # Detect Windows
 ifeq ($(OS), Windows_NT)

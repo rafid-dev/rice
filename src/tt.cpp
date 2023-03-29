@@ -15,7 +15,7 @@ void TranspositionTable::Initialize(int MB)
     TTEntry e;
     std::fill(entries.begin(), entries.end(), e);
 
-    std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)\n";
+    //std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)\n";
 }
 
 void TranspositionTable::storeEntry(U64 key, int f, Move move, int depth, int score, int eval, int ply, bool pv)

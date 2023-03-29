@@ -19,4 +19,3 @@ void InitEvaluationMasks();
 void InitPsqTables();
 int Evaluate(Board &board, PawnTable &pawnTable);
 int Evaluate(Board &board);
-

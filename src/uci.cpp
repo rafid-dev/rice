@@ -9,6 +9,7 @@
 #include "movescore.h"
 #include "tt.h"
 
+
 static void uci_send_id()
 {
     std::cout << "id name " << NAME << "\n";
@@ -47,6 +48,8 @@ void uci_loop()
     std::string command;
     std::string token;
 
+    std::thread mainSearchThread;   
+
     while (true)
     {
         token.clear();
@@ -54,14 +57,22 @@ void uci_loop()
 
         std::getline(std::cin, command);
         std::istringstream is(command);
+
         is >> std::skipws >> token;
+
         if (token == "stop")
         {
             info.stopped = true;
+            if (mainSearchThread.joinable()){
+                mainSearchThread.join();
+            }
         }
         if (token == "quit")
         {
             info.stopped = true;
+            if (mainSearchThread.joinable()){
+                mainSearchThread.join();
+            }
             break;
         }
         if (token == "isready")
@@ -144,6 +155,9 @@ void uci_loop()
         /* Handle UCI go command */
         if (token == "go")
         {
+            if (mainSearchThread.joinable()){
+                mainSearchThread.join();
+            }
             is >> std::skipws >> token;
 
             // Initialize variables
@@ -238,15 +252,18 @@ void uci_loop()
                 info.stoptimeMax = info.start_time + maxtime;
                 info.stoptimeOpt = info.start_time + optime;
             }
+            
             if (depth == -1)
             {
                 info.depth = MAXPLY;
             }
 
+            info.stopped = false;
             info.uci = is_uci;
 
             // std::cout << "time:" << time << " start:" << info.start_time << " stop:" << info.end_time << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
-            SearchPosition(board, info, table);
+            //SearchPosition(board, info, table);
+            mainSearchThread = std::thread(SearchPosition, std::ref(board), std::ref(info), table);
         }
 
         if (token == "setoption")
@@ -286,8 +303,8 @@ void uci_loop()
         {
             info.depth = MAXDEPTH;
             info.timeset = false;
-
-            SearchPosition(board, info, table);
+            
+            mainSearchThread = std::thread(SearchPosition, std::ref(board), std::ref(info), table);
         }
     }
 

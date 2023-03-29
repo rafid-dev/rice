@@ -15,3 +15,4 @@ sprt.bat
 *.app
 *.stackdump
 *.epd
+*.json

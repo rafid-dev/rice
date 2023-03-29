@@ -45,9 +45,6 @@ int mvv_lva[12][12] = {
         }else if (list.list[i].move == ss->killers[1]){
             // Score for killer 2
             list.list[i].value = Killer2Score;
-        }else if (list.list[i].move == ss->counter){
-            // Score for counter, usually below killers.
-            list.list[i].value = CounterScore;
         }else{
             // Otherwise, history score.
             list.list[i].value = info.searchHistory[attacker][to(list.list[i].move)];

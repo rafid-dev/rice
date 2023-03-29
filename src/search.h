@@ -35,7 +35,12 @@ struct SearchStack {
     Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
-    Move counter = NO_MOVE;
+};
+
+struct SearchThreadData{
+    SearchInfo *info;
+    Board *position;
+    TranspositionTable *ttable;
 };
 
 extern int RFPMargin;

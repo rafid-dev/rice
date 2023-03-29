@@ -6,6 +6,7 @@
 #include "see.h"
 #include <cmath>
 #include <iostream>
+#include <cstring>
 
 
 /* Refer to init.cpp for search parameter values. */
@@ -31,7 +32,7 @@ static void CheckUp(SearchInfo &info) {
 }
 
 static bool StopEarly(SearchInfo& info){
-  if (info.timeset && GetTimeMs() > info.stoptimeOpt){
+  if ((info.timeset && GetTimeMs() > info.stoptimeOpt) || info.stopped){
     return true;
   }else{
     return false;
@@ -350,10 +351,10 @@ movesloop:
     bool isQuiet = (!promoted(move) && !is_capture(board, move));
     bool skipQuiets = false;
     int extension = 0;
-
     if (isQuiet && skipQuiets) {
       continue;
     }
+
 
     if (!isRoot && bestscore > -ISMATE) {
 
@@ -384,6 +385,8 @@ movesloop:
       }
     }
 
+    
+
     /* Initialize new depth based on extension*/
     int newDepth = depth + extension;
 
@@ -391,6 +394,7 @@ movesloop:
     board.makeMove(move);
     table->prefetchTT(board.hashKey); // TT Prefetch
 
+    /* Set stack move to current move */
     ss->move = move;
 
     /* Increment ply, nodes and movecount */
@@ -478,9 +482,6 @@ movesloop:
             ss->killers[1] = ss->killers[0];
             ss->killers[0] = move;
 
-            // Update counter (We set previous move as a counter)
-            //ss->counter = (ss-1)->move;
-
             // Record history score
             UpdateHistory(board, info, bestmove, quietList, depth);
           }
@@ -519,9 +520,7 @@ movesloop:
 
 void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
   ClearForSearch(info, table);
-
   // Initialize search stack
-
   int score = 0;
 
   long startime = GetTimeMs();

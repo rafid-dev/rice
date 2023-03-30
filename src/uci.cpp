@@ -13,6 +13,7 @@
 static void uci_send_id() {
   std::cout << "id name " << NAME << "\n";
   std::cout << "id author " << AUTHOR << "\n";
+  std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << "\n";
   std::cout << "uciok\n";
 }
 
@@ -28,8 +29,9 @@ static void set_option(std::istream &is, std::string &token, std::string name,
 
 int DefaultHashSize = 64;
 int CurrentHashSize = DefaultHashSize;
+int LastHashSize = CurrentHashSize;
 
-bool is_uci = false;
+bool IsUci = false;
 
 void uci_loop() {
 
@@ -51,11 +53,7 @@ void uci_loop() {
     std::getline(std::cin, command);
     std::istringstream is(command);
 
-    std::cout << "Something\n";
-
     is >> std::skipws >> token;
-
-    std::cout << "Something2\n";
 
     if (token == "stop") {
       info.stopped = true;
@@ -66,14 +64,12 @@ void uci_loop() {
       std::cout << "readyok\n";
       continue;
     } else if (token == "ucinewgame") {
-      TTable.clear();
       TTable.Initialize(CurrentHashSize);
-      info.pawnTable.clear();
       info.pawnTable.Reinitialize();
       std::cout << "readyok\n";
       continue;
     } else if (token == "uci") {
-      is_uci = true;
+      IsUci = true;
       uci_send_id();
       continue;
     }
@@ -217,7 +213,7 @@ void uci_loop() {
       }
 
       info.stopped = false;
-      info.uci = is_uci;
+      info.uci = IsUci;
 
       // std::cout << "time:" << time << " start:" << info.start_time << "
       // stop:" << info.end_time << " depth:" << info.depth << " timeset: " <<
@@ -236,10 +232,10 @@ void uci_loop() {
       set_option(is, token, "LMRBase", LMRBase);
       set_option(is, token, "LMRDivision", LMRDivision);
       InitSearch();
-      if (DefaultHashSize != CurrentHashSize) {
-        TTable.clear();
+      if (CurrentHashSize != LastHashSize) {
+        CurrentHashSize = std::min(CurrentHashSize, MAXHASH);
+        LastHashSize = CurrentHashSize;
         TTable.Initialize(CurrentHashSize);
-        CurrentHashSize = DefaultHashSize;
       }
     }
 

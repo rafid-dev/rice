@@ -11,6 +11,7 @@ void prefetch(const void* addr) {
 
 void TranspositionTable::Initialize(int MB)
 {
+    currentAge = 0;
     this->entries.resize((MB * 1024 * 1024) / sizeof(TTEntry), TTEntry());
     TTEntry e;
     std::fill(entries.begin(), entries.end(), e);

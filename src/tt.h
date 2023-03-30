@@ -3,6 +3,9 @@
 #include <map>
 #include "types.h"
 
+// 8192 GBS
+#define MAXHASH 8192
+
 struct TTEntry {
     int depth = 0;
     int score = 0;

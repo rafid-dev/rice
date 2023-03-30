@@ -284,6 +284,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
      * If we give our opponent a free move and still maintain beta, we prune
      * some nodes.
      */
+
     if (eval >= beta && ss->static_eval >= beta &&
         board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
         ((ss - 1)->move != NULL_MOVE)) {

@@ -13,6 +13,8 @@ using namespace Chess;
 #define INF_BOUND 30000
 #define ISMATE 29000
 
+#define IS_DEBUG false
+
 static inline bool is_capture(Board& board, Move move){
     return (board.pieceAtB(to(move)) != None);
 }

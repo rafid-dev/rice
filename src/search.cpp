@@ -32,7 +32,7 @@ static void CheckUp(SearchInfo &info) {
 }
 
 static bool StopEarly(SearchInfo& info){
-  if ((info.timeset && GetTimeMs() > info.stoptimeOpt) || info.stopped){
+  if (info.timeset && (GetTimeMs() > info.stoptimeOpt || info.stopped)){
     return true;
   }else{
     return false;
@@ -532,7 +532,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
         score, current_depth, board, info,
         table); // AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info,
                 // ss, table);
-    if (info.stopped == true) {
+    if (info.stopped == true || StopEarly(info)) {
       break;
     }
 

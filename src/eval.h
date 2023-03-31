@@ -3,7 +3,6 @@
 #include "pawns.h"
 #include "types.h"
 
-
 extern const int piece_values[12];
 
 extern U64 FileMasks[64];
@@ -14,6 +13,8 @@ extern U64 BlackPassedMasks[64];
 extern Score PsqTable[12][64];
 
 extern Score PAWN_PROTECTION[6];
+
+typedef int8_t Phase;
 
 void InitEvaluationMasks();
 void InitPsqTables();

@@ -262,6 +262,8 @@ void uci_loop() {
 
   TTable.clear();
   info.pawnTable.clear();
-  std::cout << "\n"
-            << "\u001b[0m";
+  std::cout << "\n";
+  if (!info.uci){
+    std::cout << "\u001b[0m";
+  }
 }

@@ -22,7 +22,7 @@ Score EvaluatePawns(U64 pawns_bb, U64 enemy, U64 all)
 {
     Score score;
     Square sq;
-    int rank;
+    Rank rank;
     while (pawns_bb)
     {
         sq = poplsb(pawns_bb);

@@ -380,7 +380,7 @@ movesloop:
       } else {
 
         /* SEE Pruning for non quiets */
-        if (depth < 4 && !see(board, move, -45 * depth)) {
+        if (depth < 6 && !see(board, move, -70 * depth)) {
           continue;
         }
       }

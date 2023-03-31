@@ -16,10 +16,10 @@ struct SearchInfo {
     
     long nodes = 0l;
 
-    long start_time = 0;
-    long end_time = 0;
-    long stoptimeMax = 0;
-    long stoptimeOpt = 0;
+    long start_time = 0l;
+    long end_time = 0l;
+    long stoptimeMax = 0l;
+    long stoptimeOpt = 0l;
 
     bool timeset = false;
     bool stopped = false;

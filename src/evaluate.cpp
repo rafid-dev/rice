@@ -9,10 +9,7 @@ U64 IsolatedMasks[64];
 U64 WhitePassedMasks[64];
 U64 BlackPassedMasks[64];
 
-int gamephaseInc[6] = {0, 1, 1, 2, 4, 0};
-
-int mg_value[6] = {80, 335, 364, 475, 1025, 0};
-int eg_value[6] = {91, 280, 296, 509, 940, 0};
+Phase gamephaseInc[6] = {0, 1, 1, 2, 4, 0};
 
 const int piece_values[12] = {100, 300, 300, 500, 900, 0};
 
@@ -246,7 +243,7 @@ template <Color c> Score EvaluatePawnPsqt(Board &board) {
 }
 
 template <Color c>
-Score EvaluateKnights(Board &board, U64 all, int &gamePhase) {
+Score EvaluateKnights(Board &board, U64 all, int8_t &gamePhase) {
   Score score;
   Square sq;
   Piece p = (c == White) ? WhiteKnight : BlackKnight;
@@ -269,7 +266,7 @@ Score EvaluateKnights(Board &board, U64 all, int &gamePhase) {
 }
 
 template <Color c>
-Score EvaluateBishops(Board &board, U64 all, int &gamePhase) {
+Score EvaluateBishops(Board &board, U64 all, int8_t &gamePhase) {
   Score score;
   Square sq;
   Piece p = (c == White) ? WhiteBishop : BlackBishop;
@@ -295,7 +292,7 @@ Score EvaluateBishops(Board &board, U64 all, int &gamePhase) {
   return score;
 }
 
-template <Color c> Score EvaluateRooks(Board &board, U64 all, int &gamePhase) {
+template <Color c> Score EvaluateRooks(Board &board, U64 all, int8_t &gamePhase) {
   Score score;
   Square sq;
   Piece p = (c == White) ? WhiteRook : BlackRook;
@@ -324,7 +321,7 @@ template <Color c> Score EvaluateRooks(Board &board, U64 all, int &gamePhase) {
   return score;
 }
 
-template <Color c> Score EvaluateQueens(Board &board, U64 all, int &gamePhase) {
+template <Color c> Score EvaluateQueens(Board &board, U64 all, int8_t &gamePhase) {
   Score score;
   Square sq;
   Piece p = (c == White) ? WhiteQueen : BlackQueen;
@@ -356,11 +353,11 @@ template <Color c> Score EvaluateKings(Board &board) {
   Score score;
   Piece p = (c == White) ? WhiteKing : BlackKing;
   U64 piece_bb = board.piecesBB[p];
-  U64 pawns = board.piecesBB[c == White ? WhitePawn : BlackPawn];
+  // U64 pawns = board.piecesBB[c == White ? WhitePawn : BlackPawn];
 
   Square sq = poplsb(piece_bb);
-  File file = square_file(sq);
-  const int kingside = file >> 2;
+  // File file = square_file(sq);
+  // const int kingside = file >> 2;
 
   // Evaluate piece square tables
   score += PsqTable[p][sq];
@@ -374,12 +371,16 @@ template <Color c> Score EvaluateKings(Board &board) {
   return score;
 }
 
+template <Color c> Score EvaluateSide(Board& board, int8_t& gamePhase){
+  
+}
+
 int Evaluate(Board &board, PawnTable &pawnTable) {
   // Score //
   Score score[2];
 
   // Game phase //
-  int gamePhase = 0;
+  int8_t gamePhase = 0;
 
   Color side2move = board.sideToMove;
   Color otherSide = ~board.sideToMove;

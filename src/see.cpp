@@ -1,6 +1,6 @@
 #include "see.h"
 
-const int pieceValues[7] = {100, 300, 300, 500, 900, 0, 0};
+const int pieceValues[7] = { 93, 308, 346, 521, 994, 20000, 0};
 
 bool see(Board &board, const Move move, const int threshold)
 {

@@ -180,14 +180,19 @@ void uci_loop()
         }
 
         // Time
-        if (token == "wtime" || token == "btime")
+        if (token == "wtime")
         {
           is >> std::skipws >> token;
           if (board.sideToMove == White)
           {
             uciTime = stoi(token);
           }
-          else if (board.sideToMove == Black)
+          is >> std::skipws >> token;
+          continue;
+        }
+        if (token == "btime"){
+          is >> std::skipws >> token;
+          if (board.sideToMove == Black)
           {
             uciTime = stoi(token);
           }
@@ -196,14 +201,20 @@ void uci_loop()
         }
 
         // Increment
-        if (token == "winc" || token == "binc")
+        if (token == "winc")
         {
           is >> std::skipws >> token;
           if (board.sideToMove == White)
           {
             inc = stoi(token);
           }
-          else if (board.sideToMove == Black)
+          is >> std::skipws >> token;
+          continue;
+        }
+        if (token == "binc")
+        {
+          is >> std::skipws >> token;
+          if (board.sideToMove == Black)
           {
             inc = stoi(token);
           }

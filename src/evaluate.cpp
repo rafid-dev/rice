@@ -95,9 +95,9 @@ Score KING_TABLE[] = {
     S(-14, -21),  S(-50, -5),  S(30, -38),  S(19, -64)};
 
 Score OPEN_FILE_BONUS[] = {S(0, 0),   S(0, 0), S(0, 0),
-                           S(59, -8), S(0, 0), S(0, 0)};
+                           S(59, -8), S(0, 0), S(-30, 0)};
 Score SEMI_OPEN_FILE_BONUS[] = {S(0, 0),  S(0, 0), S(0, 0),
-                                S(19, 4), S(0, 0), S(0, 0)};
+                                S(19, 4), S(20, 2), S(-19, 0)};
 
 Score BISHOP_PAIR_BONUS = S(32, 54);
 Score KNIGHT_MOBILITY = S(1, 0);
@@ -338,12 +338,6 @@ template <Color c> Score EvaluateQueens(Board &board, U64 all, int8_t &gamePhase
 
     // Evaluate Mobility
     score += QUEEN_MOBILITY * popcount(QueenAttacks(sq, all));
-
-  //   if (IsOpenFile(board, sq)){
-  //   score += OPEN_FILE_BONUS[QUEEN];
-  // }else if(IsSemiOpenFile(board, sq, c)){
-  //   score += SEMI_OPEN_FILE_BONUS[QUEEN];
-  // }
   }
 
   return score;
@@ -356,17 +350,11 @@ template <Color c> Score EvaluateKings(Board &board) {
   // U64 pawns = board.piecesBB[c == White ? WhitePawn : BlackPawn];
 
   Square sq = poplsb(piece_bb);
-  // File file = square_file(sq);
-  // const int kingside = file >> 2;
-
+  
   // Evaluate piece square tables
   score += PsqTable[p][sq];
 
-  // if (IsOpenFile(board, sq)){
-  //   score += OPEN_FILE_BONUS[KING];
-  // }else if(IsSemiOpenFile(board, sq, c)){
-  //   score += SEMI_OPEN_FILE_BONUS[KING];
-  // }
+  
 
   return score;
 }

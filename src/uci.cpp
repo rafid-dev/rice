@@ -40,6 +40,7 @@ void uci_loop()
 
   Board board;
   SearchInfo info;
+
   TranspositionTable TTable;
 
   TTable.Initialize(DefaultHashSize);
@@ -152,7 +153,7 @@ void uci_loop()
       int depth = -1;
       int uciTime = -1;
       int inc = 0;
-      int movestogo = 40;
+      int movestogo = -1;
       int movetime = -1;
 
       while (token != "none")
@@ -242,12 +243,22 @@ void uci_loop()
       if (uciTime != -1)
       {
         info.timeset = true;
+      }
 
+      if (info.timeset && movestogo != -1){
         int safety_overhead = 50;
 
         uciTime -= safety_overhead;
 
-        int time_slot = uciTime / movestogo + inc;
+        int time_slot = uciTime / movestogo;
+
+        info.stoptimeMax = info.start_time + time_slot;
+        info.stoptimeOpt = info.start_time + time_slot;
+      }else if (info.timeset){
+
+        uciTime /= 40;
+
+        int time_slot = uciTime + inc;
         int basetime = (time_slot);
 
         // optime is the time we use to stop if we just cleared a depth
@@ -255,9 +266,9 @@ void uci_loop()
 
         // max time is the time we can spend max on a search
         int maxtime = std::min(uciTime, basetime * 2);
-
         info.stoptimeMax = info.start_time + maxtime;
         info.stoptimeOpt = info.start_time + optime;
+
       }
 
       if (depth == -1)

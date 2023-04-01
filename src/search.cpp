@@ -5,8 +5,8 @@
 #include "movescore.h"
 #include "see.h"
 #include <cmath>
-#include <iostream>
 #include <cstring>
+#include <iostream>
 
 
 /* Refer to init.cpp for search parameter values. */
@@ -31,10 +31,10 @@ static void CheckUp(SearchInfo &info) {
   }
 }
 
-static bool StopEarly(SearchInfo& info){
-  if (info.timeset && (GetTimeMs() > info.stoptimeOpt || info.stopped)){
+static bool StopEarly(SearchInfo &info) {
+  if (info.timeset && (GetTimeMs() > info.stoptimeOpt || info.stopped)) {
     return true;
-  }else{
+  } else {
     return false;
   }
 }
@@ -356,7 +356,6 @@ movesloop:
       continue;
     }
 
-
     if (!isRoot && bestscore > -ISMATE) {
 
       /* Various pruning techniques */
@@ -364,7 +363,7 @@ movesloop:
         /* Late Move Pruning/Movecount pruning */
         /* If we have searched many moves, we can skip the rest. */
         if (!isPvNode && !inCheck && depth <= 4 &&
-            (quietList.size >= depth * depth * 4)) {
+            quietList.size >= (depth * depth * 4)) {
           continue;
         }
 
@@ -376,17 +375,14 @@ movesloop:
         if (depth < 6 && !see(board, move, -50 * depth)) {
           continue;
         }
-
       } else {
 
         /* SEE Pruning for non quiets */
-        if (depth < 6 && !see(board, move, -70 * depth)) {
+        if (depth < 4 && !see(board, move, -45 * depth)) {
           continue;
         }
       }
     }
-
-    
 
     /* Initialize new depth based on extension*/
     int newDepth = depth + extension;
@@ -420,7 +416,7 @@ movesloop:
       int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
       reduction += !improving; /* Increase reduction if we're not improving. */
-      reduction += !isPvNode;  /* Increase for non pv nodes */
+      reduction -= isPvNode;   /* Increase for non pv nodes */
       reduction += isQuiet && !see(board, move, -50 * depth); /* Increase for quiets and not winning captures */
 
       /* Adjust the reduction so we don't drop into Qsearch or cause an
@@ -483,6 +479,9 @@ movesloop:
             ss->killers[1] = ss->killers[0];
             ss->killers[0] = move;
 
+            // Update counter
+            ss->counter = (ss - 1)->move;
+
             // Record history score
             UpdateHistory(board, info, bestmove, quietList, depth);
           }
@@ -537,6 +536,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
     }
 
     bestmove = info.pv_table.array[0][0];
+
     std::cout << "info score cp ";
     F_number(score, info.uci, FANCY_Yellow);
     std::cout << " depth ";
@@ -550,10 +550,10 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
     for (int i = 0; i < info.pv_table.length[0]; i++) {
       std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]);
     }
-    std::cout << "\n";
+    std::cout << std::endl;
   }
 
-  std::cout << "bestmove " << convertMoveToUci(bestmove) << "\n";
+  std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;
 }
 
 int AspirationWindowSearch(int prevEval, int depth, Board &board,
@@ -576,7 +576,7 @@ int AspirationWindowSearch(int prevEval, int depth, Board &board,
   while (true) {
     score = AlphaBeta(alpha, beta, depth, board, info, ss, table);
 
-    if (StopEarly(info)){
+    if (StopEarly(info)) {
       break;
     }
 

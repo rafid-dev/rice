@@ -12,7 +12,7 @@ struct PVTable {
 struct SearchInfo {
     int ply = 0;
     int depth = 0;
-    int searchHistory[NPIECES][NSQUARES];
+    int searchHistory[NPIECES][NSQUARES] = {0};
     
     long nodes = 0l;
 
@@ -35,6 +35,7 @@ struct SearchStack {
     Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
+    Move counter = NO_MOVE;
 };
 
 struct SearchThreadData{

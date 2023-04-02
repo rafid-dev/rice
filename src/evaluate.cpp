@@ -359,10 +359,6 @@ template <Color c> Score EvaluateKings(Board &board) {
   return score;
 }
 
-template <Color c> Score EvaluateSide(Board& board, int8_t& gamePhase){
-  
-}
-
 int Evaluate(Board &board, PawnTable &pawnTable) {
   // Score //
   Score score[2];

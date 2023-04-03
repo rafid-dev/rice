@@ -1,7 +1,6 @@
 .vscode
 binaries
 pgns
-incbin
 obj
 debug
 tests

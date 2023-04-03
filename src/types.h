@@ -1,6 +1,6 @@
 #pragma once
 
-#include "chess.hpp"
+#include "nnue.h"
 
 using namespace Chess;
 
@@ -14,6 +14,8 @@ using namespace Chess;
 #define ISMATE 29000
 
 #define IS_DEBUG true
+
+extern NNUE::BasicNNUE nnue;
 
 static inline bool is_capture(Board& board, Move move){
     return (board.pieceAtB(to(move)) != None);

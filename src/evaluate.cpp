@@ -1,5 +1,4 @@
 #include "eval.h"
-#include "psq.h"
 
 #define SETBIT(bitboard, square) ((bitboard) |= (1ULL << (square)))
 
@@ -363,7 +362,7 @@ template <Color c> Score EvaluateSide(Board& board, int8_t& gamePhase){
   
 }
 
-int Evaluate(Board &board, PawnTable &pawnTable) {
+/*int Evaluate(Board &board, PawnTable &pawnTable) {
   // Score //
   Score score[2];
 
@@ -409,4 +408,8 @@ int Evaluate(Board &board, PawnTable &pawnTable) {
   int16_t egPhase = 24 - mgPhase;
 
   return (mgScore * mgPhase + egScore * egPhase) / 24;
+}*/
+
+int Evaluate(Board &board, PawnTable &pawnTable) {
+  return nnue.Evaluate(board.sideToMove);
 }

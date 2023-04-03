@@ -2,7 +2,7 @@ _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
 CXX       := g++
 TARGET    := Rice
-CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wformat=2 -Wnull-dereference \
+CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference \
 -Wlogical-op -Wunused -Wundef -DNDEBUG
 NATIVE     = -march=native
 
@@ -73,7 +73,7 @@ OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 EXE     := $(NAME)$(SUFFIX)
 
-rice: $(TARGET)
+Rice: $(TARGET)
 clean:
 	rm -rf *.o $(DEPENDS)
 

@@ -35,13 +35,50 @@ namespace NNUE
 	using output_t = std::array<int, OUTPUT>;
 	using input_t = std::array<int16_t, INPUT>;
 
-	void SubtractFromAll(acc_t &inputA, acc_t &inputB, const feature_weight_t &delta, int offsetA, int offsetB);
+	static inline void SubtractFromAll(acc_t &inputA, acc_t &inputB, const feature_weight_t &delta, int offsetA, int offsetB)
+	{
+		for (int i = 0; i < HIDDEN; i++)
+		{
+			inputA[i] -= delta[offsetA + i];
+			inputB[i] -= delta[offsetB + i];
+		}
+	}
 
-	void AddToAll(acc_t &inputA, acc_t &inputB, const feature_weight_t &delta, int offsetA, int offsetB);
+	static inline void AddToAll(acc_t &inputA, acc_t &inputB, const feature_weight_t &delta, int offsetA, int offsetB)
+	{
+		for (int i = 0; i < HIDDEN; i++)
+		{
+			inputA[i] += delta[offsetA + i];
+			inputB[i] += delta[offsetB + i];
+		}
+	}
 
-	void SubtractAndAddToAll(acc_t &input, const feature_weight_t &delta, int offsetS, int offsetA);
+	static inline void SubtractAndAddToAll(acc_t &input, const feature_weight_t &delta, int offsetS, int offsetA)
+	{
+		for (int i = 0; i < HIDDEN; i++)
+		{
+			input[i] = input[i] - delta[offsetS + i] + delta[offsetA + i];
+		}
+	}
 
-	void CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int16_t min, int16_t max, int seperationIndex, int offset = 0);
+	static inline void CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int16_t min, int16_t max, int seperationIndex, int offset = 0)
+	{
+		int inputSize = HIDDEN * 2;
+		int weightStride = 0;
+
+		for (int i = 0; i < OUTPUT; i++)
+		{
+			int sum = 0;
+			for (int j = 0; j < inputSize; j++)
+			{
+				int16_t input = (j < seperationIndex ? inputA : inputB)[j < seperationIndex ? j : j - seperationIndex];
+				int16_t weight = weights[weightStride + j];
+				sum += std::max(min, std::min(input, max)) * weight;
+			}
+			output[offset + i] = sum;
+			weightStride += inputSize;
+		}
+	}
 
 	class BasicAccumulator
 	{
@@ -102,7 +139,6 @@ namespace NNUE
 				WhitePov[whiteIndex] = 1;
 				BlackPov[blackIndex] = 1;
 				AddToAll(accumulator.White, accumulator.Black, FeatureWeight, whiteIndex * HIDDEN, blackIndex * HIDDEN);
-
 			}
 			else
 			{
@@ -114,6 +150,9 @@ namespace NNUE
 
 		int Evaluate(Chess::Color side);
 
-		void FromJson(const std::string &file_name);
+		bool FromJson(const std::string &file_name);
+		void ToBin(const std::string &file_name);
+		void ReadBin();
+		void Init(const std::string &file_name);
 	};
 };

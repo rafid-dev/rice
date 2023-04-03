@@ -5,6 +5,7 @@
 #include "search.h"
 #include "tt.h"
 #include "types.h"
+#include <chrono>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -77,7 +78,6 @@ void uci_loop()
     else if (token == "ucinewgame")
     {
       TTable.Initialize(CurrentHashSize);
-      info.pawnTable.Reinitialize();
       std::cout << "readyok\n";
       continue;
     }
@@ -313,7 +313,12 @@ void uci_loop()
     }
     else if (token == "eval")
     {
-      std::cout << Evaluate(board, info.pawnTable) << std::endl;
+      auto start = std::chrono::high_resolution_clock::now();
+      Evaluate(board);
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+
+      std::cout << duration.count() << std::endl;
       continue;
     }
     else if (token == "side")
@@ -326,15 +331,12 @@ void uci_loop()
       info.depth = MAXDEPTH;
       info.timeset = false;
 
-      // mainSearchThread =
-      //     std::thread(SearchPosition, std::ref(board), std::ref(info), table);
-
       SearchPosition(board, info, table);
     }
   }
 
   TTable.clear();
-  info.pawnTable.clear();
+
   std::cout << "\n";
   if (!info.uci)
   {

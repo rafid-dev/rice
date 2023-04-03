@@ -1,7 +1,5 @@
 #include "init.h"
 #include "search.h"
-#include "eval.h"
-
 // Initialize Search Parameters
 int RFPMargin = 75;
 int RFPDepth = 5;
@@ -11,6 +9,5 @@ int LMRDivision = 236;
 void init_all()
 {
     InitSearch();
-    InitPsqTables();
-    nnue.FromJson("./sn0016_80.json");
+    nnue.Init("so.json");
 }

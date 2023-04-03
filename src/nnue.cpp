@@ -1,6 +1,18 @@
 #include <algorithm>
+#include <cstring>
 #include "nnue.h"
 #include "json.hpp"
+#define INCBIN_STYLE INCBIN_STYLE_CAMEL
+#include "incbin/incbin.h"
+#if !defined(_MSC_VER)
+INCBIN(EVAL, "nn.nnue");
+#else
+const unsigned char gEVALData[1] = { 0x0 };
+const unsigned char* const gEmbeddedNNUEEnd = &gEVALData[1];
+const unsigned int gEmbeddedNNUESize = 1;
+#endif
+
+bool DEBUG = false;
 
 // NNUE Implementation taken from StockNemo
 // BasicAccumulator
@@ -81,18 +93,20 @@ void NNUE::BasicNNUE::EfficientlyUpdateAccumulator(Chess::PieceType piece, Chess
 
 	int whiteIndexFrom = color * colorStride + opPieceStride + (fromSq);
 	int blackIndexFrom = (~color) * colorStride + opPieceStride + (fromSq ^ 56);
+	
 	int whiteIndexTo = color * colorStride + opPieceStride + toSq;
 	int blackIndexTo = (~color) * colorStride + opPieceStride + (toSq ^ 56);
 
 	BasicAccumulator &accumulator = Accumulators[CurrentAccumulator];
 
 	WhitePov[whiteIndexFrom] = 0;
-	BlackPov[whiteIndexFrom] = 0;
+	BlackPov[blackIndexFrom] = 0;
+
 	WhitePov[whiteIndexTo] = 1;
 	BlackPov[blackIndexTo] = 1;
 
 	SubtractAndAddToAll(accumulator.White, FeatureWeight, whiteIndexFrom * HIDDEN, whiteIndexTo * HIDDEN);
-	SubtractAndAddToAll(accumulator.White, FeatureWeight, blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN);
+	SubtractAndAddToAll(accumulator.Black, FeatureWeight, blackIndexFrom * HIDDEN, blackIndexTo * HIDDEN);
 }
 
 int NNUE::BasicNNUE::Evaluate(Chess::Color side)
@@ -109,56 +123,6 @@ int NNUE::BasicNNUE::Evaluate(Chess::Color side)
 	}
 
 	return (Output[0] + OutBias[0]) * SCALE / QAB;
-}
-
-void NNUE::SubtractFromAll(acc_t &inputA, acc_t &inputB, const feature_weight_t &delta, int offsetA, int offsetB)
-{
-	for (int i = 0; i < HIDDEN; i++)
-	{
-		inputA[i] -= delta[offsetA + i];
-		inputB[i] -= delta[offsetB + i];
-	}
-}
-
-void NNUE::AddToAll(acc_t &inputA, acc_t &inputB, const feature_weight_t &delta, int offsetA, int offsetB)
-{
-	for (int i = 0; i < HIDDEN; i++)
-	{
-		inputA[i] += delta[offsetA + i];
-		inputB[i] += delta[offsetB + i];
-	}
-}
-
-void NNUE::SubtractAndAddToAll(acc_t &input, const feature_weight_t &delta, int offsetS, int offsetA)
-{
-	for (int i = 0; i < HIDDEN; i++)
-	{
-		input[i] = input[i] - delta[offsetS + i] + delta[offsetA + i];
-	}
-}
-
-void NNUE::CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int16_t min, int16_t max, int seperationIndex, int offset)
-{
-	int inputSize = HIDDEN * 2;
-	int weightStride = 0;
-
-	auto RelativeIndex = [&](int index)
-	{ return index < seperationIndex ? index : index - seperationIndex; };
-	auto RelativeInput = [&](int index)
-	{ return index < seperationIndex ? inputA : inputB; };
-
-	for (int i = 0; i < OUTPUT; i++)
-	{
-		int sum = 0;
-		for (int j = 0; j < inputSize; j++)
-		{
-			int16_t input = RelativeInput(j)[RelativeIndex(j)];
-			int16_t weight = weights[weightStride + j];
-			sum += std::max(min, std::min(input, max)) * weight;
-		}
-		output[offset + i] = sum;
-		weightStride += inputSize;
-	}
 }
 
 using json = nlohmann::json;
@@ -200,9 +164,13 @@ void Bias(json biasRelation, T &biasArray, int k)
 	}
 }
 
-void NNUE::BasicNNUE::FromJson(const std::string &file_name)
+bool NNUE::BasicNNUE::FromJson(const std::string &file_name)
 {
 	std::fstream stream(file_name);
+
+	if (!stream){
+		return false;
+	}
 
 	json data = json::parse(stream);
 
@@ -211,25 +179,67 @@ void NNUE::BasicNNUE::FromJson(const std::string &file_name)
 		if (key == "ft.weight")
 		{
 			Weight<feature_weight_t>(value, FeatureWeight, HIDDEN, QA, true);
-			std::cout << "Feature weights loaded." << std::endl;
+			if (DEBUG)std::cout << "Feature weights loaded." << std::endl;
 		}
 
 		else if (key == "ft.bias")
 		{
 			Bias<acc_t>(value, FeatureBias, QA);
-			std::cout << "Feature bias loaded." << std::endl;
+			if (DEBUG)std::cout << "Feature bias loaded." << std::endl;
 		}
 		else if (key == "out.weight")
 		{
 			Weight<output_weight_t>(value, OutWeight, HIDDEN * 2, QB);
-			std::cout << "Out weights loaded." << std::endl;
+			if (DEBUG)std::cout << "Out weights loaded." << std::endl;
 		}
 		else if (key == "out.bias")
 		{
 
 			Bias<std::array<int16_t, 1>>(value, OutBias, QAB);
-			std::cout << "Out bias loaded." << std::endl;
+			if (DEBUG)std::cout << "Out bias loaded." << std::endl;
 		}
 	}
-	std::cout << "Basic NNUE loaded from JSON." << std::endl;
+	if (DEBUG)std::cout << "Basic NNUE loaded from JSON." << std::endl;
+
+	return true;
+}
+
+void NNUE::BasicNNUE::ToBin(const std::string &file_name){
+	std::ofstream outputData(file_name, std::ios::out | std::ios::binary);
+
+	if (outputData){
+		outputData.write((char*)(&FeatureWeight), sizeof FeatureWeight);
+		outputData.write((char*)(&FeatureBias), sizeof FeatureBias);
+		outputData.write((char*)(&OutWeight), sizeof OutWeight);
+		outputData.write((char*)(&OutBias), sizeof OutBias);
+		outputData.close();
+	}
+}
+
+void NNUE::BasicNNUE::ReadBin(){
+		uint64_t memoryIndex = 0;
+
+		std::memcpy(FeatureWeight.data(), &gEVALData[memoryIndex], INPUT * HIDDEN * sizeof(int16_t));
+
+		memoryIndex += INPUT * HIDDEN * sizeof(int16_t);
+
+		std::memcpy(FeatureBias.data(), &gEVALData[memoryIndex],
+			HIDDEN * sizeof(int16_t));
+		memoryIndex += HIDDEN * sizeof(int16_t);
+
+		std::memcpy(OutWeight.data(), &gEVALData[memoryIndex],
+			HIDDEN * 2 * OUTPUT * sizeof(int16_t));
+
+		memoryIndex += HIDDEN * 2 * OUTPUT * sizeof(int16_t);
+		std::memcpy(OutBias.data(), &gEVALData[memoryIndex], 1 * sizeof(int32_t));
+		memoryIndex += 1 * sizeof(int32_t);
+}
+
+void NNUE::BasicNNUE::Init(const std::string& file_name){
+	if (!FromJson(file_name)){
+		if(DEBUG){std::cout << "NNUE loaded from exe.\n";}
+		ReadBin();
+		return;
+	}
+	if(DEBUG){std::cout << "NNUE loaded from JSON.\n";}
 }

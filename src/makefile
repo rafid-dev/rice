@@ -4,7 +4,7 @@ CXX       := g++
 TARGET    := Rice
 CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference \
 -Wlogical-op -Wunused -Wundef -DNDEBUG
-NATIVE     = -march=native
+NATIVE     = -march=native	
 
 # engine name
 NAME      := Rice

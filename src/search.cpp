@@ -66,7 +66,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 
   /* We return static evaluation if we exceed max depth */
   if (info.ply > MAXPLY - 1) {
-    return Evaluate(board, info.pawnTable);
+    return Evaluate(board);
   }
 
   /* Repetition check */
@@ -75,7 +75,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
   }
 
   /* standing_pat is our static evaluation of the board */
-  int standing_pat = Evaluate(board, info.pawnTable);
+  int standing_pat = Evaluate(board);
 
   /* if our static evaluation beats beta, we return beta.*/
   if (standing_pat >= beta) {
@@ -220,7 +220,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
   /* We return static evaluation if we exceed max depth.*/
   if (info.ply > MAXPLY - 1) {
-    return Evaluate(board, info.pawnTable);
+    return Evaluate(board);
   }
 
   /* Repetition check*/
@@ -248,7 +248,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   /* We can use the tt entry's evaluation if we have a tt hit so we don't have
    * to re-evaluate from scratch */
 
-  ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board, info.pawnTable);
+  ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
 
   /* If we our static evaluation is better than what it was 2 plies ago, we are
    * improving */

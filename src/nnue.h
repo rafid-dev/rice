@@ -69,12 +69,21 @@ namespace NNUE
 		for (int i = 0; i < OUTPUT; i++)
 		{
 			int sum = 0;
-			for (int j = 0; j < inputSize; j++)
-			{
-				int16_t input = (j < seperationIndex ? inputA : inputB)[j < seperationIndex ? j : j - seperationIndex];
-				int16_t weight = weights[weightStride + j];
-				sum += std::max(min, std::min(input, max)) * weight;
-			}
+			for (int j = 0; j < seperationIndex; j++)
+            {
+                int16_t input =  inputA[j];
+
+                int16_t weight = weights[weightStride + j];
+                sum += std::max(min, std::min(input, max)) * weight;
+            }
+
+            for (int j = 0; j < seperationIndex; j++)
+            {
+                int16_t input = inputB[j];
+
+                int16_t weight = weights[weightStride + j + seperationIndex];
+                sum += std::max(min, std::min(input, max)) * weight;
+            }
 			output[offset + i] = sum;
 			weightStride += inputSize;
 		}

@@ -314,7 +314,7 @@ void uci_loop()
     else if (token == "eval")
     {
       auto start = std::chrono::high_resolution_clock::now();
-      Evaluate(board);
+      int score = Evaluate(board);
       auto stop = std::chrono::high_resolution_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
 

@@ -15,12 +15,15 @@ Rice is not a complete chess program and requires a <a href="https://www.chesspr
 ### Features
 # Board Representation
 * Bitboards
+* Fancy magics for movegen
 
 # Search
 
 * Negamax
 * Alpha beta pruning
 * Quiescence search
+* Null move pruning (NMP)
+* Static null move pruning aka Reverse Futility Pruning
 * PVS (Principal Variation Search)
 * ZWS (Zero Window Search)
 * LMR (Late Move Reduction)
@@ -29,10 +32,8 @@ Rice is not a complete chess program and requires a <a href="https://www.chesspr
 * Transposition Table cutoffs and move ordering
 * History, killers and MVVLVA Move ordering
 
-# Evaluation (HCE)
-* PeSTO Tables
-* Rook open file bonus
-* and much more to add
+# Evaluation
+* NNUE (Efficiently updateable neural network)
 
 # Acknowledgements
 

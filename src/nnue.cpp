@@ -4,13 +4,8 @@
 #include "json.hpp"
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
-#if !defined(_MSC_VER)
+
 INCBIN(EVAL, "nn.nnue");
-#else
-const unsigned char gEVALData[1] = { 0x0 };
-const unsigned char* const gEmbeddedNNUEEnd = &gEVALData[1];
-const unsigned int gEmbeddedNNUESize = 1;
-#endif
 
 bool DEBUG = false;
 

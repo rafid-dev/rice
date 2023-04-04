@@ -62,11 +62,7 @@
 #define INCBIN_MACRO ".incbin"
 #endif
 
-#ifndef _MSC_VER
 #define INCBIN_ALIGN __attribute__((aligned(INCBIN_ALIGNMENT)))
-#else
-#define INCBIN_ALIGN __declspec(align(INCBIN_ALIGNMENT))
-#endif
 
 #if defined(__arm__) || /* GNU C and RealView */                               \
     defined(__arm) ||   /* Diab */                                             \
@@ -150,7 +146,7 @@
 /* On arm assemblers, `@' is used as a line comment token */
 #define INCBIN_TYPE(NAME)                                                      \
   ".type " INCBIN_STRINGIZE(INCBIN_PREFIX) #NAME ", %object\n"
-#elif defined(__MINGW32__) || defined(__MINGW64__)
+#elif defined(__MINGW32__) || defined(__MINGW64__) || defined(_MSC_VER)
 /* Mingw doesn't support this directive either */
 #define INCBIN_TYPE(NAME)
 #else
@@ -311,9 +307,6 @@
  * To externally reference the data included by this in another translation unit
  * please @see INCBIN_EXTERN.
  */
-#ifdef _MSC_VER
-#define INCBIN(NAME, FILENAME) INCBIN_EXTERN(NAME)
-#else
 #define INCBIN(NAME, FILENAME)                                                                        \
   __asm__(                                                                                            \
       INCBIN_SECTION INCBIN_GLOBAL_LABELS(                                                            \
@@ -334,5 +327,4 @@
                                               ".text\n");                                             \
   INCBIN_EXTERN(NAME)
 
-#endif
 #endif

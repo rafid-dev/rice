@@ -7,6 +7,15 @@
 #include <fstream>
 #include "chess.hpp"
 
+static inline void prefetch(const void *addr)
+{
+#if defined(__INTEL_COMPILER) || defined(_MSC_VER)
+	_mm_prefetch((char *)addr, _MM_HINT_T0);
+#else
+	__builtin_prefetch(addr);
+#endif
+}
+
 namespace NNUE
 {
 	enum AccumulatorOperation
@@ -23,8 +32,8 @@ namespace NNUE
 	const int QB = 64;
 	const int QAB = QA * QB;
 
-	const int CR_MIN = 0;
-	const int CR_MAX = 1 * QA;
+	const int16_t CR_MIN = 0;
+	const int16_t CR_MAX = 1 * QA;
 	const int SCALE = 400;
 
 	const int ACCUMULATOR_STACK_SIZE = 512;
@@ -61,29 +70,28 @@ namespace NNUE
 		}
 	}
 
-	static inline void CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int16_t min, int16_t max, int seperationIndex, int offset = 0)
+	template <int inputSize>
+	static inline void CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int seperationIndex, int offset = 0)
 	{
-		int inputSize = HIDDEN * 2;
 		int weightStride = 0;
 
 		for (int i = 0; i < OUTPUT; i++)
 		{
 			int sum = 0;
+
 			for (int j = 0; j < seperationIndex; j++)
-            {
-                int16_t input =  inputA[j];
+			{
+				int16_t input = inputA[j];
+				int16_t weight = weights[weightStride + j];
+				sum += std::clamp(input, CR_MIN, CR_MAX) * weight;
+			}
 
-                int16_t weight = weights[weightStride + j];
-                sum += std::max(min, std::min(input, max)) * weight;
-            }
-
-            for (int j = 0; j < seperationIndex; j++)
-            {
-                int16_t input = inputB[j];
-
-                int16_t weight = weights[weightStride + j + seperationIndex];
-                sum += std::max(min, std::min(input, max)) * weight;
-            }
+			for (int j = 0; j < seperationIndex; j++)
+			{
+				int16_t input = inputB[j];
+				int16_t weight = weights[weightStride + j + seperationIndex];
+				sum += std::clamp(input, CR_MIN, CR_MAX) * weight;
+			}
 			output[offset + i] = sum;
 			weightStride += inputSize;
 		}

@@ -311,14 +311,21 @@ void uci_loop()
       std::cout << board << std::endl;
       continue;
     }
-    else if (token == "eval")
+    else if (token == "be")
     {
-      auto start = std::chrono::high_resolution_clock::now();
-      int score = Evaluate(board);
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+      int64_t sum = 0;
+      int count = 100000000;
 
-      std::cout << duration.count() << std::endl;
+      for (int i = 0; i < count; i++){
+        auto start = std::chrono::high_resolution_clock::now();
+        Evaluate(board);
+        auto stop = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+        sum += duration.count();
+      }
+
+      std::cout << "Average NS: " << (sum/count) << std::endl;
+
       continue;
     }
     else if (token == "side")

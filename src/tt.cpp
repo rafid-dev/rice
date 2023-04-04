@@ -1,13 +1,12 @@
 #include "tt.h"
 
-
-void prefetch(const void* addr) {
+/*void prefetch(const void* addr) {
 #  if defined(__INTEL_COMPILER) || defined(_MSC_VER)
 	_mm_prefetch((char*)addr, _MM_HINT_T0);
 #  else
 	__builtin_prefetch(addr);
 #  endif
-}
+}*/
 
 void TranspositionTable::Initialize(int MB)
 {

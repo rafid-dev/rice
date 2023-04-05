@@ -7,15 +7,6 @@
 #include <fstream>
 #include "chess.hpp"
 
-static inline void prefetch(const void *addr)
-{
-#if defined(__INTEL_COMPILER) || defined(_MSC_VER)
-	_mm_prefetch((char *)addr, _MM_HINT_T0);
-#else
-	__builtin_prefetch(addr);
-#endif
-}
-
 namespace NNUE
 {
 	enum AccumulatorOperation

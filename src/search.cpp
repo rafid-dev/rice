@@ -384,6 +384,18 @@ movesloop:
       }
     }
 
+    if (!isRoot && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE && tte.depth >= depth - 3){
+      int singularBeta = tte.score - 3 * depth;
+      int singularDepth = (depth - 1)/2;
+
+      ss->excluded = tte.move;
+      int singularScore = AlphaBeta(singularBeta - 1, singularBeta, singularDepth, board, info, ss, table);
+      ss->excluded = NO_MOVE;
+
+      if (singularScore < singularBeta)
+          extension = 1;
+    }
+
     /* Initialize new depth based on extension*/
     int newDepth = depth + extension;
 

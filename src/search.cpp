@@ -392,8 +392,11 @@ movesloop:
       int singularScore = AlphaBeta(singularBeta - 1, singularBeta, singularDepth, board, info, ss, table);
       ss->excluded = NO_MOVE;
 
-      if (singularScore < singularBeta)
+      if (singularScore < singularBeta){
           extension = 1;
+      }else if (singularBeta >= beta){
+        return (singularBeta);
+      }
     }
 
     /* Initialize new depth based on extension*/

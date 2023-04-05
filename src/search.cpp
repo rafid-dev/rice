@@ -314,6 +314,12 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         return score;
       }
     }
+
+    if (depth <= 3 &&
+			eval - 63 + 182 * depth <= alpha)
+		{
+			return Quiescence(alpha, beta, board, info, ss, table);
+		}
   }
 
 movesloop:
@@ -384,6 +390,9 @@ movesloop:
       }
     }
 
+    /* Extensions 
+    * Search extra ply if move comes from tt
+    */
     if (!isRoot && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE && tte.depth >= depth - 3){
       int singularBeta = tte.score - 3 * depth;
       int singularDepth = (depth - 1)/2;

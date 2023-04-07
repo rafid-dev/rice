@@ -9,5 +9,5 @@ int LMRDivision = 236;
 void init_all()
 {
     InitSearch();
-    nnue.Init("so.json");
+    nnue.Init("a.json");
 }

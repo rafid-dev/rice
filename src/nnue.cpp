@@ -5,7 +5,7 @@
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
-INCBIN(EVAL, "nn.nnue");
+INCBIN(EVAL, "nn1.nnue");
 
 bool DEBUG = false;
 

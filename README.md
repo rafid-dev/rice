@@ -1,18 +1,17 @@
-﻿<div align="center">
-  <a href=".">
-    <img src="./imgs/logo.png" height="200"/>
-  </a>
+# Rice
+
+<div align="center">
+  <kbd>
+    <img src="./imgs/logo.png" />
+  </kbd>
 </div>
 
-# License: <a href="https://github.com/rafid-dev/rice-2.0/blob/main/LICENSE">MIT License</a>
+## Description
 
-# Overview
-
-Rice is a free and open source UCI chess engine written in C.
-
-Rice is not a complete chess program and requires a <a href="https://www.chessprogramming.org/UCI#GUIs">UCI-compatible graphical user interface</a> in order to be used comfortably.
+Rice is a strong, free and open source UCI chess engine written in C++.
 
 ### Features
+
 # Board Representation
 * Bitboards
 * Fancy magics for movegen
@@ -31,11 +30,27 @@ Rice is not a complete chess program and requires a <a href="https://www.chesspr
 * Movecount Pruning/LMP (Late Move Pruning)
 * Transposition Table cutoffs and move ordering
 * History, killers and MVVLVA Move ordering
+* Search Extensions
 
 # Evaluation
 * NNUE (Efficiently updateable neural network)
+* Net Architecture: 768->256x2->1
 
-# Acknowledgements
+### Building
+
+```bash
+$ git clone https://github.com/rafid-dev/rice
+$ cd rice/src
+$ make 
+$ ./Rice
+```
+
+### Usage
+The Universal Chess Interface (UCI) is a standard protocol used to communicate with
+a chess engine, and is the recommended way to do so for typical graphical user interfaces
+(GUI) or chess tools. Rice requires a <a href="https://www.chessprogramming.org/UCI#GUIs">UCI-compatible graphical user interface</a> in order to be used with the protocol.
+
+### Acknowledgements
 
 I would specially like to thank <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his <a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
 
@@ -48,3 +63,7 @@ Below are some really nice people who has helped me during the development of Ri
 * <a href="https://github.com/Ciekce">Ciekce/a>, author of <a href="https://github.com/Ciekce/Polaris">Polaris<a>.
 
 * and many more.
+
+### License
+
+This project is licensed under the [MIT License](LICENSE).

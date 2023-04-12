@@ -25,7 +25,7 @@ namespace NNUE
 
 	const int16_t CR_MIN = 0;
 	const int16_t CR_MAX = 1 * QA;
-	const int SCALE = 400;
+	const int SCALE = 1000;
 
 	const int ACCUMULATOR_STACK_SIZE = 512;
 

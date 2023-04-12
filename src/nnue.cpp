@@ -5,7 +5,7 @@
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
-INCBIN(EVAL, "nn1.nnue");
+INCBIN(EVAL, "nnx.nnue");
 
 bool DEBUG = false;
 
@@ -158,6 +158,7 @@ void Bias(json biasRelation, T &biasArray, int k)
 		i++;
 	}
 }
+
 
 bool NNUE::BasicNNUE::FromJson(const std::string &file_name)
 {

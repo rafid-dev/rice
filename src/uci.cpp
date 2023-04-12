@@ -327,6 +327,8 @@ void uci_loop()
       std::cout << "Average NS: " << (sum/count) << std::endl;
 
       continue;
+    }else if (token == "eval"){
+      std::cout << "Eval: " << Evaluate(board) << std::endl;
     }
     else if (token == "side")
     {

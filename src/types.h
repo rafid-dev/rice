@@ -15,8 +15,6 @@ using namespace Chess;
 
 #define IS_DEBUG true
 
-extern NNUE::BasicNNUE nnue;
-
 static inline bool is_capture(Board& board, Move move){
     return (board.pieceAtB(to(move)) != None);
 }

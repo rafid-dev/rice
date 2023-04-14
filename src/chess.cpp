@@ -1,13 +1,14 @@
 #include "types.h"
 
-NNUE::BasicNNUE nnue = NNUE::BasicNNUE();
-
 Board::Board(std::string fen)
 {
     initializeLookupTables();
     stateHistory.reserve(MAX_PLY);
     hashHistory.reserve(512);
     pawnKeyHistory.reserve(512);
+
+    nnue = new NNUE::BasicNNUE();
+    nnue->ReadBin();
 
     sideToMove = White;
     enPassantSquare = NO_SQ;
@@ -52,7 +53,7 @@ void Board::makeMove(Move move)
     hashHistory.emplace_back(hashKey);
     stateHistory.emplace_back(State(enPassantSquare, castlingRights, halfMoveClock, capture));
     pawnKeyHistory.emplace_back(pawnKey);
-    nnue.PushAccumulator();
+    nnue->PushAccumulator();
 
     halfMoveClock++;
     fullMoveNumber++;
@@ -154,8 +155,8 @@ void Board::makeMove(Move move)
         Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
 
         // Update accumulator efficiently
-        nnue.EfficientlyUpdateAccumulator(ROOK, sideToMove, to_sq, rookToSq);
-        nnue.EfficientlyUpdateAccumulator(KING, sideToMove, from_sq, kingToSq);
+        nnue->EfficientlyUpdateAccumulator(ROOK, sideToMove, to_sq, rookToSq);
+        nnue->EfficientlyUpdateAccumulator(KING, sideToMove, from_sq, kingToSq);
 
         removePiece(p, from_sq);
         removePiece(rook, to_sq);
@@ -169,7 +170,7 @@ void Board::makeMove(Move move)
 
         removePiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
         
-        nnue.EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(PAWN, ~sideToMove, Square(to_sq ^ 8));
+        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(PAWN, ~sideToMove, Square(to_sq ^ 8));
     }
     else if (capture != None && !isCastling)
     {
@@ -183,7 +184,7 @@ void Board::makeMove(Move move)
         removePiece(capture, to_sq);
 
         // Remove the captured piece from target square
-        nnue.EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(capture), ~sideToMove, to_sq);
+        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(capture), ~sideToMove, to_sq);
     }
 
     if (promoted(move))
@@ -195,15 +196,15 @@ void Board::makeMove(Move move)
 
         // Efficiently update the accumulator
         // Remove the pawn from the square and place the promoted piece.
-        nnue.EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(PAWN, sideToMove, from_sq);
-        nnue.EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(p), sideToMove, to_sq);
+        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(PAWN, sideToMove, from_sq);
+        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(p), sideToMove, to_sq);
     }
     else if (!isCastling)
     {
         assert(pieceAtB(to_sq) == None);
 
         movePiece(p, from_sq, to_sq);
-        nnue.EfficientlyUpdateAccumulator(type_of_piece(p), sideToMove, from_sq, to_sq);
+        nnue->EfficientlyUpdateAccumulator(type_of_piece(p), sideToMove, from_sq, to_sq);
     }
 
     sideToMove = ~sideToMove;
@@ -219,7 +220,7 @@ void Board::unmakeMove(Move move)
     pawnKey = pawnKeyHistory.back();
     pawnKeyHistory.pop_back();
 
-    nnue.PullAccumulator();
+    nnue->PullAccumulator();
 
     enPassantSquare = restore.enPassant;
     castlingRights = restore.castling;
@@ -358,8 +359,8 @@ void Board::applyFen(const std::string &fen)
     pawnKeyHistory.push_back(pawnKey);
 
     // Update the accumulators
-    nnue.ResetAccumulators();
-    nnue.RefreshAccumulator(*this);
+    nnue->ResetAccumulators();
+    nnue->RefreshAccumulator(*this);
 
 }
 

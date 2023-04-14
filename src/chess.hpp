@@ -12,7 +12,10 @@
 #include <unordered_map>
 #include <vector>
 #include "sliders.hpp"
-#include "nnue.h"
+
+namespace NNUE{
+    class BasicNNUE;
+}
 
 using namespace Chess_Lookup::Fancy;
 
@@ -851,6 +854,7 @@ inline U64 KingAttacks(Square sq)
 class Board
 {
   public:
+    NNUE::BasicNNUE* nnue;
     Color sideToMove;
 
     // NO_SQ when enpassant is not possible

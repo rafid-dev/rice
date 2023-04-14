@@ -7,6 +7,7 @@
 #include <fstream>
 #include "chess.hpp"
 
+
 namespace NNUE
 {
 	enum AccumulatorOperation
@@ -27,7 +28,7 @@ namespace NNUE
 	const int16_t CR_MAX = 1 * QA;
 	const int SCALE = 1000;
 
-	const int ACCUMULATOR_STACK_SIZE = 512;
+	const int ACCUMULATOR_STACK_SIZE = 512 * 6;
 
 	using acc_t = std::array<int16_t, HIDDEN>;
 	using feature_weight_t = std::array<int16_t, INPUT * HIDDEN>;
@@ -61,8 +62,8 @@ namespace NNUE
 		}
 	}
 
-	template <int inputSize>
-	static inline void CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int seperationIndex, int offset = 0)
+	template <int inputSize, int seperationIndex>
+	static inline void CReLUFlattenAndForward(acc_t &inputA, acc_t &inputB, output_weight_t &weights, output_t &output, int offset = 0)
 	{
 		int weightStride = 0;
 
@@ -115,9 +116,9 @@ namespace NNUE
 		input_t BlackPov;
 
 		output_t Output;
-		int CurrentAccumulator = 0;
 
-		std::array<BasicAccumulator, ACCUMULATOR_STACK_SIZE> Accumulators;
+		int CurrentAccumulator = 0;
+		std::vector<BasicAccumulator> Accumulators;
 
 	public:
 		BasicNNUE();

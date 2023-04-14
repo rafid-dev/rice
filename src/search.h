@@ -3,6 +3,8 @@
 #include "types.h"
 #include "tt.h"
 
+extern TranspositionTable* table;
+
 struct PVTable {
     int length[MAXPLY];
     Move array[MAXPLY][MAXPLY];
@@ -19,10 +21,12 @@ struct SearchInfo {
     long end_time = 0l;
     long stoptimeMax = 0l;
     long stoptimeOpt = 0l;
+    long stopNodes = 0l;
 
     bool timeset = false;
     bool stopped = false;
     bool uci = false;
+    bool nodeset = false;
 
     PVTable pv_table;
 };
@@ -36,10 +40,9 @@ struct SearchStack {
     Move counter = NO_MOVE;
 };
 
-struct SearchThreadData{
+struct SearchThreadData {
+    Board board;
     SearchInfo *info;
-    Board *position;
-    TranspositionTable *ttable;
 };
 
 extern int RFPMargin;
@@ -50,9 +53,9 @@ extern int LMRDivision;
 
 void InitSearch();
 
-void ClearForSearch(SearchInfo& info);
+void ClearForSearch(SearchInfo& info, TranspositionTable *table);
 
-void SearchPosition(Board& board, SearchInfo& info, TranspositionTable *table);
-int AlphaBeta(int alpha, int beta, int depth, Board& board, SearchInfo& info, SearchStack *ss, TranspositionTable *table);
-int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss, TranspositionTable *table);
-int AspirationWindowSearch(int prevEval, int depth, Board& board, SearchInfo& info, TranspositionTable *table);
+void SearchPosition(Board& board, SearchInfo& info);
+int AlphaBeta(int alpha, int beta, int depth, Board& board, SearchInfo& info, SearchStack *ss);
+int Quiescence(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss);
+int AspirationWindowSearch(int prevEval, int depth, Board& board, SearchInfo& info);

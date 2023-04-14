@@ -26,7 +26,7 @@ void InitSearch() {
 
 /* Function to check if time has ended and if we have to stop. */
 static void CheckUp(SearchInfo &info) {
-  if (info.timeset && GetTimeMs() > info.stoptimeMax) {
+  if ((info.timeset && GetTimeMs() > info.stoptimeMax) || (info.nodeset && info.nodes >= info.stopNodes)) {
     info.stopped = true;
   }
 }
@@ -53,11 +53,12 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
 
   /* Increment transposition table age */
   table->currentAge++;
+  
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
 int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
-               SearchStack *ss, TranspositionTable *table) {
+               SearchStack *ss) {
 
   /* Checking for time every 2048 nodes */
   if ((info.nodes & 2047) == 0) {
@@ -142,7 +143,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     ss->move = move;
 
     /* Recursive call of Quiescence on current position */
-    score = -Quiescence(-beta, -alpha, board, info, ss + 1, table);
+    score = -Quiescence(-beta, -alpha, board, info, ss + 1);
 
     /* Undo move on board */
     board.unmakeMove(move);
@@ -188,7 +189,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
 int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
-              SearchStack *ss, TranspositionTable *table) {
+              SearchStack *ss) {
 
   /* Initialize our pv table lenght. */
   info.pv_table.length[info.ply] = info.ply;
@@ -196,7 +197,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
    * and also end recursion.*/
   if (depth <= 0) {
-    return Quiescence(alpha, beta, board, info, ss, table);
+    return Quiescence(alpha, beta, board, info, ss);
   }
 
   /* Checking for time every 2048 nodes */
@@ -296,7 +297,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       info.ply++;
 
       score =
-          -AlphaBeta(-beta, -beta + 1, depth - R, board, info, ss + 1, table);
+          -AlphaBeta(-beta, -beta + 1, depth - R, board, info, ss + 1);
 
       info.ply--;
       board.unmakeNullMove();
@@ -314,12 +315,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         return score;
       }
     }
-
-    // if (depth <= 3 &&
-		// 	eval - 63 + 182 * depth <= alpha)
-		// {
-		// 	return Quiescence(alpha, beta, board, info, ss, table);
-		// }
   }
 
 movesloop:
@@ -398,7 +393,7 @@ movesloop:
       int singularDepth = (depth - 1)/2;
 
       ss->excluded = tte.move;
-      int singularScore = AlphaBeta(singularBeta - 1, singularBeta, singularDepth, board, info, ss, table);
+      int singularScore = AlphaBeta(singularBeta - 1, singularBeta, singularDepth, board, info, ss);
       ss->excluded = NO_MOVE;
 
       if (singularScore < singularBeta){
@@ -448,7 +443,7 @@ movesloop:
       reduction = std::min(depth - 1, std::max(1, reduction));
 
       score = -AlphaBeta(-alpha - 1, -alpha, newDepth - reduction, board, info,
-                         ss + 1, table);
+                         ss + 1);
 
       /* We do a full depth research if our score beats alpha. */
       do_fullsearch = score > alpha && reduction != 1;
@@ -460,14 +455,13 @@ movesloop:
 
     /* Full depth search on a zero window. */
     if (do_fullsearch) {
-      score = -AlphaBeta(-alpha - 1, -alpha, newDepth - 1, board, info, ss + 1,
-                         table);
+      score = -AlphaBeta(-alpha - 1, -alpha, newDepth - 1, board, info, ss + 1);
     }
 
     // Principal Variation Search (PVS)
     if (isPvNode && (moveCount == 1 || (score > alpha && score < beta))) {
       score =
-          -AlphaBeta(-beta, -alpha, newDepth - 1, board, info, ss + 1, table);
+          -AlphaBeta(-beta, -alpha, newDepth - 1, board, info, ss + 1);
     }
 
     // Undo move on board
@@ -542,7 +536,7 @@ movesloop:
   return bestscore;
 }
 
-void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
+void SearchPosition(Board &board, SearchInfo &info) {
   ClearForSearch(info, table);
   // Initialize search stack
   int score = 0;
@@ -552,8 +546,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
 
   for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
     score = AspirationWindowSearch(
-        score, current_depth, board, info,
-        table); // AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info,
+        score, current_depth, board, info); // AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info,
                 // ss, table);
     if (info.stopped == true || StopEarly(info)) {
       break;
@@ -581,7 +574,7 @@ void SearchPosition(Board &board, SearchInfo &info, TranspositionTable *table) {
 }
 
 int AspirationWindowSearch(int prevEval, int depth, Board &board,
-                           SearchInfo &info, TranspositionTable *table) {
+                           SearchInfo &info) {
   int score = 0;
 
   SearchStack stack[MAXPLY + 10];
@@ -598,7 +591,7 @@ int AspirationWindowSearch(int prevEval, int depth, Board &board,
   }
 
   while (true) {
-    score = AlphaBeta(alpha, beta, depth, board, info, ss, table);
+    score = AlphaBeta(alpha, beta, depth, board, info, ss);
 
     if (StopEarly(info)) {
       break;

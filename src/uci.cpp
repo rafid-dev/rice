@@ -5,10 +5,13 @@
 #include "search.h"
 #include "tt.h"
 #include "types.h"
+#include "datagen.h"
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <thread>
+
+//std::thread mainThread;
 
 static void uci_send_id()
 {
@@ -36,17 +39,21 @@ int LastHashSize = CurrentHashSize;
 
 bool IsUci = false;
 
-void uci_loop()
+TranspositionTable *table = new TranspositionTable();
+
+void uci_loop(int argv, char* argc[])
 {
 
   Board board;
   SearchInfo info;
 
-  TranspositionTable TTable;
+  if (argv > 2 && std::string{argc[1]} == "datagen"){
+    int threads = std::stoi(argc[2]);
+    table->Initialize(64 * threads);
+    generateData(1000000, threads);
+  }
 
-  TTable.Initialize(DefaultHashSize);
-
-  TranspositionTable *table = &TTable;
+  table->Initialize(DefaultHashSize);
 
   std::string command;
   std::string token;
@@ -77,7 +84,7 @@ void uci_loop()
     }
     else if (token == "ucinewgame")
     {
-      TTable.Initialize(CurrentHashSize);
+      table->Initialize(CurrentHashSize);
       std::cout << "readyok\n";
       continue;
     }
@@ -155,6 +162,7 @@ void uci_loop()
       int inc = 0;
       int movestogo = -1;
       int movetime = -1;
+      int nodes = -1;
 
       while (token != "none")
       {
@@ -230,12 +238,22 @@ void uci_loop()
           is >> std::skipws >> token;
           continue;
         }
+        if (token == "nodes"){
+          is >> std::skipws >> token;
+          nodes = stoi(token);
+          is >> std::skipws >> token;
+        }
         token = "none";
       }
       if (movetime != -1)
       {
         uciTime = movetime;
         movestogo = 1;
+      }
+
+      if (nodes != -1){
+        info.stopNodes = nodes;
+        info.nodeset = true;
       }
 
       info.start_time = GetTimeMs();
@@ -282,7 +300,7 @@ void uci_loop()
       if (IS_DEBUG){
          std::cout << "movestogo: " << movestogo << " time:" << uciTime << " start:" << info.start_time << " stop:" << info.stoptimeMax << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
       }
-      SearchPosition(board, info, table);
+      SearchPosition(board, info);
       // mainSearchThread =
       //     std::thread(SearchPosition, std::ref(board), std::ref(info), table);
     }
@@ -301,7 +319,7 @@ void uci_loop()
       {
         CurrentHashSize = std::min(CurrentHashSize, MAXHASH);
         LastHashSize = CurrentHashSize;
-        TTable.Initialize(CurrentHashSize);
+        table->Initialize(CurrentHashSize);
       }
     }
 
@@ -340,11 +358,16 @@ void uci_loop()
       info.depth = MAXDEPTH;
       info.timeset = false;
 
-      SearchPosition(board, info, table);
+      SearchPosition(board, info);
+    }else if (token == "datagen"){
+      table->Initialize(64 * 6);
+      generateData(1000000, 6);
     }
   }
 
-  TTable.clear();
+  table->clear();
+
+  delete table;
 
   std::cout << "\n";
   if (!info.uci)

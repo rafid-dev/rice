@@ -5,7 +5,7 @@
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
-INCBIN(EVAL, "nnx.nnue");
+INCBIN(EVAL, "./nnx.nnue");
 
 bool DEBUG = false;
 
@@ -39,6 +39,7 @@ void NNUE::BasicAccumulator::Clear()
 
 NNUE::BasicNNUE::BasicNNUE()
 {
+	Accumulators.reserve(ACCUMULATOR_STACK_SIZE);
 	BasicAccumulator acc;
 	std::fill(Accumulators.begin(), Accumulators.end(), acc);
 }
@@ -110,11 +111,11 @@ int NNUE::BasicNNUE::Evaluate(Chess::Color side)
 
 	if (side == Chess::White)
 	{
-		CReLUFlattenAndForward<HIDDEN * 2>(accumulator.White, accumulator.Black, OutWeight, Output, HIDDEN);
+		CReLUFlattenAndForward<HIDDEN * 2, HIDDEN>(accumulator.White, accumulator.Black, OutWeight, Output);
 	}
 	else
 	{
-		CReLUFlattenAndForward<HIDDEN * 2>(accumulator.Black, accumulator.White, OutWeight, Output, HIDDEN);
+		CReLUFlattenAndForward<HIDDEN * 2, HIDDEN>(accumulator.Black, accumulator.White, OutWeight, Output);
 	}
 
 	return (Output[0] + OutBias[0]) * SCALE / QAB;

@@ -60,7 +60,7 @@ Below are some really nice people who has helped me during the development of Ri
 * <a href="https://github.com/pgg106">Zuppa</a>, author of <a href="https://github.com/PGG106/Alexandria/">Alexandria</a>.
 * <a href="https://github.com/raklaptudirm">Rak</a>, author of <a href="https://github.com/raklaptudirm/mess">Mess</a>.
 * <a href="https://github.com/archishou">Archi</a>, author of <a href="https://github.com/archishou/MidnightChessEngine">MidnightChessEngine<a>.
-* <a href="https://github.com/Ciekce">Ciekce/a>, author of <a href="https://github.com/Ciekce/Polaris">Polaris<a>.
+* <a href="https://github.com/Ciekce">Ciekce, author of <a href="https://github.com/Ciekce/Polaris">Polaris<a>.
 
 * and many more.
 

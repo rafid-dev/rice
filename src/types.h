@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nnue.h"
+#include "chess.hpp"
 
 using namespace Chess;
 

@@ -1,8 +1,8 @@
 #include "datagen.h"
 
-std::atomic<bool> stop_flag = false;
-std::atomic<uint64_t> total_fens = 0;
-std::atomic<uint64_t> total_games = 0;
+std::atomic<bool> stop_flag(false);
+std::atomic<uint64_t> total_fens(0);
+std::atomic<uint64_t> total_games(0);
 
 static inline std::string ToString(FenData &fenData)
 {
@@ -17,7 +17,7 @@ static inline void NodesOver(SearchInfo &info)
     }
 }
 
-static inline void MakeRandomMoves(Board &board)
+ inline void MakeRandomMoves(Board &board)
 {
     srand(time(NULL));
     Movelist list;
@@ -48,8 +48,7 @@ int search_best_move(Board &board, SearchInfo &info)
 
     ClearForSearch(info, table);
     
-    board.nnue->RefreshAccumulator(board);
-    board.nnue->ResetAccumulators();
+    board.Refresh();
 
     int score = 0;
 
@@ -107,8 +106,7 @@ int sanity_search(Board &board, SearchInfo &info)
     SearchStack *ss = stack + 7; // Have some safety overhead.
 
     ClearForSearch(info, table);
-    board.nnue->RefreshAccumulator(board);
-    board.nnue->ResetAccumulators();
+    board.Refresh();
 
     int score = 0;
 
@@ -180,9 +178,9 @@ void playGames(int id, int games , int threadcount)
 {
     Board board;
     SearchInfo info;
+    info.timeset = false;
     info.stopNodes = 5000;
     info.nodeset = true;
-    info.timeset = false;
     info.depth = MAXDEPTH;
 
     std::ofstream outfile("./data" + std::to_string(id) + ".txt", std::ios::app);
@@ -192,7 +190,7 @@ void playGames(int id, int games , int threadcount)
     if (outfile.is_open())
     {
         if (id == 0){
-            std::cout << "datagen started successfully!" << std::endl;
+            std::cout << "datagen started successfully! with " << threadcount << " threads and " << games << " games!" << std::endl;
         }
         for (int i = 1; i <= games; i++)
         {
@@ -211,7 +209,7 @@ void playGames(int id, int games , int threadcount)
             }
 
             if (id == 0 && !(i % 100)){
-                std::cout << "iter "<< i << ":\t| total games: " << total_games << " | total_fens: " << total_fens << " | speed: " << (total_fens * 1000 / (1 + GetTimeMs() - start_time)) << " fens/s | " << ((total_fens * 1000 / (1 + GetTimeMs() - start_time))*60) << " fens/m | " << ((total_fens * 1000 / (1 + GetTimeMs() - start_time))*60*60) << " fens/hour" << std::endl;
+                std::cout << "gamecount "<< i << ":\t| total games: " << total_games << " | total_fens: " << total_fens << " | speed: " << (total_fens * 1000 / (1 + GetTimeMs() - start_time)) << " fens/s | " << ((total_fens * 1000 / (1 + GetTimeMs() - start_time))*60) << " fens/m | " << ((total_fens * 1000 / (1 + GetTimeMs() - start_time))*60*60) << " fens/hour" << std::endl;
             }
         }
     }else std::cout << "Unable to open file" << std::endl;

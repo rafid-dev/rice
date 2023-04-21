@@ -1,0 +1,3 @@
+[submodule "src/MantaRay"]
+	path = src/MantaRay
+	url = https://github.com/TheBlackPlague/MantaRay.git

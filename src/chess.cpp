@@ -1,4 +1,21 @@
 #include "types.h"
+#define INCBIN_STYLE INCBIN_STYLE_CAMEL
+#include "incbin/incbin.h"
+
+INCBIN(EVAL, "./nnx.nnue");
+
+void Board::Refresh(){
+    nnue->ResetAccumulator();
+    nnue->RefreshAccumulator();
+
+    for (Square sq = SQ_A1; sq < NO_SQ; sq++){
+        PieceType p = pieceTypeAtB(sq);
+
+        if (p == NONETYPE)continue;
+
+        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Activate>(p, colorOf(sq), sq);
+    }
+}
 
 Board::Board(std::string fen)
 {
@@ -7,8 +24,12 @@ Board::Board(std::string fen)
     hashHistory.reserve(512);
     pawnKeyHistory.reserve(512);
 
-    nnue = new NNUE::BasicNNUE();
-    nnue->ReadBin();
+     MantaRay::BinaryMemoryStream stream(gEVALData, gEVALSize);
+    //  MantaRay::MarlinflowStream stream(R"(./anet.json)");
+
+    nnue = new PerspectiveNetwork(stream);
+    //  MantaRay::BinaryFileStream str(R"(./anet.nnue)");
+     // nnue->WriteTo(str);
 
     sideToMove = White;
     enPassantSquare = NO_SQ;
@@ -170,7 +191,7 @@ void Board::makeMove(Move move)
 
         removePiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
         
-        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(PAWN, ~sideToMove, Square(to_sq ^ 8));
+        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Deactivate>(PAWN, ~sideToMove, Square(to_sq ^ 8));
     }
     else if (capture != None && !isCastling)
     {
@@ -184,7 +205,7 @@ void Board::makeMove(Move move)
         removePiece(capture, to_sq);
 
         // Remove the captured piece from target square
-        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(capture), ~sideToMove, to_sq);
+        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Deactivate>(type_of_piece(capture), ~sideToMove, to_sq);
     }
 
     if (promoted(move))
@@ -196,8 +217,8 @@ void Board::makeMove(Move move)
 
         // Efficiently update the accumulator
         // Remove the pawn from the square and place the promoted piece.
-        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(PAWN, sideToMove, from_sq);
-        nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(p), sideToMove, to_sq);
+        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Deactivate>(PAWN, sideToMove, from_sq);
+        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Activate>(type_of_piece(p), sideToMove, to_sq);
     }
     else if (!isCastling)
     {
@@ -358,10 +379,7 @@ void Board::applyFen(const std::string &fen)
     hashHistory.push_back(hashKey);
     pawnKeyHistory.push_back(pawnKey);
 
-    // Update the accumulators
-    nnue->ResetAccumulators();
-    nnue->RefreshAccumulator(*this);
-
+    Refresh();
 }
 
 void Board::makeNullMove()
@@ -399,7 +417,7 @@ void Board::removePiece(Piece piece, Square sq)
     piecesBB[piece] &= ~(1ULL << sq);
     board[sq] = None;
 
-    //nnue.EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(piece), colorOf(sq), sq);
+    //nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(piece), colorOf(sq), sq);
 }
 
  void Board::placePiece(Piece piece, Square sq)
@@ -407,7 +425,7 @@ void Board::removePiece(Piece piece, Square sq)
     piecesBB[piece] |= (1ULL << sq);
     board[sq] = piece;
 
-    //nnue.EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(piece), colorOf(sq), sq);
+    //nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(piece), colorOf(sq), sq);
 }
 
  void Board::movePiece(Piece piece, Square fromSq, Square toSq)
@@ -417,5 +435,5 @@ void Board::removePiece(Piece piece, Square sq)
     board[fromSq] = None;
     board[toSq] = piece;
 
-    //nnue.EfficientlyUpdateAccumulator(type_of_piece(piece), colorOf(toSq), fromSq, toSq);
+    //nnue->EfficientlyUpdateAccumulator(type_of_piece(piece), colorOf(toSq), fromSq, toSq);
 }

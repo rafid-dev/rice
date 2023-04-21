@@ -1,9 +1,8 @@
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
-CXX       := g++
+CXX       := clang++
 TARGET    := Rice
-CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=gnu++2a -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference \
--Wlogical-op -Wunused -Wundef -DNDEBUG
+CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=c++20 -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wunused -Wundef -DNDEBUG
 NATIVE     = -march=native	
 
 # engine name
@@ -13,10 +12,10 @@ NAME      := Rice
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	SUFFIX  := .exe
-	FLAGS    = -pthread -lstdc++ -static
-	CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	FLAGS    = 
+	CXXFLAGS += -v -static -fuse-ld=lld
 else
-	FLAGS   = -lpthread -lstdc++
+	FLAGS   = -static -fuse-ld=lld
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif
@@ -63,7 +62,7 @@ ifeq ($(build), x86-64-bmi2)
 endif
 
 ifeq ($(build), debug)
-	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=gnu++2a
+	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++20
 	NATIVE   = -msse -msse3 -mpopcnt
 	FLAGS    = -lpthread -lstdc++
 endif

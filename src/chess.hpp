@@ -12,10 +12,15 @@
 #include <unordered_map>
 #include <vector>
 #include "sliders.hpp"
+#include "MantaRay/src/Perspective/PerspectiveNNUE.h"
+#include "MantaRay/src/Activation/ClippedReLU.h"
 
-namespace NNUE{
-    class BasicNNUE;
-}
+constexpr int16_t INPUT_NEURONS = 768;
+constexpr int16_t HIDDEN_NEURONS = 256;
+constexpr int OUTPUT_NEURONS = 1;
+
+using ActivationFunction = MantaRay::ClippedReLU<int16_t, 0, 255>;
+using PerspectiveNetwork = MantaRay::PerspectiveNetwork<int16_t, int32_t, ActivationFunction, INPUT_NEURONS, HIDDEN_NEURONS, OUTPUT_NEURONS, 512, 1000, 255, 64>;
 
 using namespace Chess_Lookup::Fancy;
 
@@ -854,7 +859,7 @@ inline U64 KingAttacks(Square sq)
 class Board
 {
   public:
-    NNUE::BasicNNUE* nnue;
+    PerspectiveNetwork* nnue;
     Color sideToMove;
 
     // NO_SQ when enpassant is not possible
@@ -955,6 +960,8 @@ class Board
     bool nonPawnMat(Color c) const;
 
     Square KingSQ(Color c) const;
+
+    void Refresh();
 
     U64 Enemy(Color c) const;
     U64 EnemyEmpty(Color c) const;

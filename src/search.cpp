@@ -8,70 +8,84 @@
 #include <cstring>
 #include <iostream>
 
-
 /* Refer to init.cpp for search parameter values. */
 
 int LMRTable[MAXDEPTH][64];
 
 /* Initialize LMR table using the log formula */
-void InitSearch() {
+void InitSearch()
+{
   float base = static_cast<float>(static_cast<float>(LMRBase) / 100);
   float division = static_cast<float>(static_cast<float>(LMRDivision) / 100);
-  for (int depth = 1; depth < MAXDEPTH; depth++) {
-    for (int played = 1; played < 64; played++) {
+  for (int depth = 1; depth < MAXDEPTH; depth++)
+  {
+    for (int played = 1; played < 64; played++)
+    {
       LMRTable[depth][played] = base + log(depth) * log(played) / division;
     }
   }
 }
 
 /* Function to check if time has ended and if we have to stop. */
-static void CheckUp(SearchInfo &info) {
-  if ((info.timeset && GetTimeMs() > info.stoptimeMax) || (info.nodeset && info.nodes >= info.stopNodes)) {
+static void CheckUp(SearchInfo &info)
+{
+  if ((info.timeset && GetTimeMs() > info.stoptimeMax) || (info.nodeset && info.nodes >= info.stopNodes))
+  {
     info.stopped = true;
   }
 }
 
-static bool StopEarly(SearchInfo &info) {
-  if (info.timeset && (GetTimeMs() > info.stoptimeOpt || info.stopped)) {
+static bool StopEarly(SearchInfo &info)
+{
+  if (info.timeset && (GetTimeMs() > info.stoptimeOpt || info.stopped))
+  {
     return true;
-  } else {
+  }
+  else
+  {
     return false;
   }
 }
 
 /* Clear helper variables for search */
-void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
+void ClearForSearch(SearchInfo &info, TranspositionTable *table)
+{
   info.nodes = 0;
   info.stopped = false;
 
   // Reset history
-  for (int x = 0; x < 12; x++) {
-    for (int i = 0; i < 64; i++) {
+  for (int x = 0; x < 12; x++)
+  {
+    for (int i = 0; i < 64; i++)
+    {
       info.searchHistory[x][i] = 0;
     }
   }
 
   /* Increment transposition table age */
   table->currentAge++;
-  
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
 int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
-               SearchStack *ss) {
+               SearchStack *ss)
+{
 
   /* Checking for time every 2048 nodes */
-  if ((info.nodes & 2047) == 0) {
+  if ((info.nodes & 2047) == 0)
+  {
     CheckUp(info);
   }
 
   /* We return static evaluation if we exceed max depth */
-  if (info.ply > MAXPLY - 1) {
+  if (info.ply > MAXPLY - 1)
+  {
     return Evaluate(board);
   }
 
   /* Repetition check */
-  if (board.isRepetition()) {
+  if (board.isRepetition())
+  {
     return 0;
   }
 
@@ -79,22 +93,25 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
   int standing_pat = Evaluate(board);
 
   /* if our static evaluation beats beta, we return beta.*/
-  if (standing_pat >= beta) {
+  if (standing_pat >= beta)
+  {
     return beta;
   }
 
   /* if our static evaluation betas alpha, we set alpha to standing_pat */
-  if (standing_pat > alpha) {
+  if (standing_pat > alpha)
+  {
     alpha = standing_pat;
   }
 
   /* Probe Tranpsosition Table */
-  TTEntry tte;
+  bool ttHit = false;
   bool isPvNode = (beta - alpha) > 1;
-  bool ttHit = table->probeEntry(board.hashKey, &tte, info.ply);
+  TTEntry &tte = table->probeEntry(board.hashKey, ttHit, info.ply);
 
   /* Return TT score if we found a TT entry*/
-  if (!isPvNode && ttHit) {
+  if (!isPvNode && ttHit)
+  {
     if ((tte.flag == HFALPHA && tte.score <= alpha) ||
         (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
       return tte.score;
@@ -119,7 +136,8 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
   score_moves(board, list, tte.move);
 
   /* Moves loop */
-  for (int i = 0; i < list.size; i++) {
+  for (int i = 0; i < list.size; i++)
+  {
     /* Pick next move with highest score */
     pickNextMove(i, list);
 
@@ -127,7 +145,8 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 
     /* SEE pruning in Quiescence search */
     /* If we do not SEE a good capture move, we can skip the move.*/
-    if (list.list[i].value < GoodCaptureScore && moveCount >= 1) {
+    if (list.list[i].value < GoodCaptureScore && moveCount >= 1)
+    {
       continue;
     }
 
@@ -152,21 +171,25 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     info.ply--;
 
     /* Return 0 if time is up */
-    if (info.stopped) {
+    if (info.stopped)
+    {
       return 0;
     }
 
     /* If our score beats bestscore, bestmove is move that beat bestscore and
      * bestscore is set to the current score*/
-    if (score > bestscore) {
+    if (score > bestscore)
+    {
       bestmove = move;
       bestscore = score;
 
-      if (score > alpha) {
+      if (score > alpha)
+      {
         alpha = score;
 
         /* Fail soft */
-        if (score >= beta) {
+        if (score >= beta)
+        {
           break;
         }
       }
@@ -189,19 +212,22 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
 int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
-              SearchStack *ss) {
+              SearchStack *ss)
+{
 
   /* Initialize our pv table lenght. */
   info.pv_table.length[info.ply] = info.ply;
 
   /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
    * and also end recursion.*/
-  if (depth <= 0) {
+  if (depth <= 0)
+  {
     return Quiescence(alpha, beta, board, info, ss);
   }
 
   /* Checking for time every 2048 nodes */
-  if ((info.nodes & 2047) == 0) {
+  if ((info.nodes & 2047) == 0)
+  {
     CheckUp(info);
   }
 
@@ -215,30 +241,37 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   bool improving = false;
 
   /* In check extension. We search an extra ply if we are in check. */
-  if (inCheck) {
+  if (inCheck)
+  {
     depth++;
   }
 
   /* We return static evaluation if we exceed max depth.*/
-  if (info.ply > MAXPLY - 1) {
+  if (info.ply > MAXPLY - 1)
+  {
     return Evaluate(board);
   }
 
   /* Repetition check*/
-  if ((board.isRepetition()) && info.ply) {
+  if ((board.isRepetition()) && info.ply)
+  {
     return 0;
   }
 
   /* Probe transposition table */
-  TTEntry tte;
-  bool ttHit = ss->excluded != NO_MOVE
-                   ? false
-                   : table->probeEntry(board.hashKey, &tte, info.ply);
+  bool ttHit = false;
+  TTEntry &tte = table->probeEntry(board.hashKey, ttHit, info.ply);
+
+  if (ss->excluded)
+  {
+    ttHit = false;
+  }
 
   /* If we hit a transposition table entry and the depth >= tt entry depth
      and the following conditions meet we will return the tt score. */
 
-  if (!isPvNode && ttHit && tte.depth >= depth) {
+  if (!isPvNode && ttHit && tte.depth >= depth)
+  {
     if ((tte.flag == HFALPHA && tte.score <= alpha) ||
         (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
       return tte.score;
@@ -258,18 +291,21 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
   /* We set static evaluation to 0 if we are in check or if we have hit an
    * excluded move. */
   /* and also set improving to false. */
-  if (inCheck || ss->excluded) {
+  if (inCheck || ss->excluded)
+  {
     ss->static_eval = eval = 0;
     improving = false;
     goto movesloop;
   }
 
   /* Reverse Futility Pruning || Null Move Pruning */
-  if (!isPvNode && !inCheck && info.ply && !ss->excluded) {
+  if (!isPvNode && !inCheck && info.ply && !ss->excluded)
+  {
 
     /* We can use tt entry's score as score if we hit one.*/
     /* This score is from search so this is more accurate */
-    if (ttHit) {
+    if (ttHit)
+    {
       eval = tte.score;
     }
 
@@ -277,7 +313,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
      * If the eval is well above beta by a margin, then we assume the eval will
      * hold above beta.
      */
-    if (depth <= RFPDepth && eval - ((depth - improving) * RFPMargin) >= beta) {
+    if (depth <= RFPDepth && eval - ((depth - improving) * RFPMargin) >= beta)
+    {
       return eval;
     }
 
@@ -288,7 +325,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     if (eval >= beta && ss->static_eval >= beta &&
         board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
-        ((ss - 1)->move != NULL_MOVE)) {
+        ((ss - 1)->move != NULL_MOVE))
+    {
 
       int R = 3 + depth / 3 + std::min((eval - beta) / 200, 3);
 
@@ -302,11 +340,13 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
       info.ply--;
       board.unmakeNullMove();
 
-      if (info.stopped) {
+      if (info.stopped)
+      {
         return 0;
       }
 
-      if (score >= beta) {
+      if (score >= beta)
+      {
 
         /* We don't return mate scores because it can be a false mate. */
         if (score > ISMATE)
@@ -339,7 +379,8 @@ movesloop:
   score_moves(board, list, ss, info, tte.move);
 
   /* Move loop */
-  for (int i = 0; i < list.size; i++) {
+  for (int i = 0; i < list.size; i++)
+  {
     // Pick move with highest possible score
     pickNextMove(i, list);
 
@@ -353,18 +394,22 @@ movesloop:
     bool isQuiet = (!promoted(move) && !is_capture(board, move));
     bool skipQuiets = false;
     int extension = 0;
-    if (isQuiet && skipQuiets) {
+    if (isQuiet && skipQuiets)
+    {
       continue;
     }
 
-    if (!isRoot && bestscore > -ISMATE) {
+    if (!isRoot && bestscore > -ISMATE)
+    {
 
       /* Various pruning techniques */
-      if (isQuiet) {
+      if (isQuiet)
+      {
         /* Late Move Pruning/Movecount pruning */
         /* If we have searched many moves, we can skip the rest. */
         if (!isPvNode && !inCheck && depth <= 4 &&
-            quietList.size >= (depth * depth * 4)) {
+            quietList.size >= (depth * depth * 4))
+        {
           continue;
         }
 
@@ -373,32 +418,40 @@ movesloop:
          */
 
         /* SEE Pruning for quiets */
-        if (depth < 6 && !see(board, move, -50 * depth)) {
+        if (depth < 6 && !see(board, move, -50 * depth))
+        {
           continue;
         }
-      } else {
+      }
+      else
+      {
 
         /* SEE Pruning for non quiets */
-        if (depth < 4 && !see(board, move, -45 * depth)) {
+        if (depth < 4 && !see(board, move, -45 * depth))
+        {
           continue;
         }
       }
     }
 
-    /* Extensions 
-    * Search extra ply if move comes from tt
-    */
-    if (!isRoot && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE && tte.depth >= depth - 3){
+    /* Extensions
+     * Search extra ply if move comes from tt
+     */
+    if (!isRoot && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE && tte.depth >= depth - 3)
+    {
       int singularBeta = tte.score - 3 * depth;
-      int singularDepth = (depth - 1)/2;
+      int singularDepth = (depth - 1) / 2;
 
       ss->excluded = tte.move;
       int singularScore = AlphaBeta(singularBeta - 1, singularBeta, singularDepth, board, info, ss);
       ss->excluded = NO_MOVE;
 
-      if (singularScore < singularBeta){
-          extension = 1;
-      }else if (singularBeta >= beta){
+      if (singularScore < singularBeta)
+      {
+        extension = 1;
+      }
+      else if (singularBeta >= beta)
+      {
         return (singularBeta);
       }
     }
@@ -419,7 +472,8 @@ movesloop:
     moveCount++;
 
     /* Add quiet to quiet list if it's a quiet move. */
-    if (isQuiet) {
+    if (isQuiet)
+    {
       quietList.Add(move);
     }
 
@@ -431,11 +485,12 @@ movesloop:
      * If they beat alpha, It will be researched in a reduced window but full
      * depth.
      */
-    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode)) {
+    if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode))
+    {
       int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
-      reduction += !improving; /* Increase reduction if we're not improving. */
-      reduction += !isPvNode;   /* Increase for non pv nodes */
+      reduction += !improving;                                /* Increase reduction if we're not improving. */
+      reduction += !isPvNode;                                 /* Increase for non pv nodes */
       reduction += isQuiet && !see(board, move, -50 * depth); /* Increase for quiets and not winning captures */
 
       /* Adjust the reduction so we don't drop into Qsearch or cause an
@@ -447,19 +502,23 @@ movesloop:
 
       /* We do a full depth research if our score beats alpha. */
       do_fullsearch = score > alpha && reduction != 1;
-    } else {
+    }
+    else
+    {
 
       /* Zero window search. */
       do_fullsearch = !isPvNode || moveCount > 1;
     }
 
     /* Full depth search on a zero window. */
-    if (do_fullsearch) {
+    if (do_fullsearch)
+    {
       score = -AlphaBeta(-alpha - 1, -alpha, newDepth - 1, board, info, ss + 1);
     }
 
     // Principal Variation Search (PVS)
-    if (isPvNode && (moveCount == 1 || (score > alpha && score < beta))) {
+    if (isPvNode && (moveCount == 1 || (score > alpha && score < beta)))
+    {
       score =
           -AlphaBeta(-beta, -alpha, newDepth - 1, board, info, ss + 1);
     }
@@ -469,14 +528,17 @@ movesloop:
     // Decrement ply
     info.ply--;
 
-    if (info.stopped == true && !isRoot) {
+    if (info.stopped == true && !isRoot)
+    {
       return 0;
     }
 
-    if (score > bestscore) {
+    if (score > bestscore)
+    {
       bestscore = score;
 
-      if (score > alpha) {
+      if (score > alpha)
+      {
         // Record PV
         alpha = score;
 
@@ -484,15 +546,18 @@ movesloop:
 
         info.pv_table.array[info.ply][info.ply] = bestmove;
         for (int next_ply = info.ply + 1;
-             next_ply < info.pv_table.length[info.ply + 1]; next_ply++) {
+             next_ply < info.pv_table.length[info.ply + 1]; next_ply++)
+        {
           info.pv_table.array[info.ply][next_ply] =
               info.pv_table.array[info.ply + 1][next_ply];
         }
 
         info.pv_table.length[info.ply] = info.pv_table.length[info.ply + 1];
 
-        if (score >= beta) {
-          if (isQuiet) {
+        if (score >= beta)
+        {
+          if (isQuiet)
+          {
             // Update killers
             ss->killers[1] = ss->killers[0];
             ss->killers[0] = move;
@@ -511,15 +576,20 @@ movesloop:
     // We are safe to break out of the loop if we are sure that we don't return
     // illegal move
     if (info.stopped == true && isRoot &&
-        info.pv_table.array[0][0] != NO_MOVE) {
+        info.pv_table.array[0][0] != NO_MOVE)
+    {
       break;
     }
   }
 
-  if (moveCount == 0) {
-    if (inCheck) {
+  if (moveCount == 0)
+  {
+    if (inCheck)
+    {
       return -ISMATE + info.ply; // Checkmate
-    } else {
+    }
+    else
+    {
       return 0; // Stalemate
     }
   }
@@ -528,7 +598,8 @@ movesloop:
              : (alpha != oldAlpha) ? HFEXACT
                                    : HFALPHA;
 
-  if (ss->excluded == NO_MOVE) {
+  if (ss->excluded == NO_MOVE)
+  {
     table->storeEntry(board.hashKey, flag, bestmove, depth, bestscore,
                       ss->static_eval, info.ply, isPvNode);
   }
@@ -536,7 +607,8 @@ movesloop:
   return bestscore;
 }
 
-void SearchPosition(Board &board, SearchInfo &info) {
+void SearchPosition(Board &board, SearchInfo &info)
+{
   ClearForSearch(info, table);
   // Initialize search stack
   int score = 0;
@@ -544,11 +616,13 @@ void SearchPosition(Board &board, SearchInfo &info) {
   long startime = GetTimeMs();
   Move bestmove = NO_MOVE;
 
-  for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
+  for (int current_depth = 1; current_depth <= info.depth; current_depth++)
+  {
     score = AspirationWindowSearch(
         score, current_depth, board, info); // AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info,
-                // ss, table);
-    if (info.stopped == true || StopEarly(info)) {
+                                            // ss, table);
+    if (info.stopped == true || StopEarly(info))
+    {
       break;
     }
 
@@ -564,7 +638,8 @@ void SearchPosition(Board &board, SearchInfo &info) {
     F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
     std::cout << " pv";
 
-    for (int i = 0; i < info.pv_table.length[0]; i++) {
+    for (int i = 0; i < info.pv_table.length[0]; i++)
+    {
       std::cout << " " << convertMoveToUci(info.pv_table.array[0][i]);
     }
     std::cout << std::endl;
@@ -574,7 +649,8 @@ void SearchPosition(Board &board, SearchInfo &info) {
 }
 
 int AspirationWindowSearch(int prevEval, int depth, Board &board,
-                           SearchInfo &info) {
+                           SearchInfo &info)
+{
   int score = 0;
 
   SearchStack stack[MAXPLY + 10];
@@ -585,24 +661,32 @@ int AspirationWindowSearch(int prevEval, int depth, Board &board,
   int alpha = -INF_BOUND;
   int beta = INF_BOUND;
 
-  if (depth > 3) {
+  if (depth > 3)
+  {
     alpha = std::max(-INF_BOUND, prevEval - delta);
     beta = std::min(prevEval + delta, INF_BOUND);
   }
 
-  while (true) {
+  while (true)
+  {
     score = AlphaBeta(alpha, beta, depth, board, info, ss);
 
-    if (StopEarly(info)) {
+    if (StopEarly(info))
+    {
       break;
     }
 
-    if ((score <= alpha)) {
+    if ((score <= alpha))
+    {
       beta = (alpha + beta) / 2;
       alpha = std::max(-INF_BOUND, score - delta);
-    } else if ((score >= beta)) {
+    }
+    else if ((score >= beta))
+    {
       beta = std::min(score + delta, INF_BOUND);
-    } else {
+    }
+    else
+    {
       break;
     }
     delta += delta / 2;

@@ -1,3 +1,7 @@
+#include <chrono>
+#include <iostream>
+#include <sstream>
+#include <thread>
 #include "uci.h"
 #include "eval.h"
 #include "misc.h"
@@ -6,12 +10,8 @@
 #include "tt.h"
 #include "types.h"
 #include "datagen.h"
-#include <chrono>
-#include <iostream>
-#include <sstream>
-#include <thread>
+#include "bench.h"
 
-//std::thread mainThread;
 
 static void uci_send_id()
 {
@@ -39,25 +39,30 @@ int LastHashSize = CurrentHashSize;
 
 bool IsUci = false;
 
-TranspositionTable *table = new TranspositionTable();
+TranspositionTable TTable;
+TranspositionTable *table = &TTable;
 
-void uci_loop(int argv, char* argc[])
+void uci_loop(int argv, char *argc[])
 {
-
   Board board;
   SearchInfo info;
 
-  if (argv > 2 && std::string{argc[1]} == "datagen"){
+  table->Initialize(DefaultHashSize);
+
+  if (argv > 2 && std::string{argc[1]} == "datagen")
+  {
     int threads = std::stoi(argc[2]);
     table->Initialize(64 * threads);
     generateData(1000000, threads);
+  }else if (argv > 1 && std::string{argc[1]} == "bench"){
+    info.depth = 13;
+    info.timeset = false;
+    StartBenchmark(board, info);
   }
-
-  table->Initialize(DefaultHashSize);
 
   std::string command;
   std::string token;
-
+  
   while (true)
   {
     token.clear();
@@ -75,6 +80,7 @@ void uci_loop(int argv, char* argc[])
     else if (token == "quit")
     {
       info.stopped = true;
+
       break;
     }
     else if (token == "isready")
@@ -199,7 +205,8 @@ void uci_loop(int argv, char* argc[])
           is >> std::skipws >> token;
           continue;
         }
-        if (token == "btime"){
+        if (token == "btime")
+        {
           is >> std::skipws >> token;
           if (board.sideToMove == Black)
           {
@@ -238,7 +245,8 @@ void uci_loop(int argv, char* argc[])
           is >> std::skipws >> token;
           continue;
         }
-        if (token == "nodes"){
+        if (token == "nodes")
+        {
           is >> std::skipws >> token;
           nodes = stoi(token);
           is >> std::skipws >> token;
@@ -250,8 +258,8 @@ void uci_loop(int argv, char* argc[])
         uciTime = movetime;
         movestogo = 1;
       }
-
-      if (nodes != -1){
+      if (nodes != -1)
+      {
         info.stopNodes = nodes;
         info.nodeset = true;
       }
@@ -263,7 +271,8 @@ void uci_loop(int argv, char* argc[])
         info.timeset = true;
       }
 
-      if (info.timeset && movestogo != -1){
+      if (info.timeset && movestogo != -1)
+      {
         int safety_overhead = 50;
 
         uciTime -= safety_overhead;
@@ -272,7 +281,9 @@ void uci_loop(int argv, char* argc[])
 
         info.stoptimeMax = info.start_time + time_slot;
         info.stoptimeOpt = info.start_time + time_slot;
-      }else if (info.timeset){
+      }
+      else if (info.timeset)
+      {
 
         uciTime /= 40;
 
@@ -286,7 +297,6 @@ void uci_loop(int argv, char* argc[])
         int maxtime = std::min(uciTime, basetime * 2);
         info.stoptimeMax = info.start_time + maxtime;
         info.stoptimeOpt = info.start_time + optime;
-
       }
 
       if (depth == -1)
@@ -297,12 +307,13 @@ void uci_loop(int argv, char* argc[])
       info.stopped = false;
       info.uci = IsUci;
 
-      if (IS_DEBUG){
-         std::cout << "movestogo: " << movestogo << " time:" << uciTime << " start:" << info.start_time << " stop:" << info.stoptimeMax << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
+      if (IS_DEBUG)
+      {
+        std::cout << "movestogo: " << movestogo << " time:" << uciTime << " start:" << info.start_time << " stop:" << info.stoptimeMax << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
       }
       SearchPosition(board, info);
       // mainSearchThread =
-      //     std::thread(SearchPosition, std::ref(board), std::ref(info), table);
+      //     std::thread(SearchPosition, std::ref(board), std::ref(info));
     }
 
     else if (token == "setoption")
@@ -333,19 +344,24 @@ void uci_loop(int argv, char* argc[])
     {
       int64_t sum = 0;
       int count = 100000000;
+      int64_t score = 0;
+      auto start = std::chrono::high_resolution_clock::now();
 
-      for (int i = 0; i < count; i++){
-        auto start = std::chrono::high_resolution_clock::now();
-        Evaluate(board);
-        auto stop = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-        sum += duration.count();
+      for (int i = 0; i < count; i++)
+      {
+
+        score += Evaluate(board);
       }
-
-      std::cout << "Average NS: " << (sum/count) << std::endl;
+      auto stop = std::chrono::high_resolution_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+      sum += duration.count();
+      std::cout << "Average NS: " << (sum / count) << std::endl;
+      std::cout << score << std::endl;
 
       continue;
-    }else if (token == "eval"){
+    }
+    else if (token == "eval")
+    {
       std::cout << "Eval: " << Evaluate(board) << std::endl;
     }
     else if (token == "side")
@@ -353,21 +369,20 @@ void uci_loop(int argv, char* argc[])
       std::cout << (board.sideToMove == White ? "White" : "Black\n")
                 << std::endl;
     }
-    else if (token == "run")
+    else if (token == "bench")
     {
-      info.depth = MAXDEPTH;
+      info.depth = 13;
       info.timeset = false;
-
-      SearchPosition(board, info);
-    }else if (token == "datagen"){
+      StartBenchmark(board, info);
+    }
+    else if (token == "datagen")
+    {
       table->Initialize(64 * 6);
       generateData(1000000, 6);
     }
   }
 
   table->clear();
-
-  delete table;
 
   std::cout << "\n";
   if (!info.uci)

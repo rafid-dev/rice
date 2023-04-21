@@ -14,4 +14,5 @@ struct FenData
     std::string wdl;
 };
 
+void MakeRandomMoves(Board& board);
 void generateData(int games, int threadCount);

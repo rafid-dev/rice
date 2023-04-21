@@ -18,19 +18,19 @@ void TranspositionTable::Initialize(int MB)
     //std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)\n";
 }
 
-void TranspositionTable::storeEntry(U64 key, int f, Move move, int depth, int score, int eval, int ply, bool pv)
+void TranspositionTable::storeEntry(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score, int16_t eval, int ply, bool pv)
 {
-    int index = reduce_hash(key, entries.size());
+    TTEntry& entry = entries[reduce_hash(key, entries.size())];
 
     bool replace = false;
 
-    if (entries[index].key == 0ULL)
+    if (entry.key == 0ULL)
     {
         replace = true;
     }
     else
     {
-        if (entries[index].age < currentAge || entries[index].depth <= depth){
+        if (entry.age < currentAge || entry.depth <= depth){
             replace = true;
         }
     }
@@ -44,37 +44,35 @@ void TranspositionTable::storeEntry(U64 key, int f, Move move, int depth, int sc
     else if (score < -ISMATE)
         score -= ply;
 
-    // if (move != NO_MOVE || key != entries[index].key)
-    // {
-    //     entries[index].move = move;
-    // }
+    if (move != NO_MOVE || key != entry.key)
+    {
+        entry.move = move;
+    }
 
-    // if (f == HFEXACT || key != entries[index].key || depth + 7 + 2 * pv > entries[index].depth - 4)
-    // {
-        entries[index].key = key;
-        entries[index].flag = f;
-        entries[index].move = move;
-        entries[index].depth = depth;
-        entries[index].score = score;
-        entries[index].eval = eval;
-        entries[index].age = currentAge;
-        entries[index].pv = pv;
-    //}
-
+    if (f == HFEXACT || key != entry.key || depth + 7 + 2 * pv > entry.depth - 4)
+    {
+        entry.key = key;
+        entry.flag = f;
+        entry.move = move;
+        entry.depth = depth;
+        entry.score = score;
+        entry.eval = eval;
+        entry.age = currentAge;
+    }
 }
 
-bool TranspositionTable::probeEntry(U64 key, TTEntry *entry, int ply)
+TTEntry& TranspositionTable::probeEntry(U64 key, bool& ttHit, int ply)
 {
-    int index = reduce_hash(key, entries.size());
+    TTEntry& entry = entries[reduce_hash(key, entries.size())];
 
-    *entry = entries[index];
+    if (entry.score > ISMATE)
+        entry.score -= ply;
+    else if (entry.score < -ISMATE)
+        entry.score += ply;
 
-    if (entry->score > ISMATE)
-        entry->score -= ply;
-    else if (entry->score < -ISMATE)
-        entry->score += ply;
+    ttHit = (entry.key == key);
 
-    return (entry->key == key);
+    return entry;
 }
 
 void TranspositionTable::prefetchTT(const U64 key){

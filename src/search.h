@@ -13,7 +13,7 @@ struct PVTable {
 struct SearchInfo {
     int ply = 0;
     int depth = 0;
-    int searchHistory[NPIECES][NSQUARES] = {0};
+    int searchHistory[NPIECES][NSQUARES] = {{0}};
     
     long nodes = 0l;
 

@@ -54,7 +54,7 @@ a chess engine, and is the recommended way to do so for typical graphical user i
 
 I would specially like to thank <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his <a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
 
-I would also like to specially thank <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>, author of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo<a>, for enormous help in implementing NNUE.
+I would also like to specially thank <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>, author of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo<a>, for enormous help in implementing NNUE and for MantaRay.
 
 Below are some really nice people who has helped me during the development of Rice.
 * <a href="https://github.com/pgg106">Zuppa</a>, author of <a href="https://github.com/PGG106/Alexandria/">Alexandria</a>.

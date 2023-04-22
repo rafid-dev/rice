@@ -441,15 +441,13 @@ movesloop:
             int reduction =
                 LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
-            reduction +=
-                !improving; /* Increase reduction if we're not improving. */
+            reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !isPvNode; /* Increase for non pv nodes */
-            reduction +=
-                isQuiet &&
+            reduction += isQuiet &&
                 !see(board, move, -50 * depth); /* Increase for quiets and not
                                                    winning captures */
 
-            reduction -= (ss->killers[0] == move || ss->killers[1] == move) * 2;
+            reduction -= (ss->killers[0] == move || ss->killers[1] == move) * 2; /* Reduce two plies if it's a killer* /
             
             
             /* Adjust the reduction so we don't drop into Qsearch or cause an

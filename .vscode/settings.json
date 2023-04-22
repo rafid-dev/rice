@@ -63,5 +63,6 @@
         "optional": "cpp",
         "ranges": "cpp",
         "valarray": "cpp"
-    }
+    },
+    "clang-format.style": "{IndentWidth: 4}"
 }

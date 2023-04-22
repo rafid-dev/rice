@@ -15,13 +15,13 @@ struct SearchInfo {
     int depth = 0;
     int searchHistory[NPIECES][NSQUARES] = {{0}};
     
-    long nodes = 0l;
+    uint64_t nodes = 0l;
 
-    long start_time = 0l;
-    long end_time = 0l;
-    long stoptimeMax = 0l;
-    long stoptimeOpt = 0l;
-    long stopNodes = 0l;
+    int64_t start_time = 0l;
+    int64_t end_time = 0l;
+    int64_t stoptimeMax = 0l;
+    int64_t stoptimeOpt = 0l;
+    int64_t stopNodes = 0l;
 
     bool timeset = false;
     bool stopped = false;
@@ -37,7 +37,6 @@ struct SearchStack {
     Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
-    Move counter = NO_MOVE;
 };
 
 struct SearchThreadData {

@@ -49,10 +49,6 @@ void score_moves(Board &board, Movelist &list, SearchStack *ss, SearchInfo &info
             // Score for killer 2
             list.list[i].value = Killer2Score;
         }
-        else if (list.list[i].move == ss->counter){
-            // If it's a counter move
-            //list.list[i].value = CounterScore;
-        }
         else
         {
             // Otherwise, history score.

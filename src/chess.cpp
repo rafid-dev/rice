@@ -25,11 +25,11 @@ Board::Board(std::string fen)
     pawnKeyHistory.reserve(512);
 
      MantaRay::BinaryMemoryStream stream(gEVALData, gEVALSize);
-    //  MantaRay::MarlinflowStream stream(R"(./anet.json)");
+    //  MantaRay::MarlinflowStream stream(R"(./2.json)");
 
     nnue = new PerspectiveNetwork(stream);
-    //  MantaRay::BinaryFileStream str(R"(./anet.nnue)");
-     // nnue->WriteTo(str);
+    //  MantaRay::BinaryFileStream str(R"(./nettt1.nnue)");
+    //  nnue->WriteTo(str);
 
     sideToMove = White;
     enPassantSquare = NO_SQ;

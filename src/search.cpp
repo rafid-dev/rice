@@ -325,7 +325,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
                 return score;
             }
         }
-        
 
         // Probcut (~10 elo)
         int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
@@ -418,8 +417,9 @@ movesloop:
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
-            if (isQuiet && !isPvNode && !inCheck && depth <= 4 &&
-                quietList.size >= (depth * depth * 4)) {
+            if (isQuiet && !isPvNode && !inCheck && depth <= 5 &&
+                quietList.size >= depth * depth * (2 + 2*improving)) {
+                skipQuiets = true;
                 continue;
             }
 

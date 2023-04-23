@@ -15,7 +15,7 @@ struct SearchInfo {
     int depth = 0;
     int searchHistory[NPIECES][NSQUARES] = {{0}};
     
-    uint64_t nodes = 0l;
+    int64_t nodes = 0l;
 
     int64_t start_time = 0l;
     int64_t end_time = 0l;

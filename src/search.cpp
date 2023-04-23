@@ -325,6 +325,47 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
                 return score;
             }
         }
+        
+
+        // Probcut pruning (~10 elo)
+        int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
+        if (depth >= 5 && abs(beta) < ISMATE &&
+            (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
+            Movelist list;
+            Movegen::legalmoves<CAPTURE>(board, list);
+            score_moves(board, list, ss, info, tte.move);
+            int score = 0;
+            for (int i = 0; i < list.size; i++) {
+                pickNextMove(i, list);
+                Move move = list.list[i].move;
+
+                if (list.list[i].value < GoodCaptureScore) {
+                    continue;
+                }
+
+                if (move == tte.move) {
+                    continue;
+                }
+
+                board.makeMove(move);
+
+                score = -Quiescence(-rbeta, -rbeta + 1, board, info, ss);
+
+                if (score >= rbeta) {
+                    score = -AlphaBeta(-rbeta, -rbeta + 1, depth - 4, board,
+                                       info, ss);
+                }
+
+                board.unmakeMove(move);
+
+                if (score >= rbeta) {
+                    table->storeEntry(board.hashKey, HFBETA, move, depth - 3,
+                                      score, ss->static_eval, info.ply,
+                                      isPvNode);
+                    return score;
+                }
+            }
+        }
     }
 
 movesloop:
@@ -363,7 +404,10 @@ movesloop:
         bool isQuiet = (!promoted(move) && !is_capture(board, move));
         bool skipQuiets = false;
         int extension = 0;
-        int historyScore = isQuiet ? info.searchHistory[board.pieceAtB(from(move))][to(move)] : 0;
+
+        // TODO: Use this for LMR
+        // int historyScore = isQuiet ?
+        // info.searchHistory[board.pieceAtB(from(move))][to(move)] : 0;
         if (isQuiet && skipQuiets) {
             continue;
         }
@@ -371,16 +415,16 @@ movesloop:
         if (!isRoot && bestscore > -ISMATE) {
 
             /* Various pruning techniques */
-            /* Late Move Pruning/Movecount pruning */
-            /* If we have searched many moves, we can skip the rest. */
+
+            /* Late Move Pruning/Movecount pruning
+                 If we have searched many moves, we can skip the rest. */
             if (isQuiet && !isPvNode && !inCheck && depth <= 4 &&
                 quietList.size >= (depth * depth * 4)) {
                 continue;
             }
 
-            /* SEE Pruning
-             * Dont search moves at low depths that seem to lose material
-             */
+            // SEE Pruning
+            // Dont search moves at low depths that seem to lose material
 
             if ((isQuiet ? depth < 6 : depth < 4) &&
                 !see(board, move, (isQuiet ? -50 * depth : -45 * depth))) {
@@ -441,15 +485,17 @@ movesloop:
             int reduction =
                 LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
-            reduction += !improving; /* Increase reduction if we're not improving. */
+            reduction +=
+                !improving; /* Increase reduction if we're not improving. */
             reduction += !isPvNode; /* Increase for non pv nodes */
-            reduction += isQuiet &&
+            reduction +=
+                isQuiet &&
                 !see(board, move, -50 * depth); /* Increase for quiets and not
                                                    winning captures */
 
-            reduction -= (ss->killers[0] == move || ss->killers[1] == move) * 2; /* Reduce two plies if it's a killer* /
-            
-            
+            reduction -= (ss->killers[0] == move || ss->killers[1] == move) *
+                         2; /* Reduce two plies if it's a killer */
+
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/
             reduction = std::min(depth - 1, std::max(1, reduction));

@@ -327,7 +327,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
         }
         
 
-        // Probcut pruning (~10 elo)
+        // Probcut (~10 elo)
         int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
         if (depth >= 5 && abs(beta) < ISMATE &&
             (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {

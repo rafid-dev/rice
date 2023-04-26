@@ -11,13 +11,15 @@
 #include "types.h"
 #include "datagen.h"
 #include "bench.h"
-
+#include "perft.h"
 
 static void uci_send_id()
 {
   std::cout << "id name " << NAME << "\n";
   std::cout << "id author " << AUTHOR << "\n";
   std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << "\n";
+
+
   std::cout << "uciok\n";
 }
 
@@ -320,12 +322,23 @@ void uci_loop(int argv, char *argc[])
     {
       is >> std::skipws >> token;
       is >> std::skipws >> token;
+
       set_option(is, token, "Hash", CurrentHashSize);
+
+      // Tuner related options
       set_option(is, token, "RFPMargin", RFPMargin);
       set_option(is, token, "RFPDepth", RFPDepth);
+
       set_option(is, token, "LMRBase", LMRBase);
       set_option(is, token, "LMRDivision", LMRDivision);
+
+      set_option(is, token, "NMPBase", NMPBase);
+      set_option(is, token, "NMPDivison", NMPDivision);
+      set_option(is, token, "NMPMargin", NMPMargin);
+
+
       InitSearch();
+
       if (CurrentHashSize != LastHashSize)
       {
         CurrentHashSize = std::min(CurrentHashSize, MAXHASH);
@@ -363,6 +376,8 @@ void uci_loop(int argv, char *argc[])
     else if (token == "eval")
     {
       std::cout << "Eval: " << Evaluate(board) << std::endl;
+    }else if (token == "repetition"){
+      std::cout << board.isRepetition() << std::endl;
     }
     else if (token == "side")
     {
@@ -379,6 +394,10 @@ void uci_loop(int argv, char *argc[])
     {
       table->Initialize(64 * 6);
       generateData(1000000, 6);
+    }else if (token == "perft"){
+      is >> std::skipws >> token;
+      int depth = stoi(token);
+      PerftTest(board, depth);
     }
   }
 

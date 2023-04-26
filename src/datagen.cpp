@@ -143,14 +143,14 @@ bool play_game(Board &board, SearchInfo &info, std::ofstream &outfile)
         int score =  search_best_move(board, info);
         entry.eval = board.sideToMove == White ? score : -score;
 
-        Move move = info.pv_table.array[0][0];
+        Move move = info.pvTable[0][0];
 
         bool cap = is_capture(board, move);
 
         bool InCheck =
             board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
         //std::cout << convertMoveToUci(info.pv_table.array[0][0]) << std::endl;
-        board.makeMove(info.pv_table.array[0][0]);
+        board.makeMove(info.pvTable[0][0]);
         ply++;
 
         bool TheirCheck =

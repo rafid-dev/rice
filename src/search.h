@@ -5,15 +5,42 @@
 
 extern TranspositionTable* table;
 
+enum SearchType {
+    QSEARCH,
+    ABSEARCH
+};
+
 struct PVTable {
-    int length[MAXPLY];
-    Move array[MAXPLY][MAXPLY];
+    std::array<int, MAXPLY> length;
+    std::array<std::array<Move, MAXPLY>, MAXPLY> array;
+
+    PVTable(){
+        for (auto& i : array){
+            for (auto& element : i){
+                element = NO_MOVE;
+            }
+        }
+    }
+
+    inline void print(){
+        std::cout << " pv";
+        for (int i = 0; i < length[0]; i++) {
+            std::cout << " " << convertMoveToUci(array[0][i]);
+        }
+        std::cout << std::endl;
+    }
+
+    std::array<Move, MAXPLY> operator[](int i){
+        return array[i];
+    }
 };
 
 struct SearchInfo {
-    int ply = 0;
+    int verifPlies = 0;
     int depth = 0;
-    int searchHistory[NPIECES][NSQUARES] = {{0}};
+
+    int16_t searchHistory[NPIECES][NSQUARES] = {{0}};
+    std::array<std::array<std::array<std::array<int16_t, 64>, 12>, 64>, 12> contHist;
     
     int64_t nodes = 0l;
 
@@ -28,20 +55,19 @@ struct SearchInfo {
     bool uci = false;
     bool nodeset = false;
 
-    PVTable pv_table;
+    PVTable pvTable;
+    Move bestmove = NO_MOVE;
 };
 
 struct SearchStack {
     int static_eval = 0;
+    int ply = 0;
 
     Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
-};
 
-struct SearchThreadData {
-    Board board;
-    SearchInfo *info;
+    Piece movedPiece = None;
 };
 
 extern int RFPMargin;
@@ -49,6 +75,10 @@ extern int RFPImprovingBonus;
 extern int RFPDepth;
 extern int LMRBase;
 extern int LMRDivision;
+
+extern int NMPBase;
+extern int NMPDivision;
+extern int NMPMargin;
 
 void InitSearch();
 

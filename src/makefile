@@ -63,7 +63,7 @@ endif
 
 ifeq ($(build), debug)
 	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++20
-	NATIVE   = -msse -msse3 -mpopcnt
+	NATIVE   = -msse -msse3 -mpopcnt -mavx -mavx2
 	FLAGS    = -lpthread -lstdc++
 endif
 
@@ -82,4 +82,4 @@ $(TARGET): $(OBJECTS)
 -include $(DEPENDS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto -MMD -MP -c -o $@ $< $(FLAGS)
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto -MMD -MP -c -o $@ $< $(FLAGS) -g3

@@ -12,8 +12,7 @@ void TranspositionTable::Initialize(int MB)
 {
     currentAge = 0;
     this->entries.resize((MB * 1024 * 1024) / sizeof(TTEntry), TTEntry());
-    TTEntry e;
-    std::fill(entries.begin(), entries.end(), e);
+    std::fill(entries.begin(), entries.end(), TTEntry());
 
     //std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)\n";
 }

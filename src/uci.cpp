@@ -13,12 +13,27 @@
 #include "bench.h"
 #include "perft.h"
 
+bool TUNING = true;
+
+void print_tuning_parameter(std::string str, int value){
+  std::cout << "option name " << str << " type spin default " << value << " min -100000 max 100000" << std::endl;
+}
+
+void print_tuning_parameters(){
+      print_tuning_parameter("RFPMargin", RFPMargin);
+      print_tuning_parameter("RFPImproving", RFPImprovingBonus);
+      print_tuning_parameter("RFPDepth", RFPDepth);
+}
+
 static void uci_send_id()
 {
   std::cout << "id name " << NAME << "\n";
   std::cout << "id author " << AUTHOR << "\n";
   std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << "\n";
 
+  if (TUNING){
+    print_tuning_parameters();
+  }
 
   std::cout << "uciok\n";
 }
@@ -327,6 +342,7 @@ void uci_loop(int argv, char *argc[])
 
       // Tuner related options
       set_option(is, token, "RFPMargin", RFPMargin);
+      set_option(is, token, "RFPImproving", RFPImprovingBonus);
       set_option(is, token, "RFPDepth", RFPDepth);
 
       set_option(is, token, "LMRBase", LMRBase);

@@ -4,6 +4,7 @@
 // Initialize Search Parameters
 int RFPMargin = 75;
 int RFPDepth = 5;
+int RFPImprovingBonus = 62;
 int LMRBase = 75;
 int LMRDivision = 225;
 

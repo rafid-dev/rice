@@ -41,6 +41,7 @@ struct SearchInfo {
 
     int16_t searchHistory[NPIECES][NSQUARES] = {{0}};
     std::array<std::array<std::array<std::array<int16_t, 64>, 12>, 64>, 12> contHist;
+    int16_t captureHistory[12][64][12];
     
     int64_t nodes = 0l;
 
@@ -66,6 +67,7 @@ struct SearchStack {
     Move excluded = NO_MOVE;
     Move move = NO_MOVE;
     Move killers[2] = {NO_MOVE, NO_MOVE};
+    Move counter = NO_MOVE;
 
     Piece movedPiece = None;
 };

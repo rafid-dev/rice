@@ -15,7 +15,7 @@ int mvv_lva[12][12] = {
     402, 502, 602, 101, 201, 301, 401, 501, 601, 101, 201, 301, 401, 501, 601,
     100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600};
 
-static inline int GetConthHistoryScore(Board &board, SearchInfo &info,
+int GetConthHistoryScore(Board &board, SearchInfo &info,
                                        SearchStack *ss, const Move move) {
     Move previous_move = (ss - 1)->move;
     Move previous_previous_move = (ss - 2)->move;
@@ -32,6 +32,10 @@ static inline int GetConthHistoryScore(Board &board, SearchInfo &info,
                            [movedPiece][to(move)] : 0;
 
     return previous_score + previous_previous_score;
+}
+
+static inline int GetCaptureHIstoryScore(Board& board, SearchInfo& info, const Move move){
+    return info.captureHistory[board.pieceAtB(from(move))][to(move)][board.pieceAtB(to(move))];
 }
 
 // Move scoring
@@ -51,19 +55,16 @@ void score_moves(Board &board, Movelist &list, SearchStack *ss,
             // victim, Least Valuable Attacker) and if see move that doesn't
             // lose material, we add additional bonus
 
-            list.list[i].value =
-                mvv_lva[attacker][victim] +
-                (GoodCaptureScore * see(board, list.list[i].move, -107));
+            list.list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list.list[i].move, -107));
         } else if (list.list[i].move == ss->killers[0]) {
             // Score for killer 1
             list.list[i].value = Killer1Score;
         } else if (list.list[i].move == ss->killers[1]) {
             // Score for killer 2
             list.list[i].value = Killer2Score;
-        } else {
+        }else {
             // Otherwise, history score.
-            list.list[i].value =
-                info.searchHistory[attacker][to(list.list[i].move)] + GetConthHistoryScore(board, info, ss, list.list[i].move);
+            list.list[i].value = info.searchHistory[attacker][to(list.list[i].move)] + GetConthHistoryScore(board, info, ss, list.list[i].move);
         }
     }
 }
@@ -163,4 +164,14 @@ void UpdateContHistory(Board &board, SearchInfo &info, SearchStack *ss,
         int penalty = bonus - GetConthHistoryScore(board, info, ss, move) * std::abs(bonus) / MAXCOUNTERHISTORY;
         UpdateContHistoryScore(board, info, ss, move, -penalty);
     }
+}
+
+
+// TODO: Implement this soon.
+void UpdateCaptureHistory(Board& board, SearchInfo& info, Move bestmove, int depth){
+    // Update best move score
+    int bonus = std::min(depth * depth, 1200);
+    int score = std::min(GetCaptureHIstoryScore(board, info, bestmove) + bonus, MAXCOUNTERHISTORY);
+
+    info.captureHistory[board.pieceAtB(from(bestmove))][to(bestmove)][board.pieceAtB(to(bestmove))] = score;
 }

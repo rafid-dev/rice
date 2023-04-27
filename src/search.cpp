@@ -58,6 +58,7 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
     }
 
     memset(info.contHist.data(), 0, sizeof(info.contHist));
+    memset(info.captureHistory, 0, sizeof(info.captureHistory));
 
     /* Increment transposition table age */
     table->currentAge++;
@@ -420,6 +421,11 @@ movesloop:
 
         bool isQuiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
+        // int contHistScore =
+        //     isQuiet ? GetConthHistoryScore(board, info, ss, move) : 0;
+        
+        
+        bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
 
         // TODO: Use this for LMR
         // int historyScore = isQuiet ?
@@ -429,9 +435,12 @@ movesloop:
             continue;
         }
 
+        /* Various pruning techniques */
         if (!isRoot && bestscore > -ISMATE) {
 
-            /* Various pruning techniques */
+            // Initialize lmrDepth which we will use soon.
+            int lmrDepth =
+                LMRTable[std::min(depth, 63)][std::min(moveCount, 63)];
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
@@ -441,9 +450,14 @@ movesloop:
                 continue;
             }
 
+            // Futility pruning
+            if (lmrDepth <= 6 && !inCheck && isQuiet &&
+                eval + 217 + 71 * depth <= alpha) {
+                skipQuiets = true;
+            }
+
             // SEE Pruning
             // Dont search moves at low depths that seem to lose material
-
             if ((isQuiet ? depth < 6 : depth < 4) &&
                 !see(board, move, (isQuiet ? -50 * depth : -45 * depth))) {
                 continue;
@@ -501,18 +515,17 @@ movesloop:
          * If they beat alpha, It will be researched in a reduced window but
          * full depth.
          */
+        // clang-format off
         if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode)) {
-            int reduction =
-                LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
+            int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
 
-            reduction +=
-                !improving; /* Increase reduction if we're not improving. */
+            reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !isPvNode; /* Increase for non pv nodes */
             reduction += isQuiet && !see(board, move, -50 * depth); /* Increase
                                           for quiets and not winning captures */
 
-            reduction -= (ss->killers[0] == move || ss->killers[1] == move) *
-                         2; /* Reduce two plies if it's a killer */
+            // Reduce two plies if it's a counter or killer
+            reduction -= refutationMove * 2; 
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/
@@ -533,9 +546,10 @@ movesloop:
 
         // Principal Variation Search (PVS)
         if (isPvNode && (moveCount == 1 || (score > alpha && score < beta))) {
-            score =
-                -AlphaBeta(-beta, -alpha, newDepth - 1, board, info, ss + 1);
+            score = -AlphaBeta(-beta, -alpha, newDepth - 1, board, info, ss + 1);
         }
+
+        // clang-format on
 
         // Undo move on board
         board.unmakeMove(move);
@@ -553,12 +567,15 @@ movesloop:
                 bestmove = move;
 
                 info.pvTable.array[ss->ply][ss->ply] = bestmove;
-                for (int next_ply = ss->ply + 1; next_ply < info.pvTable.length[ss->ply + 1]; next_ply++) {
-                    info.pvTable.array[ss->ply][next_ply] = info.pvTable.array[ss->ply + 1][next_ply];
+                for (int next_ply = ss->ply + 1;
+                     next_ply < info.pvTable.length[ss->ply + 1]; next_ply++) {
+                    info.pvTable.array[ss->ply][next_ply] =
+                        info.pvTable.array[ss->ply + 1][next_ply];
                 }
 
                 info.pvTable.length[ss->ply] = info.pvTable.length[ss->ply + 1];
 
+                // clang-format off
                 if (score >= beta) {
                     if (isQuiet) {
                         // Update killers
@@ -568,9 +585,14 @@ movesloop:
                         // Record history score
                         UpdateHistory(board, info, bestmove, quietList, depth);
                         UpdateContHistory(board, info, ss, bestmove, quietList, depth);
+
                     }
+
+                    // TODO: Add capture history.
                     break;
                 }
+
+                // clang-format on
             }
         }
 
@@ -599,7 +621,7 @@ movesloop:
                           ss->static_eval, ss->ply, isPvNode);
     }
 
-    if (alpha != oldAlpha){
+    if (alpha != oldAlpha) {
         info.bestmove = bestmove;
     }
 
@@ -613,17 +635,18 @@ void SearchPosition(Board &board, SearchInfo &info) {
 
     long startime = GetTimeMs();
     Move bestmove = NO_MOVE;
-    
-    for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
-        score = AspirationWindowSearch( score, current_depth, board, info);
 
-        // score = AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info, ss);
+    for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
+        score = AspirationWindowSearch(score, current_depth, board, info);
+
+        // score = AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info,
+        // ss);
 
         if (info.stopped == true || StopEarly(info)) {
             break;
         }
 
-        bestmove = info.bestmove; //info.pvTable.array[0][0];
+        bestmove = info.bestmove; // info.pvTable.array[0][0];
 
         std::cout << "info score cp ";
         F_number(score, info.uci, FANCY_Yellow);
@@ -633,8 +656,8 @@ void SearchPosition(Board &board, SearchInfo &info) {
         F_number(info.nodes, info.uci, FANCY_Blue);
         std::cout << " time ";
         F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
-        
-        //info.pvTable.print();
+
+        // info.pvTable.print();
         std::cout << " pv " << convertMoveToUci(bestmove) << std::endl;
     }
 

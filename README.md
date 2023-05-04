@@ -13,7 +13,7 @@
 </div>
 
 ## Overview
-Rice is a powerful NNUE chess engine that combines the use of alpha-beta search with various other search techniques to achieve its impressive performance. This combination of methods allows Rice to effectively search through large numbers of potential moves and select the optimal move based on its evaluation function, which has been trained on a vast amount of data.
+Rice is a powerful NNUE chess engine that combines the use of alpha-beta search with various other search techniques to achieve its impressive performance.
 
 ## Features
 

@@ -55,7 +55,7 @@ void score_moves(Board &board, Movelist &list, SearchStack *ss,
             // victim, Least Valuable Attacker) and if see move that doesn't
             // lose material, we add additional bonus
 
-            list.list[i].value = mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list.list[i].move, -107));
+            list.list[i].value = info.captureHistory[attacker][to(list.list[i].move)][victim] + mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list.list[i].move, -107));
         } else if (list.list[i].move == ss->killers[0]) {
             // Score for killer 1
             list.list[i].value = Killer1Score;

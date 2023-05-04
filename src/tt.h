@@ -18,23 +18,23 @@ struct TTEntry {
 };
 
 class TranspositionTable {
-    private:
-    std::vector<TTEntry>entries;
+  private:
+    std::vector<TTEntry> entries;
 
-    public:
+  public:
     int currentAge = 0;
     void Initialize(int usersize);
-    void storeEntry(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score, int16_t eval, int ply, bool pv);
-    TTEntry& probeEntry(U64 key, bool& ttHit, int ply);
+    void storeEntry(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score,
+                    int16_t eval, int ply, bool pv);
+    TTEntry &probeEntry(U64 key, bool &ttHit, int ply);
     void prefetchTT(const U64 key);
     void clear();
 };
 
-static inline void prefetch(const void *addr)
-{
+static inline void prefetch(const void *addr) {
 #if defined(__INTEL_COMPILER) || defined(_MSC_VER)
-	_mm_prefetch((char *)addr, _MM_HINT_T0);
+    _mm_prefetch((char *)addr, _MM_HINT_T0);
 #else
-	__builtin_prefetch(addr);
+    __builtin_prefetch(addr);
 #endif
 }

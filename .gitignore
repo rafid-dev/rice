@@ -1,6 +1,6 @@
-.vscode
-binaries
-pgns
+src/.vscode
+src/binaries
+src/pgns
 obj
 debug
 tests
@@ -22,11 +22,3 @@ Rice
 *.sh
 sprt.bat
 sprt.sh
-virinet.nnue
-riceclang
-anet.nnue
-letsee.nnue
-nn69.nnue
-nn420.nnue
-onn.nnue
-onn2.nnue

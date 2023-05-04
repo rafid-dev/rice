@@ -30,7 +30,12 @@ struct PVTable {
         std::cout << std::endl;
     }
 
-    std::array<Move, MAXPLY> operator[](int i){
+    inline void clear(){
+        memset(length.data(), 0, sizeof(length));
+        memset(array.data(), 0, sizeof(array));
+    }
+
+    std::array<Move, MAXPLY>& operator[](int i){
         return array[i];
     }
 };

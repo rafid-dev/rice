@@ -58,12 +58,10 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
     }
 
     memset(info.contHist.data(), 0, sizeof(info.contHist));
-    memset(info.captureHistory, 0, sizeof(info.captureHistory));
+    info.pvTable.clear();
 
     /* Increment transposition table age */
     table->currentAge++;
-
-    // std::fill(info.contHist[0][0][0][0], info.contHist[0][0][0][0], 0);
 }
 
 /* Quiescence Search to prevent Horizon Effect.*/
@@ -399,7 +397,8 @@ movesloop:
     Movelist list;
     Movegen::legalmoves<ALL>(board, list);
 
-    Movelist quietList; // Quiet moves list
+    Movelist quietList;   // Quiet moves list
+    Movelist captureList; // Capture moveslist
 
     // Score moves and pass the tt move so it can be sorted highest
     score_moves(board, list, ss, info, tte.move);
@@ -412,7 +411,7 @@ movesloop:
         pickNextMove(i, list);
 
         // Initialize move variable
-        Move move = list.list[i].move;
+        Move move = list[i].move;
         Piece movedPiece = board.pieceAtB(from(move));
 
         // Skip excluded moves from extension
@@ -421,15 +420,17 @@ movesloop:
 
         bool isQuiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
-        // int contHistScore =
-        //     isQuiet ? GetConthHistoryScore(board, info, ss, move) : 0;
-        
-        
-        bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
+        int contHistScore =
+            isQuiet ? GetConthHistoryScore(board, info, ss, move) : 0;
 
-        // TODO: Use this for LMR
-        // int historyScore = isQuiet ?
-        // info.searchHistory[board.pieceAtB(from(move))][to(move)] : 0;
+        int historyScore =
+            isQuiet ? info.searchHistory[board.pieceAtB(from(move))][to(move)]
+                    : 0;
+
+        int allHistoryScore = contHistScore + historyScore;
+
+        bool refutationMove =
+            (ss->killers[0] == move || ss->killers[1] == move);
 
         if (isQuiet && skipQuiets) {
             continue;
@@ -533,6 +534,9 @@ movesloop:
 
             score = -AlphaBeta(-alpha - 1, -alpha, newDepth - reduction, board,
                                info, ss + 1);
+            
+
+            reduction -= allHistoryScore/12000;
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;
@@ -566,15 +570,6 @@ movesloop:
                 alpha = score;
                 bestmove = move;
 
-                info.pvTable.array[ss->ply][ss->ply] = bestmove;
-                for (int next_ply = ss->ply + 1;
-                     next_ply < info.pvTable.length[ss->ply + 1]; next_ply++) {
-                    info.pvTable.array[ss->ply][next_ply] =
-                        info.pvTable.array[ss->ply + 1][next_ply];
-                }
-
-                info.pvTable.length[ss->ply] = info.pvTable.length[ss->ply + 1];
-
                 // clang-format off
                 if (score >= beta) {
                     if (isQuiet) {
@@ -589,9 +584,9 @@ movesloop:
                     }
 
                     // TODO: Add capture history.
+                    // UpdateCaptureHistory(board, info, move, depth);
                     break;
                 }
-
                 // clang-format on
             }
         }
@@ -623,6 +618,13 @@ movesloop:
 
     if (alpha != oldAlpha) {
         info.bestmove = bestmove;
+        info.pvTable[ss->ply][ss->ply] = bestmove;
+
+        for (int next_ply = ss->ply + 1; next_ply < info.pvTable.length[ss->ply + 1]; next_ply++) {
+            info.pvTable[ss->ply][next_ply] = info.pvTable[ss->ply + 1][next_ply];
+        }
+
+        info.pvTable.length[ss->ply] = info.pvTable.length[ss->ply + 1];
     }
 
     return bestscore;
@@ -646,7 +648,7 @@ void SearchPosition(Board &board, SearchInfo &info) {
             break;
         }
 
-        bestmove = info.bestmove; // info.pvTable.array[0][0];
+        bestmove = info.pvTable[0][0];
 
         std::cout << "info score cp ";
         F_number(score, info.uci, FANCY_Yellow);
@@ -657,8 +659,8 @@ void SearchPosition(Board &board, SearchInfo &info) {
         std::cout << " time ";
         F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
 
-        // info.pvTable.print();
-        std::cout << " pv " << convertMoveToUci(bestmove) << std::endl;
+        info.pvTable.print();
+        // std::cout << " pv " << convertMoveToUci(bestmove) << std::endl;
     }
 
     std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;

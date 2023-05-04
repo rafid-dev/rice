@@ -2,34 +2,35 @@
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
-INCBIN(EVAL, "./nnx.nnue");
+INCBIN(EVAL, "./nn.nnue");
 
-void Board::Refresh(){
+void Board::Refresh() {
     nnue->ResetAccumulator();
     nnue->RefreshAccumulator();
 
-    for (Square sq = SQ_A1; sq < NO_SQ; sq++){
+    for (Square sq = SQ_A1; sq < NO_SQ; sq++) {
         PieceType p = pieceTypeAtB(sq);
 
-        if (p == NONETYPE)continue;
+        if (p == NONETYPE)
+            continue;
 
-        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Activate>(p, colorOf(sq), sq);
+        nnue->EfficientlyUpdateAccumulator<
+            MantaRay::AccumulatorOperation::Activate>(p, colorOf(sq), sq);
     }
 }
 
-Board::Board(std::string fen)
-{
+Board::Board(std::string fen) {
     initializeLookupTables();
     stateHistory.reserve(MAX_PLY);
     hashHistory.reserve(512);
     pawnKeyHistory.reserve(512);
 
-     MantaRay::BinaryMemoryStream stream(gEVALData, gEVALSize);
-    //  MantaRay::MarlinflowStream stream(R"(./2.json)");
+    MantaRay::BinaryMemoryStream stream(gEVALData, gEVALSize);
+    // MantaRay::MarlinflowStream stream(R"(./12.json)");
 
     nnue = new PerspectiveNetwork(stream);
-    //  MantaRay::BinaryFileStream str(R"(./nettt1.nnue)");
-    //  nnue->WriteTo(str);
+    // MantaRay::BinaryFileStream str(R"(./12.nnue)");
+    // nnue->WriteTo(str);
 
     sideToMove = White;
     enPassantSquare = NO_SQ;
@@ -53,8 +54,7 @@ Board::Board(std::string fen)
     enemyEmptyBB = EnemyEmpty(sideToMove);
 }
 
-void Board::makeMove(Move move)
-{
+void Board::makeMove(Move move) {
     PieceType pt = piece(move);
     Piece p = makePiece(pt, sideToMove);
     Square from_sq = from(move);
@@ -72,7 +72,8 @@ void Board::makeMove(Move move)
     // *****************************
 
     hashHistory.emplace_back(hashKey);
-    stateHistory.emplace_back(State(enPassantSquare, castlingRights, halfMoveClock, capture));
+    stateHistory.emplace_back(
+        State(enPassantSquare, castlingRights, halfMoveClock, capture));
     pawnKeyHistory.emplace_back(pawnKey);
     nnue->PushAccumulator();
 
@@ -80,7 +81,8 @@ void Board::makeMove(Move move)
     fullMoveNumber++;
 
     bool ep = to_sq == enPassantSquare;
-    const bool isCastling = pt == KING && type_of_piece(capture) == ROOK && colorOf(from_sq) == colorOf(to_sq);
+    const bool isCastling = pt == KING && type_of_piece(capture) == ROOK &&
+                            colorOf(from_sq) == colorOf(to_sq);
 
     // *****************************
     // UPDATE HASH
@@ -92,36 +94,28 @@ void Board::makeMove(Move move)
 
     hashKey ^= updateKeyCastling();
 
-    if (isCastling)
-    {
+    if (isCastling) {
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        Square rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
+        Square rookSQ = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D,
+                                         square_rank(from_sq));
 
         assert(type_of_piece(pieceAtB(to_sq)) == ROOK);
         hashKey ^= updateKeyPiece(rook, to_sq);
         hashKey ^= updateKeyPiece(rook, rookSQ);
     }
 
-    if (pt == KING)
-    {
+    if (pt == KING) {
         removeCastlingRightsAll(sideToMove);
-    }
-    else if (pt == ROOK)
-    {
+    } else if (pt == ROOK) {
         removeCastlingRightsRook(from_sq);
-    }
-    else if (pt == PAWN)
-    {
+    } else if (pt == PAWN) {
         halfMoveClock = 0;
-        if (ep)
-        {
-            hashKey ^= updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
-        }
-        else if (std::abs(from_sq - to_sq) == 16)
-        {
+        if (ep) {
+            hashKey ^=
+                updateKeyPiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
+        } else if (std::abs(from_sq - to_sq) == 16) {
             U64 epMask = PawnAttacks(Square(to_sq ^ 8), sideToMove);
-            if (epMask & pieces(PAWN, ~sideToMove))
-            {
+            if (epMask & pieces(PAWN, ~sideToMove)) {
                 enPassantSquare = Square(to_sq ^ 8);
                 hashKey ^= updateKeyEnPassant(enPassantSquare);
 
@@ -130,33 +124,27 @@ void Board::makeMove(Move move)
         }
     }
 
-    if (capture != None && !isCastling)
-    {
+    if (capture != None && !isCastling) {
         halfMoveClock = 0;
         hashKey ^= updateKeyPiece(capture, to_sq);
         if (type_of_piece(capture) == ROOK)
             removeCastlingRightsRook(to_sq);
     }
 
-    if (promoted(move))
-    {
+    if (promoted(move)) {
         halfMoveClock = 0;
 
         hashKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from_sq);
         hashKey ^= updateKeyPiece(p, to_sq);
 
-        if (pt == PAWN)
-        {
+        if (pt == PAWN) {
             pawnKey ^= updateKeyPiece(makePiece(PAWN, sideToMove), from_sq);
             pawnKey ^= updateKeyPiece(p, to_sq);
         }
-    }
-    else
-    {
+    } else {
         hashKey ^= updateKeyPiece(p, from_sq);
         hashKey ^= updateKeyPiece(p, to_sq);
-        if (pt == PAWN)
-        {
+        if (pt == PAWN) {
             pawnKey ^= updateKeyPiece(p, from_sq);
             pawnKey ^= updateKeyPiece(p, to_sq);
         }
@@ -169,11 +157,12 @@ void Board::makeMove(Move move)
     // UPDATE PIECES
     // *****************************
 
-    if (isCastling)
-    {
+    if (isCastling) {
         const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
-        Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+        Square rookToSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D,
+                                           square_rank(from_sq));
+        Square kingToSq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C,
+                                           square_rank(from_sq));
 
         // Update accumulator efficiently
         nnue->EfficientlyUpdateAccumulator(ROOK, sideToMove, to_sq, rookToSq);
@@ -184,32 +173,30 @@ void Board::makeMove(Move move)
 
         placePiece(p, kingToSq);
         placePiece(rook, rookToSq);
-    }
-    else if (pt == PAWN && ep)
-    {
+    } else if (pt == PAWN && ep) {
         assert(pieceAtB(Square(to_sq ^ 8)) != None);
 
         removePiece(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8));
-        
-        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Deactivate>(PAWN, ~sideToMove, Square(to_sq ^ 8));
-    }
-    else if (capture != None && !isCastling)
-    {
+
+        nnue->EfficientlyUpdateAccumulator<
+            MantaRay::AccumulatorOperation::Deactivate>(PAWN, ~sideToMove,
+                                                        Square(to_sq ^ 8));
+    } else if (capture != None && !isCastling) {
         assert(pieceAtB(to_sq) != None);
 
-        if (capture == WhitePawn || capture == BlackPawn)
-        {
+        if (capture == WhitePawn || capture == BlackPawn) {
             pawnKey ^= updateKeyPiece(capture, to_sq);
         }
 
         removePiece(capture, to_sq);
 
         // Remove the captured piece from target square
-        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Deactivate>(type_of_piece(capture), ~sideToMove, to_sq);
+        nnue->EfficientlyUpdateAccumulator<
+            MantaRay::AccumulatorOperation::Deactivate>(type_of_piece(capture),
+                                                        ~sideToMove, to_sq);
     }
 
-    if (promoted(move))
-    {
+    if (promoted(move)) {
         assert(pieceAtB(to_sq) == None);
 
         removePiece(makePiece(PAWN, sideToMove), from_sq);
@@ -217,22 +204,24 @@ void Board::makeMove(Move move)
 
         // Efficiently update the accumulator
         // Remove the pawn from the square and place the promoted piece.
-        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Deactivate>(PAWN, sideToMove, from_sq);
-        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Activate>(type_of_piece(p), sideToMove, to_sq);
-    }
-    else if (!isCastling)
-    {
+        nnue->EfficientlyUpdateAccumulator<
+            MantaRay::AccumulatorOperation::Deactivate>(PAWN, sideToMove,
+                                                        from_sq);
+        nnue->EfficientlyUpdateAccumulator<
+            MantaRay::AccumulatorOperation::Activate>(type_of_piece(p),
+                                                      sideToMove, to_sq);
+    } else if (!isCastling) {
         assert(pieceAtB(to_sq) == None);
 
         movePiece(p, from_sq, to_sq);
-        nnue->EfficientlyUpdateAccumulator(type_of_piece(p), sideToMove, from_sq, to_sq);
+        nnue->EfficientlyUpdateAccumulator(type_of_piece(p), sideToMove,
+                                           from_sq, to_sq);
     }
 
     sideToMove = ~sideToMove;
 }
 
-void Board::unmakeMove(Move move)
-{
+void Board::unmakeMove(Move move) {
     const State restore = stateHistory.back();
     stateHistory.pop_back();
 
@@ -258,14 +247,16 @@ void Board::unmakeMove(Move move)
     PieceType pt = piece(move);
     Piece p = makePiece(pt, sideToMove);
 
-    const bool isCastling = (p == WhiteKing && capture == WhiteRook) || (p == BlackKing && capture == BlackRook);
+    const bool isCastling = (p == WhiteKing && capture == WhiteRook) ||
+                            (p == BlackKing && capture == BlackRook);
 
-    if (isCastling)
-    {
+    if (isCastling) {
         Square rookToSq = to_sq;
         Piece rook = sideToMove == White ? WhiteRook : BlackRook;
-        Square rookFromSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
-        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
+        Square rookFromSq = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D,
+                                             square_rank(from_sq));
+        to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C,
+                                 square_rank(from_sq));
 
         // We need to remove both pieces first and then place them back.
         removePiece(rook, rookFromSq);
@@ -273,36 +264,28 @@ void Board::unmakeMove(Move move)
 
         placePiece(p, from_sq);
         placePiece(rook, rookToSq);
-    }
-    else if (promotion)
-    {
+    } else if (promotion) {
         removePiece(p, to_sq);
         placePiece(makePiece(PAWN, sideToMove), from_sq);
         if (capture != None)
             placePiece(capture, to_sq);
         return;
-    }
-    else
-    {
+    } else {
         movePiece(p, to_sq, from_sq);
     }
 
-    if (to_sq == enPassantSquare && pt == PAWN)
-    {
+    if (to_sq == enPassantSquare && pt == PAWN) {
         int8_t offset = sideToMove == White ? -8 : 8;
-        placePiece(makePiece(PAWN, ~sideToMove), Square(enPassantSquare + offset));
-    }
-    else if (capture != None && !isCastling)
-    {
+        placePiece(makePiece(PAWN, ~sideToMove),
+                   Square(enPassantSquare + offset));
+    } else if (capture != None && !isCastling) {
 
         placePiece(capture, to_sq);
     }
 }
 
-void Board::applyFen(const std::string &fen)
-{
-    for (Piece p = WhitePawn; p < None; p++)
-    {
+void Board::applyFen(const std::string &fen) {
+    for (Piece p = WhitePawn; p < None; p++) {
         piecesBB[p] = 0ULL;
     }
 
@@ -323,22 +306,18 @@ void Board::applyFen(const std::string &fen)
     std::fill(std::begin(board), std::end(board), None);
 
     Square square = Square(56);
-    for (int index = 0; index < static_cast<int>(position.size()); index++)
-    {
+    for (int index = 0; index < static_cast<int>(position.size()); index++) {
         char curr = position[index];
-        if (charToPiece.find(curr) != charToPiece.end())
-        {
+        if (charToPiece.find(curr) != charToPiece.end()) {
             const Piece piece = charToPiece[curr];
             placePiece(piece, square);
 
-            if (type_of_piece(piece) == PAWN)
-            {
+            if (type_of_piece(piece) == PAWN) {
                 pawnKey ^= updateKeyPiece(piece, square);
             }
 
             square = Square(square + 1);
-        }
-        else if (curr == '/')
+        } else if (curr == '/')
             square = Square(square - 16);
         else if (isdigit(curr))
             square = Square(square + (curr - '0'));
@@ -347,18 +326,14 @@ void Board::applyFen(const std::string &fen)
     removeCastlingRightsAll(White);
     removeCastlingRightsAll(Black);
 
-    for (size_t i = 0; i < castling.size(); i++)
-    {
+    for (size_t i = 0; i < castling.size(); i++) {
         if (readCastleString.find(castling[i]) != readCastleString.end())
             castlingRights |= readCastleString[castling[i]];
     }
 
-    if (en_passant == "-")
-    {
+    if (en_passant == "-") {
         enPassantSquare = NO_SQ;
-    }
-    else
-    {
+    } else {
         char letter = en_passant[0];
         int file = letter - 96;
         int rank = en_passant[1] - 48;
@@ -382,9 +357,9 @@ void Board::applyFen(const std::string &fen)
     Refresh();
 }
 
-void Board::makeNullMove()
-{
-    stateHistory.emplace_back(State(enPassantSquare, castlingRights, halfMoveClock, None));
+void Board::makeNullMove() {
+    stateHistory.emplace_back(
+        State(enPassantSquare, castlingRights, halfMoveClock, None));
     sideToMove = ~sideToMove;
 
     hashKey ^= updateKeySideToMove();
@@ -395,8 +370,7 @@ void Board::makeNullMove()
     fullMoveNumber++;
 }
 
-void Board::unmakeNullMove()
-{
+void Board::unmakeNullMove() {
     const State restore = stateHistory.back();
     stateHistory.pop_back();
 
@@ -412,28 +386,28 @@ void Board::unmakeNullMove()
     sideToMove = ~sideToMove;
 }
 
-void Board::removePiece(Piece piece, Square sq)
-{
+void Board::removePiece(Piece piece, Square sq) {
     piecesBB[piece] &= ~(1ULL << sq);
     board[sq] = None;
 
-    //nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(piece), colorOf(sq), sq);
+    // nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Deactivate>(type_of_piece(piece),
+    // colorOf(sq), sq);
 }
 
- void Board::placePiece(Piece piece, Square sq)
-{
+void Board::placePiece(Piece piece, Square sq) {
     piecesBB[piece] |= (1ULL << sq);
     board[sq] = piece;
 
-    //nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(piece), colorOf(sq), sq);
+    // nnue->EfficientlyUpdateAccumulator<NNUE::AccumulatorOperation::Activate>(type_of_piece(piece),
+    // colorOf(sq), sq);
 }
 
- void Board::movePiece(Piece piece, Square fromSq, Square toSq)
-{
+void Board::movePiece(Piece piece, Square fromSq, Square toSq) {
     piecesBB[piece] &= ~(1ULL << fromSq);
     piecesBB[piece] |= (1ULL << toSq);
     board[fromSq] = None;
     board[toSq] = piece;
 
-    //nnue->EfficientlyUpdateAccumulator(type_of_piece(piece), colorOf(toSq), fromSq, toSq);
+    // nnue->EfficientlyUpdateAccumulator(type_of_piece(piece), colorOf(toSq),
+    // fromSq, toSq);
 }

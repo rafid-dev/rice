@@ -20,7 +20,7 @@ constexpr int16_t HIDDEN_NEURONS = 256;
 constexpr int OUTPUT_NEURONS = 1;
 
 using ActivationFunction = MantaRay::ClippedReLU<int16_t, 0, 255>;
-using PerspectiveNetwork = MantaRay::PerspectiveNetwork<int16_t, int32_t, ActivationFunction, INPUT_NEURONS, HIDDEN_NEURONS, OUTPUT_NEURONS, 512, 1000, 255, 64>;
+using PerspectiveNetwork = MantaRay::PerspectiveNetwork<int16_t, int32_t, ActivationFunction, INPUT_NEURONS, HIDDEN_NEURONS, OUTPUT_NEURONS, 512, 400, 255, 64>;
 
 using namespace Chess_Lookup::Fancy;
 

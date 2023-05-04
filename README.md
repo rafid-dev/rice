@@ -1,22 +1,26 @@
 # Rice
 
 <div align="center">
-  <kbd>
-    <img src="./imgs/logo.png" height="200" />
-  </kbd>
+    <img src="./imgs/logo.png" alt="Rice logo by Midjourney" width="30%">
+    <br>
+    <br>
+    <b><i>strong, free and open source UCI chess engine written in C++.</i></b>
+    <br>
+    <br>
+    <img src="https://img.shields.io/github/downloads/rafid-dev/rice/total?color=critical&style=for-the-badge">
+    <img src="https://img.shields.io/github/license/rafid-dev/rice?color=blue&style=for-the-badge">
+    <br>
+    <img src="https://img.shields.io/github/v/release/rafid-dev/rice?color=blue&label=Latest%20release&style=for-the-badge">
+    <img src="https://img.shields.io/github/last-commit/rafid-dev/rice?color=critical&style=for-the-badge">
 </div>
 
-## Description
+## Features
 
-Rice is a strong, free and open source UCI chess engine written in C++.
-
-### Features
-
-# Board Representation
+### Board Representation
 * Bitboards
 * Fancy magics for movegen
 
-# Search
+### Search
 
 * Negamax
 * Alpha beta pruning
@@ -32,11 +36,11 @@ Rice is a strong, free and open source UCI chess engine written in C++.
 * History, killers and MVVLVA Move ordering
 * Search Extensions
 
-# Evaluation
+### Evaluation
 * NNUE (Efficiently updateable neural network)
 * Net Architecture: 768->256x2->1
 
-### Building
+## Building
 
 Clang is preferred.
 
@@ -65,9 +69,9 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 
 ### Acknowledgements
 
-<a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his <a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
+* <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his <a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
 
-<a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>, author of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo<a>, for enormous help in implementing NNUE and for MantaRay.
+* <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>, author of <a href="https://github.com/TheBlackPlague/StockNemo">StockNemo<a>, for enormous help in implementing NNUE and for MantaRay.
 
 * <a href="https://github.com/pgg106">Zuppa</a>, author of <a href="https://github.com/PGG106/Alexandria/">Alexandria</a>.
 * <a href="https://github.com/raklaptudirm">Rak</a>, author of <a href="https://github.com/raklaptudirm/mess">Mess</a>.
@@ -75,7 +79,3 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 * <a href="https://github.com/Ciekce">Ciekce, author of <a href="https://github.com/Ciekce/Polaris">Polaris<a>.
 
 * <a href="https://github.com/dsekercioglu/marlinflow">marlinflow</a> for Rice's current neural network trainer.
-
-### License
-
-This project is licensed under the [MIT License](LICENSE).

@@ -1,5 +1,3 @@
-# Rice
-
 <div align="center">
     <img src="./imgs/logo.png" alt="Rice logo by Midjourney" width="30%">
     <br>
@@ -13,6 +11,9 @@
     <img src="https://img.shields.io/github/v/release/rafid-dev/rice?color=blue&label=Latest%20release&style=for-the-badge">
     <img src="https://img.shields.io/github/last-commit/rafid-dev/rice?color=critical&style=for-the-badge">
 </div>
+
+## Overview
+Rice is a powerful NNUE chess engine that combines the use of alpha-beta search with various other search techniques to achieve its impressive performance. This combination of methods allows Rice to effectively search through large numbers of potential moves and select the optimal move based on its evaluation function, which has been trained on a vast amount of data.
 
 ## Features
 

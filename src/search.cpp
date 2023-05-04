@@ -9,7 +9,6 @@
 #include <iostream>
 
 int LMRTable[MAXDEPTH][64];
-int LateMovePruningCounts[2][9];
 int ProbcutDepth = 5;
 
 /* Initialize LMR table using the log formula */
@@ -21,11 +20,6 @@ void InitSearch() {
             LMRTable[depth][played] =
                 base + log(depth) * log(played) / division;
         }
-    }
-
-    for (int depth = 1; depth < 9; depth++) {
-        LateMovePruningCounts[0][depth] = 2.5 + 2 * depth * depth / 4.5;
-        LateMovePruningCounts[1][depth] = 4.0 + 4 * depth * depth / 4.5;
     }
 }
 
@@ -618,13 +612,6 @@ movesloop:
 
     if (alpha != oldAlpha) {
         info.bestmove = bestmove;
-        info.pvTable[ss->ply][ss->ply] = bestmove;
-
-        for (int next_ply = ss->ply + 1; next_ply < info.pvTable.length[ss->ply + 1]; next_ply++) {
-            info.pvTable[ss->ply][next_ply] = info.pvTable[ss->ply + 1][next_ply];
-        }
-
-        info.pvTable.length[ss->ply] = info.pvTable.length[ss->ply + 1];
     }
 
     return bestscore;
@@ -648,7 +635,7 @@ void SearchPosition(Board &board, SearchInfo &info) {
             break;
         }
 
-        bestmove = info.pvTable[0][0];
+        bestmove = info.bestmove;
 
         std::cout << "info score cp ";
         F_number(score, info.uci, FANCY_Yellow);
@@ -659,8 +646,8 @@ void SearchPosition(Board &board, SearchInfo &info) {
         std::cout << " time ";
         F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
 
-        info.pvTable.print();
-        // std::cout << " pv " << convertMoveToUci(bestmove) << std::endl;
+        // info.pvTable.print();
+        std::cout << " pv " << convertMoveToUci(bestmove) << std::endl;
     }
 
     std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;

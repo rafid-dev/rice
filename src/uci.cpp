@@ -56,15 +56,17 @@ int LastHashSize = CurrentHashSize;
 
 bool IsUci = false;
 
-TranspositionTable TTable;
-TranspositionTable *table = &TTable;
+TranspositionTable *table;
 
-void uci_loop(int argv, char *argc[])
+void uci_loop(int argv, char **argc)
 {
+  std::cout << "Rice 6.0" << std::endl;
+
   Board board;
   SearchInfo info;
-
-  table->Initialize(DefaultHashSize);
+  
+  table = new TranspositionTable();
+  table->Initialize(DefaultHashSize); 
 
   if (argv > 2 && std::string{argc[1]} == "datagen")
   {
@@ -355,7 +357,7 @@ void uci_loop(int argv, char *argc[])
 
       InitSearch();
 
-      if (CurrentHashSize != LastHashSize)
+      if(CurrentHashSize != LastHashSize)
       {
         CurrentHashSize = std::min(CurrentHashSize, MAXHASH);
         LastHashSize = CurrentHashSize;

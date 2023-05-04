@@ -35,6 +35,7 @@ endif
 ifeq ($(build), native)
 	NATIVE   = -march=native
 	ARCH     = -x86-64-native
+	CXXFLAGS += -w
 endif
 
 ifeq ($(build), x86-64)
@@ -62,7 +63,7 @@ ifeq ($(build), x86-64-bmi2)
 endif
 
 ifeq ($(build), debug)
-	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++20
+	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++20 -fsanitize=address
 	NATIVE   = -msse -msse3 -mpopcnt -mavx -mavx2
 	FLAGS    = -lpthread -lstdc++
 endif
@@ -82,4 +83,4 @@ $(TARGET): $(OBJECTS)
 -include $(DEPENDS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto -MMD -MP -c -o $@ $< $(FLAGS) -g3
+	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto -MMD -MP -c -o $@ $< $(FLAGS)

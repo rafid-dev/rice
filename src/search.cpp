@@ -125,11 +125,11 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
         /* Pick next move with highest score */
         pickNextMove(i, list);
 
-        Move move = list.list[i].move;
+        Move move = list[i].move;
 
         /* SEE pruning in Quiescence search */
         /* If we do not SEE a good capture move, we can skip the move.*/
-        if (list.list[i].value < GoodCaptureScore && moveCount >= 1) {
+        if (list[i].value < GoodCaptureScore && moveCount >= 1) {
             continue;
         }
 
@@ -332,9 +332,9 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
             int score = 0;
             for (int i = 0; i < list.size; i++) {
                 pickNextMove(i, list);
-                Move move = list.list[i].move;
+                Move move = list[i].move;
 
-                if (list.list[i].value < GoodCaptureScore) {
+                if (list[i].value < GoodCaptureScore) {
                     continue;
                 }
 

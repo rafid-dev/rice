@@ -2,7 +2,7 @@
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
-INCBIN(EVAL, "./sn.nnue");
+INCBIN(EVAL, "./nn.nnue");
 
 void Board::Refresh() {
     nnue->ResetAccumulator();
@@ -14,8 +14,7 @@ void Board::Refresh() {
         if (p == NONETYPE)
             continue;
 
-        nnue->EfficientlyUpdateAccumulator<
-            MantaRay::AccumulatorOperation::Activate>(p, colorOf(sq), sq);
+        nnue->EfficientlyUpdateAccumulator<MantaRay::AccumulatorOperation::Activate>(p, colorOf(sq), sq);
     }
 }
 
@@ -26,10 +25,10 @@ Board::Board(std::string fen) {
     pawnKeyHistory.reserve(512);
 
     MantaRay::BinaryMemoryStream stream(gEVALData, gEVALSize);
-    // MantaRay::MarlinflowStream stream(R"(./12.json)");
+    // MantaRay::MarlinflowStream stream(R"(./13.json)");
 
     nnue = new PerspectiveNetwork(stream);
-    // MantaRay::BinaryFileStream str(R"(./12.nnue)");
+    // MantaRay::BinaryFileStream str(R"(./nn2.nnue)");
     // nnue->WriteTo(str);
 
     sideToMove = White;

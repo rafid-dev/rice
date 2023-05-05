@@ -44,27 +44,27 @@ void score_moves(Board &board, Movelist &list, SearchStack *ss,
 
     // Loop through moves in movelist.
     for (int i = 0; i < list.size; i++) {
-        Piece victim = board.pieceAtB(to(list.list[i].move));
-        Piece attacker = board.pieceAtB(from(list.list[i].move));
+        Piece victim = board.pieceAtB(to(list[i].move));
+        Piece attacker = board.pieceAtB(from(list[i].move));
 
         // Score tt move the highest
-        if (list.list[i].move == tt_move) {
-            list.list[i].value = PvMoveScore;
+        if (list[i].move == tt_move) {
+            list[i].value = PvMoveScore;
         } else if (victim != None) {
             // If it's a capture move, we score using MVVLVA (Most valuable
             // victim, Least Valuable Attacker) and if see move that doesn't
             // lose material, we add additional bonus
 
-            list.list[i].value = info.captureHistory[attacker][to(list.list[i].move)][victim] + mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list.list[i].move, -107));
-        } else if (list.list[i].move == ss->killers[0]) {
+            list[i].value = info.captureHistory[attacker][to(list[i].move)][victim] + mvv_lva[attacker][victim] + (GoodCaptureScore * see(board, list[i].move, -107));
+        } else if (list[i].move == ss->killers[0]) {
             // Score for killer 1
-            list.list[i].value = Killer1Score;
-        } else if (list.list[i].move == ss->killers[1]) {
+            list[i].value = Killer1Score;
+        } else if (list[i].move == ss->killers[1]) {
             // Score for killer 2
-            list.list[i].value = Killer2Score;
+            list[i].value = Killer2Score;
         }else {
             // Otherwise, history score.
-            list.list[i].value = info.searchHistory[attacker][to(list.list[i].move)] + GetConthHistoryScore(board, info, ss, list.list[i].move);
+            list[i].value = info.searchHistory[attacker][to(list[i].move)] + GetConthHistoryScore(board, info, ss, list[i].move);
         }
     }
 }
@@ -74,16 +74,16 @@ void score_moves(Board &board, Movelist &list, Move tt_move) {
 
     // Loop through moves in movelist.
     for (int i = 0; i < list.size; i++) {
-        Piece victim = board.pieceAtB(to(list.list[i].move));
-        Piece attacker = board.pieceAtB(from(list.list[i].move));
-        if (list.list[i].move == tt_move) {
-            list.list[i].value = 20000000;
+        Piece victim = board.pieceAtB(to(list[i].move));
+        Piece attacker = board.pieceAtB(from(list[i].move));
+        if (list[i].move == tt_move) {
+            list[i].value = 20000000;
         } else if (victim != None) {
             // If it's a capture move, we score using MVVLVA (Most valuable
             // victim, Least Valuable Attacker)
-            list.list[i].value =
+            list[i].value =
                 mvv_lva[attacker][victim] +
-                (GoodCaptureScore * see(board, list.list[i].move, -107));
+                (GoodCaptureScore * see(board, list[i].move, -107));
         }
     }
 }
@@ -97,16 +97,16 @@ void pickNextMove(const int moveNum, Movelist &list) {
 
     for (index = moveNum; index < list.size; ++index) {
 
-        if (list.list[index].value > bestscore) {
-            bestscore = list.list[index].value;
+        if (list[index].value > bestscore) {
+            bestscore = list[index].value;
             bestnum = index;
         }
     }
 
-    temp = list.list[moveNum];
-    list.list[moveNum] =
-        list.list[bestnum]; // Sort the highest score move to highest.
-    list.list[bestnum] = temp;
+    temp = list[moveNum];
+    list[moveNum] =
+        list[bestnum]; // Sort the highest score move to highest.
+    list[bestnum] = temp;
 }
 
 // Update History
@@ -121,7 +121,7 @@ void UpdateHistory(Board &board, SearchInfo &info, Move bestmove,
 
     for (int i = 0; i < quietList.size; i++)
     {
-        Move move = quietList.list[i].move;
+        Move move = quietList[i].move;
 
         if (move == bestmove)
             continue; // Don't give penalty to our best move
@@ -155,7 +155,7 @@ void UpdateContHistory(Board &board, SearchInfo &info, SearchStack *ss,
     UpdateContHistoryScore(board, info, ss, bestmove, score);
 
     for (int i = 0; i < quietList.size; i++) {
-        Move move = quietList.list[i].move;
+        Move move = quietList[i].move;
 
         if (move == bestmove)
             continue; // Don't give penalty to our best move, so skip it.

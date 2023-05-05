@@ -318,20 +318,6 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
                     score = beta;
                 }
 
-                // if (info.verifPlies || (depth <= 10 && abs(beta) < ISMATE)) {
-                //     return (score);
-                // }
-
-                // info.verifPlies = ss->ply + 3 * (depth - R) / 4;
-                // int zzscore =
-                //     AlphaBeta(beta - 1, beta, depth - R, board, info, ss);
-
-                // info.verifPlies = 0;
-
-                // if (zzscore >= beta) {
-                // return score;
-                // }
-
                 return score;
             }
         }

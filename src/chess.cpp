@@ -2,7 +2,7 @@
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
 
-INCBIN(EVAL, "./nn.nnue");
+INCBIN(EVAL, "./sn.nnue");
 
 void Board::Refresh() {
     nnue->ResetAccumulator();

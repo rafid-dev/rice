@@ -63,9 +63,12 @@ void uci_loop(int argv, char **argc)
   std::cout << "Rice 6.0" << std::endl;
 
   Board board;
-  SearchInfo info;
+
+  auto heap_allocated_info =std::make_unique<SearchInfo>(); 
+  auto& info = *heap_allocated_info;
   
-  table = new TranspositionTable();
+  auto ttable = std::make_unique<TranspositionTable>();
+  table = ttable.get();
   table->Initialize(DefaultHashSize); 
 
   if (argv > 2 && std::string{argc[1]} == "datagen")

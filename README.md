@@ -1,5 +1,3 @@
-
-
 <div align="center">
     <img src="./imgs/logo.png" alt="Rice logo by Midjourney" width="30%">
     <br>

@@ -8,64 +8,65 @@ long GetTimeMs()
     return sec.count();
 }
 
-std::string getSanString(Board &board, Move move)
-{
-    std::stringstream ss;
+std::string san(Board& board, const Move move) {
+    // static const std::string repPieceType[] = {"", "N", "B", "R", "Q", "K"};
+    // static const std::string repFile[] = {"a", "b", "c", "d", "e", "f", "g", "h"};
 
-    bool inCheck = false;
-    board.makeMove(move);
+    // if (piece(move) == KING && square_distance(to(move), from(move)) >= 2) {
+    //     return to(move) > from(move) ? "O-O" : "O-O-O";
+    // }
 
-    if (board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove)))
-    {
-        inCheck = true;
-    }
+    // const PieceType pt = type_of_piece(board.pieceAtB(from(move)));
 
-    board.unmakeMove(move);
+    // std::string san;
 
-    // Get the from and to squares
-    Square from_sq = from(move);
-    Square to_sq = to(move);
-    Piece p = board.pieceAtB(from_sq);
-    PieceType pt = type_of_piece(p);
-    bool capture = is_capture(board, move);
+    // if (pt != PieceType::PAWN) {
+    //     san += repPieceType[int(pt)];
+    // }
 
-    if (piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
-    {
-        ss << (to_sq > from_sq ? "O-O" : "O-O-O");
-    }
+    // Movelist moves;
+    // Movegen::legalmoves<ALL>(board, moves);
 
-    // Add the from and to squares to the string stream
-    if (pt != PAWN)
-    {
-        ss << pieceToChar[Piece(pt)];
-    }
-    else
-    {
-        ss << char('a' + square_file(from_sq));
-    }
+    // for (const auto &m : moves.list) {
+    //     if (pt != PAWN && m != move && board.pieceAtB(from(m)) == board.pieceAtB(from(move)) &&
+    //         to(m) == to(move)) {
+    //         if (square_file(from(m)) == square_file(from(move))) {
+    //             san += std::to_string(int(square_rank(from(move))) + 1);
+    //             break;
+    //         } else {
+    //             san += repFile[int(square_file(from(move)))];
+    //             break;
+    //         }
+    //     }
+    // }
 
-    if (capture)
-    {
-        ss << "x";  
-    }
+    // if (board.pieceAtB(to(move)) != Piece::NONE || move.typeOf() == Move::EN_PASSANT) {
+    //     if (pt == PieceType::PAWN) {
+    //         san += repFile[int(squareFile(move.from()))];
+    //     }
 
-    if (pt != PAWN || capture)
-    {
-        ss << char('a' + square_file(to_sq));
-    }
+    //     san += "x";
+    // }
 
-    ss << char('1' + square_rank(to_sq));
+    // san += repFile[int(squareFile(move.to()))];
+    // san += std::to_string(int(squareRank(move.to())) + 1);
 
-    // If the move is a promotion, add the promoted piece to the string stream
-    if (promoted(move))
-    {
-        ss << "=";
-        ss << PieceTypeToPromPiece[piece(move)];
-    }
-    if (inCheck)
-    {
-        ss << "+";
-    }
+    // if (move.typeOf() == Move::PROMOTION) {
+    //     san += "=";
+    //     san += repPieceType[int(move.promotionType())];
+    // }
 
-    return ss.str();
+    // makeMove(move);
+
+    // if (isKingAttacked()) {
+    //     if (isGameOver().second == GameResult::LOSE) {
+    //         san += "#";
+    //     } else {
+    //         san += "+";
+    //     }
+    // }
+
+    // unmakeMove(move);
+
+    // return san;
 }

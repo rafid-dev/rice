@@ -1,37 +1,38 @@
+#include "uci.h"
+#include "bench.h"
+#include "datagen.h"
+#include "eval.h"
+#include "misc.h"
+#include "movescore.h"
+#include "perft.h"
+#include "search.h"
+#include "tt.h"
+#include "types.h"
 #include <chrono>
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include "uci.h"
-#include "eval.h"
-#include "misc.h"
-#include "movescore.h"
-#include "search.h"
-#include "tt.h"
-#include "types.h"
-#include "datagen.h"
-#include "bench.h"
-#include "perft.h"
 
 bool TUNING = true;
 
-void print_tuning_parameter(std::string str, int value){
-  std::cout << "option name " << str << " type spin default " << value << " min -100000 max 100000" << std::endl;
+void print_tuning_parameter(std::string str, int value) {
+  std::cout << "option name " << str << " type spin default " << value
+            << " min -100000 max 100000" << std::endl;
 }
 
-void print_tuning_parameters(){
-      print_tuning_parameter("RFPMargin", RFPMargin);
-      print_tuning_parameter("RFPImproving", RFPImprovingBonus);
-      print_tuning_parameter("RFPDepth", RFPDepth);
+void print_tuning_parameters() {
+  print_tuning_parameter("RFPMargin", RFPMargin);
+  print_tuning_parameter("RFPImproving", RFPImprovingBonus);
+  print_tuning_parameter("RFPDepth", RFPDepth);
 }
 
-static void uci_send_id()
-{
+static void uci_send_id() {
   std::cout << "id name " << NAME << "\n";
   std::cout << "id author " << AUTHOR << "\n";
-  std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << "\n";
+  std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH
+            << "\n";
 
-  if (TUNING){
+  if (TUNING) {
     print_tuning_parameters();
   }
 
@@ -39,10 +40,8 @@ static void uci_send_id()
 }
 
 static void set_option(std::istream &is, std::string &token, std::string name,
-                       int &value)
-{
-  if (token == name)
-  {
+                       int &value) {
+  if (token == name) {
     is >> std::skipws >> token;
     is >> std::skipws >> token;
 
@@ -58,25 +57,23 @@ bool IsUci = false;
 
 TranspositionTable *table;
 
-void uci_loop(int argv, char **argc)
-{
+void uci_loop(int argv, char **argc) {
   std::cout << "Rice 6.0" << std::endl;
 
   Board board;
 
-  auto heap_allocated_info =std::make_unique<SearchInfo>(); 
-  auto& info = *heap_allocated_info;
-  
+  auto heap_allocated_info = std::make_unique<SearchInfo>();
+  auto &info = *heap_allocated_info;
+
   auto ttable = std::make_unique<TranspositionTable>();
   table = ttable.get();
-  table->Initialize(DefaultHashSize); 
+  table->Initialize(DefaultHashSize);
 
-  if (argv > 2 && std::string{argc[1]} == "datagen")
-  {
+  if (argv > 2 && std::string{argc[1]} == "datagen") {
     int threads = std::stoi(argc[2]);
     table->Initialize(64 * threads);
     generateData(1000000, threads);
-  }else if (argv > 1 && std::string{argc[1]} == "bench"){
+  } else if (argv > 1 && std::string{argc[1]} == "bench") {
     info.depth = 13;
     info.timeset = false;
     StartBenchmark(board, info);
@@ -84,9 +81,8 @@ void uci_loop(int argv, char **argc)
 
   std::string command;
   std::string token;
-  
-  while (true)
-  {
+
+  while (true) {
     token.clear();
     command.clear();
 
@@ -95,45 +91,32 @@ void uci_loop(int argv, char **argc)
 
     is >> std::skipws >> token;
 
-    if (token == "stop")
-    {
+    if (token == "stop") {
       info.stopped = true;
-    }
-    else if (token == "quit")
-    {
+    } else if (token == "quit") {
       info.stopped = true;
 
       break;
-    }
-    else if (token == "isready")
-    {
+    } else if (token == "isready") {
       std::cout << "readyok\n";
       continue;
-    }
-    else if (token == "ucinewgame")
-    {
+    } else if (token == "ucinewgame") {
       table->Initialize(CurrentHashSize);
       std::cout << "readyok\n";
       continue;
-    }
-    else if (token == "uci")
-    {
+    } else if (token == "uci") {
       IsUci = true;
       uci_send_id();
       continue;
     }
 
     /* Handle UCI position command */
-    else if (token == "position")
-    {
+    else if (token == "position") {
       std::string option;
       is >> std::skipws >> option;
-      if (option == "startpos")
-      {
+      if (option == "startpos") {
         board.applyFen(DEFAULT_POS);
-      }
-      else if (option == "fen")
-      {
+      } else if (option == "fen") {
         std::string final_fen;
         is >> std::skipws >> option;
         final_fen = option;
@@ -166,12 +149,10 @@ void uci_loop(int argv, char **argc)
         board.applyFen(final_fen);
       }
       is >> std::skipws >> option;
-      if (option == "moves")
-      {
+      if (option == "moves") {
         std::string moveString;
 
-        while (is >> moveString)
-        {
+        while (is >> moveString) {
           // std::cout << moveString << std::endl;
           board.makeMove(convertUciToMove(board, moveString));
         }
@@ -180,8 +161,7 @@ void uci_loop(int argv, char **argc)
     }
 
     /* Handle UCI go command */
-    else if (token == "go")
-    {
+    else if (token == "go") {
       is >> std::skipws >> token;
 
       // Initialize variables
@@ -192,15 +172,12 @@ void uci_loop(int argv, char **argc)
       int movetime = -1;
       int nodes = -1;
 
-      while (token != "none")
-      {
-        if (token == "infinite")
-        {
+      while (token != "none") {
+        if (token == "infinite") {
           depth = -1;
           continue;
         }
-        if (token == "movestogo")
-        {
+        if (token == "movestogo") {
           is >> std::skipws >> token;
           movestogo = stoi(token);
           is >> std::skipws >> token;
@@ -208,8 +185,7 @@ void uci_loop(int argv, char **argc)
         }
 
         // Depth
-        if (token == "depth")
-        {
+        if (token == "depth") {
           is >> std::skipws >> token;
           depth = stoi(token);
           is >> std::skipws >> token;
@@ -217,21 +193,17 @@ void uci_loop(int argv, char **argc)
         }
 
         // Time
-        if (token == "wtime")
-        {
+        if (token == "wtime") {
           is >> std::skipws >> token;
-          if (board.sideToMove == White)
-          {
+          if (board.sideToMove == White) {
             uciTime = stoi(token);
           }
           is >> std::skipws >> token;
           continue;
         }
-        if (token == "btime")
-        {
+        if (token == "btime") {
           is >> std::skipws >> token;
-          if (board.sideToMove == Black)
-          {
+          if (board.sideToMove == Black) {
             uciTime = stoi(token);
           }
           is >> std::skipws >> token;
@@ -239,62 +211,52 @@ void uci_loop(int argv, char **argc)
         }
 
         // Increment
-        if (token == "winc")
-        {
+        if (token == "winc") {
           is >> std::skipws >> token;
-          if (board.sideToMove == White)
-          {
+          if (board.sideToMove == White) {
             inc = stoi(token);
           }
           is >> std::skipws >> token;
           continue;
         }
-        if (token == "binc")
-        {
+        if (token == "binc") {
           is >> std::skipws >> token;
-          if (board.sideToMove == Black)
-          {
+          if (board.sideToMove == Black) {
             inc = stoi(token);
           }
           is >> std::skipws >> token;
           continue;
         }
 
-        if (token == "movetime")
-        {
+        if (token == "movetime") {
           is >> std::skipws >> token;
           movetime = stoi(token);
           is >> std::skipws >> token;
           continue;
         }
-        if (token == "nodes")
-        {
+        if (token == "nodes") {
           is >> std::skipws >> token;
           nodes = stoi(token);
           is >> std::skipws >> token;
         }
         token = "none";
       }
-      if (movetime != -1)
-      {
+      if (movetime != -1) {
         uciTime = movetime;
         movestogo = 1;
       }
-      if (nodes != -1)
-      {
+      if (nodes != -1) {
         info.stopNodes = nodes;
         info.nodeset = true;
       }
 
       info.start_time = GetTimeMs();
       info.depth = depth;
-      if (uciTime != -1)
-      {
+      if (uciTime != -1) {
         info.timeset = true;
       }
 
-      if (info.timeset && movestogo != -1)
-      {
+      if (info.timeset && movestogo != -1) {
         int safety_overhead = 50;
 
         uciTime -= safety_overhead;
@@ -303,9 +265,7 @@ void uci_loop(int argv, char **argc)
 
         info.stoptimeMax = info.start_time + time_slot;
         info.stoptimeOpt = info.start_time + time_slot;
-      }
-      else if (info.timeset)
-      {
+      } else if (info.timeset) {
 
         uciTime /= 40;
 
@@ -321,25 +281,25 @@ void uci_loop(int argv, char **argc)
         info.stoptimeOpt = info.start_time + optime;
       }
 
-      if (depth == -1)
-      {
+      if (depth == -1) {
         info.depth = MAXPLY;
       }
 
       info.stopped = false;
       info.uci = IsUci;
 
-      if (IS_DEBUG)
-      {
-        std::cout << "movestogo: " << movestogo << " time:" << uciTime << " start:" << info.start_time << " stop:" << info.stoptimeMax << " depth:" << info.depth << " timeset: " << info.timeset << "\n";
+      if (IS_DEBUG) {
+        std::cout << "movestogo: " << movestogo << " time:" << uciTime
+                  << " start:" << info.start_time
+                  << " stop:" << info.stoptimeMax << " depth:" << info.depth
+                  << " timeset: " << info.timeset << "\n";
       }
       SearchPosition(board, info);
       // mainSearchThread =
       //     std::thread(SearchPosition, std::ref(board), std::ref(info));
     }
 
-    else if (token == "setoption")
-    {
+    else if (token == "setoption") {
       is >> std::skipws >> token;
       is >> std::skipws >> token;
 
@@ -357,11 +317,9 @@ void uci_loop(int argv, char **argc)
       set_option(is, token, "NMPDivison", NMPDivision);
       set_option(is, token, "NMPMargin", NMPMargin);
 
-
       InitSearch();
 
-      if(CurrentHashSize != LastHashSize)
-      {
+      if (CurrentHashSize != LastHashSize) {
         CurrentHashSize = std::min(CurrentHashSize, MAXHASH);
         LastHashSize = CurrentHashSize;
         table->Initialize(CurrentHashSize);
@@ -369,53 +327,42 @@ void uci_loop(int argv, char **argc)
     }
 
     /* Debugging Commands */
-    else if (token == "print")
-    {
+    else if (token == "print") {
       std::cout << board << std::endl;
       continue;
-    }
-    else if (token == "be")
-    {
+    } else if (token == "be") {
       int64_t sum = 0;
       int count = 100000000;
       int64_t score = 0;
       auto start = std::chrono::high_resolution_clock::now();
 
-      for (int i = 0; i < count; i++)
-      {
+      for (int i = 0; i < count; i++) {
 
         score += Evaluate(board);
       }
       auto stop = std::chrono::high_resolution_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+      auto duration =
+          std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
       sum += duration.count();
       std::cout << "Average NS: " << (sum / count) << std::endl;
       std::cout << score << std::endl;
 
       continue;
-    }
-    else if (token == "eval")
-    {
+    } else if (token == "eval") {
       std::cout << "Eval: " << Evaluate(board) << std::endl;
-    }else if (token == "repetition"){
+    } else if (token == "repetition") {
       std::cout << board.isRepetition() << std::endl;
-    }
-    else if (token == "side")
-    {
+    } else if (token == "side") {
       std::cout << (board.sideToMove == White ? "White" : "Black\n")
                 << std::endl;
-    }
-    else if (token == "bench")
-    {
+    } else if (token == "bench") {
       info.depth = 13;
       info.timeset = false;
       StartBenchmark(board, info);
-    }
-    else if (token == "datagen")
-    {
+    } else if (token == "datagen") {
       table->Initialize(64 * 6);
       generateData(1000000, 6);
-    }else if (token == "perft"){
+    } else if (token == "perft") {
       is >> std::skipws >> token;
       int depth = stoi(token);
       PerftTest(board, depth);
@@ -425,8 +372,7 @@ void uci_loop(int argv, char **argc)
   table->clear();
 
   std::cout << "\n";
-  if (!info.uci)
-  {
+  if (!info.uci) {
     std::cout << "\u001b[0m";
   }
 }

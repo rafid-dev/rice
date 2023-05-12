@@ -54,29 +54,28 @@ std::string BenchmarkFen[] = {
     "2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93",
 };
 
-void StartBenchmark(Board &board, SearchInfo &info)
-{
-    info.depth = 13;
-    info.timeset = false;
+void StartBenchmark(Board &board, SearchInfo &info) {
+  info.depth = 13;
+  info.timeset = false;
 
-    uint64_t total = 0;
-    uint64_t time_elasped = 0;
+  uint64_t total = 0;
+  uint64_t time_elasped = 0;
 
-    for (auto &fen : BenchmarkFen)
-    {
-        board.applyFen(fen);
+  for (auto &fen : BenchmarkFen) {
+    board.applyFen(fen);
 
-        std::cout << "Position " << fen << std::endl;
+    std::cout << "Position " << fen << std::endl;
 
-        auto start = GetTimeMs();
-        SearchPosition(board, info);
-        auto end = GetTimeMs();
+    auto start = GetTimeMs();
+    SearchPosition(board, info);
+    auto end = GetTimeMs();
 
-        total += info.nodes;
-        time_elasped += (end - start);
-    }
+    total += info.nodes;
+    time_elasped += (end - start);
+  }
 
-    std::cout << "Total nodes: " << total << std::endl;
-    std::cout << "Total time elasped (MS): " << time_elasped << std::endl;
-    std::cout << "Speed: " << (total / (time_elasped / 1000)) << " NPS" << std::endl;
+  std::cout << "Total nodes: " << total << std::endl;
+  std::cout << "Total time elasped (MS): " << time_elasped << std::endl;
+  std::cout << "Speed: " << (total / (time_elasped / 1000)) << " NPS"
+            << std::endl;
 }

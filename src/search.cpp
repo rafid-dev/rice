@@ -52,7 +52,6 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
     }
 
     memset(info.contHist.data(), 0, sizeof(info.contHist));
-    info.pvTable.clear();
 
     /* Increment transposition table age */
     table->currentAge++;
@@ -192,7 +191,8 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
               SearchStack *ss) {
 
     /* Initialize our pv table lenght. */
-    info.pvTable.length[ss->ply] = ss->ply;
+    /* UNUSED */
+    // info.pvTable.length[ss->ply] = ss->ply;
 
     /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
      * and also end recursion.*/
@@ -573,8 +573,7 @@ movesloop:
 
         // We are safe to break out of the loop if we are sure that we don't
         // return illegal move
-        if (info.stopped == true && isRoot &&
-            info.pvTable.array[0][0] != NO_MOVE) {
+        if (info.stopped == true && isRoot && info.bestmove != NO_MOVE) {
             break;
         }
     }
@@ -601,6 +600,41 @@ movesloop:
     }
 
     return bestscore;
+}
+
+static inline bool moveExists(Board &board, Move move) {
+    Movelist list;
+    Movegen::legalmoves<ALL>(board, list);
+
+    if (list.find(move) > -1) {
+        return true;
+    }
+
+    return false;
+}
+
+// Recursive implementation to fetch pv lines.
+static void getPvLines(Board &board, std::vector<U64>& positions) {
+
+    if (positions.size() >= MAXPLY){
+        return;
+    }
+
+    const auto pvMove = table->probeMove(board.hashKey);
+
+    if (pvMove && moveExists(board, pvMove)) {
+        for (auto &pos : positions) {
+            if (pos == board.hashKey) {
+                return;
+            }
+        }
+        std::cout << " " << convertMoveToUci(pvMove);
+        positions.push_back(board.hashKey);
+        board.makeMove(pvMove);
+        getPvLines(board, positions);
+        board.unmakeMove(pvMove);
+    }
+    return;
 }
 
 void SearchPosition(Board &board, SearchInfo &info) {
@@ -633,7 +667,12 @@ void SearchPosition(Board &board, SearchInfo &info) {
         F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
 
         // info.pvTable.print();
-        std::cout << " pv " << convertMoveToUci(bestmove) << std::endl;
+        std::cout << " pv";
+
+        std::vector<U64> positions;
+        getPvLines(board, positions);
+
+        std::cout << std::endl;
     }
 
     std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;

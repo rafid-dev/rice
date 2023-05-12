@@ -40,41 +40,45 @@ struct PVTable {
     }
 };
 
+using HistoryTable = std::array<std::array<int16_t, 64>, 12>;
+using ContinuationHistoryTable = std::array<std::array<std::array<std::array<int16_t, 64>, 12>, 64>, 12>;
+using CaptureHistoryTable = std::array<std::array<std::array<int16_t, 12>, 64>, 12>;
+
 struct SearchInfo {
-    int verifPlies = 0;
-    int depth = 0;
+    uint8_t verifPlies{};
+    uint8_t depth{};
 
-    int16_t searchHistory[NPIECES][NSQUARES] = {{0}};
-    std::array<std::array<std::array<std::array<int16_t, 64>, 12>, 64>, 12> contHist;
-    int16_t captureHistory[12][64][12];
+    HistoryTable searchHistory;
+    ContinuationHistoryTable contHist;
+    CaptureHistoryTable captureHistory;
     
-    int64_t nodes = 0l;
+    uint64_t nodes{};
 
-    int64_t start_time = 0l;
-    int64_t end_time = 0l;
-    int64_t stoptimeMax = 0l;
-    int64_t stoptimeOpt = 0l;
-    int64_t stopNodes = 0l;
+    int64_t start_time{};
+    int64_t end_time{};
+    int64_t stoptimeMax{};
+    int64_t stoptimeOpt{};
+    int64_t stopNodes{};
 
-    bool timeset = false;
-    bool stopped = false;
-    bool uci = false;
-    bool nodeset = false;
-
-    PVTable pvTable;
-    Move bestmove = NO_MOVE;
+    bool timeset{};
+    bool stopped{};
+    bool uci{};
+    bool nodeset{};
+    
+    Move bestmove {NO_MOVE};
+    Move next_bestmove {NO_MOVE};
 };
 
 struct SearchStack {
-    int static_eval = 0;
-    int ply = 0;
+    int16_t static_eval{};
+    uint8_t ply{};
 
-    Move excluded = NO_MOVE;
-    Move move = NO_MOVE;
+    Move excluded {NO_MOVE};
+    Move move {NO_MOVE};
     Move killers[2] = {NO_MOVE, NO_MOVE};
-    Move counter = NO_MOVE;
+    Move counter {NO_MOVE};
 
-    Piece movedPiece = None;
+    Piece movedPiece {None};
 };
 
 extern int RFPMargin;

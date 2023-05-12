@@ -1,7 +1,4 @@
-[![Contributors][contributors-shield]][contributors-url]
-[![Forks][forks-shield]][forks-url]
-[![Stargazers][stars-shield]][stars-url]
-[![MIT License][license-shield]][license-url]
+
 
 <div align="center">
     <img src="./imgs/logo.png" alt="Rice logo by Midjourney" width="30%">

@@ -1,15 +1,13 @@
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![MIT License][license-shield]][license-url]
+
 <div align="center">
     <img src="./imgs/logo.png" alt="Rice logo by Midjourney" width="30%">
     <br>
     <br>
     <b><i>strong, free and open source UCI chess engine written in C++.</i></b>
-    <br>
-    <br>
-    <img src="https://img.shields.io/github/downloads/rafid-dev/rice/total?color=critical&style=for-the-badge">
-    <img src="https://img.shields.io/github/license/rafid-dev/rice?color=blue&style=for-the-badge">
-    <br>
-    <img src="https://img.shields.io/github/v/release/rafid-dev/rice?color=blue&label=Latest%20release&style=for-the-badge">
-    <img src="https://img.shields.io/github/last-commit/rafid-dev/rice?color=critical&style=for-the-badge">
 </div>
 
 ## Overview

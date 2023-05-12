@@ -6,7 +6,7 @@
     <br>
     <br>
     <img src="https://img.shields.io/github/downloads/rafid-dev/rice/total?color=green&style=for-the-badge">
-    <a href="./LICENSE"><img alt="GitHub" src="https://img.shields.io/github/license/rafid-dev/rice?color=blue&style=for-the-badge">
+    <a href="./LICENSE"><img src="https://img.shields.io/github/license/rafid-dev/rice?color=blue&style=for-the-badge">
     <img src="https://img.shields.io/github/v/release/rafid-dev/rice?color=blue&label=Latest%20release&style=for-the-badge">
     <img src="https://img.shields.io/github/last-commit/rafid-dev/rice?color=critical&style=for-the-badge">
 </div>

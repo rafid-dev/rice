@@ -58,7 +58,7 @@ bool IsUci = false;
 TranspositionTable *table;
 
 void uci_loop(int argv, char **argc) {
-  std::cout << "Rice 6.0" << std::endl;
+  std::cout << "Rice  Copyright (C) 2023  Rafid Ahsan";
 
   Board board;
 

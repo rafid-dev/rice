@@ -2,4 +2,4 @@
 
 #include "types.h"
 
-int Evaluate(Board &board);
+int evaluate(Board &board);

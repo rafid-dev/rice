@@ -12,4 +12,4 @@ int NMPBase = 3;
 int NMPDivision = 3;
 int NMPMargin = 180;
 
-void init_all() { InitSearch(); }
+void init_all() { init_search(); }

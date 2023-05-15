@@ -19,17 +19,17 @@ int GetConthHistoryScore(Board &board, SearchInfo &info,
                                        SearchStack *ss, const Move move) {
     Move previous_move = (ss - 1)->move;
     Move previous_previous_move = (ss - 2)->move;
-    Piece previous_piece = (ss - 1)->movedPiece;
-    Piece previous_previous_piece = (ss - 2)->movedPiece;
-    Piece movedPiece = board.pieceAtB(from(move));
+    Piece previous_piece = (ss - 1)->moved_piece;
+    Piece previous_previous_piece = (ss - 2)->moved_piece;
+    Piece moved_piece = board.pieceAtB(from(move));
 
     int previous_score = previous_move
                              ? info.contHist[previous_piece][to(previous_move)]
-                                            [movedPiece][to(move)] : 0;
+                                            [moved_piece][to(move)] : 0;
     int previous_previous_score =
         previous_previous_move
             ? info.contHist[previous_previous_piece][to(previous_previous_move)]
-                           [movedPiece][to(move)] : 0;
+                           [moved_piece][to(move)] : 0;
 
     return previous_score + previous_previous_score;
 }
@@ -88,7 +88,7 @@ void score_moves(Board &board, Movelist &list, Move tt_move) {
     }
 }
 
-void pickNextMove(const int moveNum, Movelist &list) {
+void pick_nextmove(const int moveNum, Movelist &list) {
 
     ExtMove temp;
     int index = 0;
@@ -137,10 +137,10 @@ static inline void UpdateContHistoryScore(Board &board, SearchInfo &info,
                                          SearchStack *ss, const Move move,
                                          const int score) {
     if (ss->ply > 0) {
-        info.contHist[(ss - 1)->movedPiece][to((ss - 1)->move)]
+        info.contHist[(ss - 1)->moved_piece][to((ss - 1)->move)]
                      [board.pieceAtB(from(move))][to(move)] += score;
         if (ss->ply > 1) {
-            info.contHist[(ss - 2)->movedPiece][to((ss - 2)->move)]
+            info.contHist[(ss - 2)->moved_piece][to((ss - 2)->move)]
                          [board.pieceAtB(from(move))][to(move)] += score;
         }
     }
@@ -165,7 +165,6 @@ void UpdateContHistory(Board &board, SearchInfo &info, SearchStack *ss,
         UpdateContHistoryScore(board, info, ss, move, -penalty);
     }
 }
-
 
 // TODO: Implement this soon.
 void UpdateCaptureHistory(Board& board, SearchInfo& info, Move bestmove, int depth){

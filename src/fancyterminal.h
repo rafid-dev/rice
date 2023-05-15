@@ -12,7 +12,8 @@ FANCYCOLOR FANCY_Cyan = "\u001b[36;1m";
 FANCYCOLOR FANCY_Blue = "\u001b[34;1m";
 FANCYCOLOR FANCY_Reset = "\u001b[0m";
 
-inline void F_number(long x, bool uci, FANCYCOLOR col){
+template<typename T = uint64_t>
+inline void FancyNumber(T x, bool uci, FANCYCOLOR col){
     if (uci){
         std::cout << x;
     }else{

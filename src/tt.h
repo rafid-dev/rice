@@ -27,11 +27,11 @@ class TranspositionTable {
   public:
     uint8_t currentAge = 0;
     void Initialize(int usersize);
-    void storeEntry(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score,
+    void store(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score,
                     int16_t eval, int ply, bool pv);
-    TTEntry &probeEntry(U64 key, bool &ttHit, int ply);
+    TTEntry &probe_entry(U64 key, bool &ttHit, int ply);
     Move probeMove(U64 key);
-    void prefetchTT(const U64 key);
+    void prefetch_tt(const U64 key);
     void clear();
 };
 

@@ -9,7 +9,7 @@ void TranspositionTable::Initialize(int MB)
     std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)\n";
 }
 
-void TranspositionTable::storeEntry(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score, int16_t eval, int ply, bool pv)
+void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score, int16_t eval, int ply, bool pv)
 {
     TTEntry& entry = entries[reduce_hash(key, entries.size())];
 
@@ -52,7 +52,7 @@ void TranspositionTable::storeEntry(U64 key, uint8_t f, Move move, uint8_t depth
     }
 }
 
-TTEntry& TranspositionTable::probeEntry(U64 key, bool& ttHit, int ply)
+TTEntry& TranspositionTable::probe_entry(U64 key, bool& ttHit, int ply)
 {
     TTEntry& entry = entries[reduce_hash(key, entries.size())];
 
@@ -76,7 +76,7 @@ Move TranspositionTable::probeMove(U64 key){
     return NO_MOVE;
 }
 
-void TranspositionTable::prefetchTT(const U64 key){
+void TranspositionTable::prefetch_tt(const U64 key){
     prefetch(&(entries[reduce_hash(key, entries.size())]));
 }
 

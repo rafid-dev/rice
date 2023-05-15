@@ -11,7 +11,7 @@ static inline std::string ToString(FenData &fenData)
 
 static inline void NodesOver(SearchInfo &info)
 {
-    if (info.nodeset && info.nodes >= info.stopNodes)
+    if (info.nodeset && info.nodes_reached >= info.nodes)
     {
         info.stopped = true;
     }
@@ -36,7 +36,7 @@ static inline void NodesOver(SearchInfo &info)
 
 static inline void SetNewGameState(Board &board, SearchInfo &info)
 {
-    ClearForSearch(info, table);
+    clear_for_search(info, table);
 
     board.applyFen(DEFAULT_POS);
 }
@@ -46,7 +46,7 @@ int search_best_move(Board &board, SearchInfo &info)
     SearchStack stack[MAXPLY + 10];
     SearchStack *ss = stack + 7; // Have some safety overhead.
 
-    ClearForSearch(info, table);
+    clear_for_search(info, table);
     
     board.Refresh();
 
@@ -54,7 +54,7 @@ int search_best_move(Board &board, SearchInfo &info)
 
     for (int i = 1; i <= info.depth; i++)
     {
-        score = AlphaBeta(-INF_BOUND, INF_BOUND, i, board, info, ss);
+        score = negamax(-INF_BOUND, INF_BOUND, i, board, info, ss);
         NodesOver(info);
         if (info.stopped)
         {
@@ -105,12 +105,12 @@ int sanity_search(Board &board, SearchInfo &info)
     SearchStack stack[MAXPLY + 10];
     SearchStack *ss = stack + 7; // Have some safety overhead.
 
-    ClearForSearch(info, table);
+    clear_for_search(info, table);
     board.Refresh();
 
     int score = 0;
 
-    score = AlphaBeta(-INF_BOUND, INF_BOUND, 10, board, info, ss);
+    score = negamax(-INF_BOUND, INF_BOUND, 10, board, info, ss);
 
 
     return score;
@@ -179,13 +179,13 @@ void playGames(int id, int games , int threadcount)
     Board board;
     SearchInfo info;
     info.timeset = false;
-    info.stopNodes = 5000;
+    info.nodes = 5000;
     info.nodeset = true;
     info.depth = MAXDEPTH;
 
     std::ofstream outfile("./data" + std::to_string(id) + ".txt", std::ios::app);
     
-    auto start_time = GetTimeMs();
+    auto start_time = misc::tick();
 
     if (outfile.is_open())
     {
@@ -209,7 +209,7 @@ void playGames(int id, int games , int threadcount)
             }
 
             if (id == 0 && !(i % 100)){
-                std::cout << "gamecount "<< i << ":\t| total games: " << total_games << " | total_fens: " << total_fens << " | speed: " << (total_fens * 1000 / (1 + GetTimeMs() - start_time)) << " fens/s | " << ((total_fens * 1000 / (1 + GetTimeMs() - start_time))*60) << " fens/m | " << ((total_fens * 1000 / (1 + GetTimeMs() - start_time))*60*60) << " fens/hour" << std::endl;
+                std::cout << "gamecount "<< i << ":\t| total games: " << total_games << " | total_fens: " << total_fens << " | speed: " << (total_fens * 1000 / (1 + misc::tick() - start_time)) << " fens/s | " << ((total_fens * 1000 / (1 + misc::tick() - start_time))*60) << " fens/m | " << ((total_fens * 1000 / (1 + misc::tick() - start_time))*60*60) << " fens/hour" << std::endl;
             }
         }
     }else std::cout << "Unable to open file" << std::endl;

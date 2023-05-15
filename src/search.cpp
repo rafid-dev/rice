@@ -9,30 +9,29 @@
 #include <iostream>
 
 int LMRTable[MAXDEPTH][64];
-int ProbcutDepth = 5;
+constexpr int ProbcutDepth = 5;
 
 /* Initialize LMR table using the log formula */
-void InitSearch() {
+void init_search() {
     float base = static_cast<float>(static_cast<float>(LMRBase) / 100);
     float division = static_cast<float>(static_cast<float>(LMRDivision) / 100);
     for (int depth = 1; depth < MAXDEPTH; depth++) {
         for (int played = 1; played < 64; played++) {
-            LMRTable[depth][played] =
-                base + log(depth) * log(played) / division;
+            LMRTable[depth][played] = base + log(depth) * log(played) / division;
         }
     }
 }
 
-/* Function to check if time has ended and if we have to stop. */
-static void CheckUp(SearchInfo &info) {
-    if ((info.timeset && GetTimeMs() > info.stoptimeMax) ||
-        (info.nodeset && info.nodes >= info.stopNodes)) {
+// Check if we have to stop the search.
+static void check_time(SearchInfo &info) {
+    if ((info.timeset && misc::tick() > info.stoptime_max) ||
+        (info.nodeset && info.nodes_reached >= info.nodes)) {
         info.stopped = true;
     }
 }
 
-static bool StopEarly(SearchInfo &info) {
-    if (info.timeset && (GetTimeMs() > info.stoptimeOpt || info.stopped)) {
+static bool stop_early(SearchInfo &info) {
+    if (info.timeset && (misc::tick() > info.stoptime_opt || info.stopped)) {
         return true;
     } else {
         return false;
@@ -40,8 +39,8 @@ static bool StopEarly(SearchInfo &info) {
 }
 
 /* Clear helper variables for search */
-void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
-    info.nodes = 0;
+void clear_for_search(SearchInfo &info, TranspositionTable *table) {
+    info.nodes_reached = 0;
     info.stopped = false;
 
     // Reset history
@@ -57,18 +56,18 @@ void ClearForSearch(SearchInfo &info, TranspositionTable *table) {
     table->currentAge++;
 }
 
-/* Quiescence Search to prevent Horizon Effect.*/
-int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
+/* qsearch Search to prevent Horizon Effect.*/
+int qsearch(int alpha, int beta, Board &board, SearchInfo &info,
                SearchStack *ss) {
 
     /* Checking for time every 2048 nodes */
-    if ((info.nodes & 2047) == 0) {
-        CheckUp(info);
+    if ((info.nodes_reached & 2047) == 0) {
+        check_time(info);
     }
 
     /* We return static evaluation if we exceed max depth */
     if (ss->ply > MAXPLY - 1) {
-        return Evaluate(board);
+        return evaluate(board);
     }
 
     /* Repetition check */
@@ -77,7 +76,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     }
 
     /* standing_pat is our static evaluation of the board */
-    int standing_pat = Evaluate(board);
+    int standing_pat = evaluate(board);
 
     /* if our static evaluation beats beta, we return beta.*/
     if (standing_pat >= beta) {
@@ -91,11 +90,11 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 
     /* Probe Tranpsosition Table */
     bool ttHit = false;
-    bool isPvNode = (beta - alpha) > 1;
-    TTEntry &tte = table->probeEntry(board.hashKey, ttHit, ss->ply);
+    bool is_pvnode = (beta - alpha) > 1;
+    TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
     /* Return TT score if we found a TT entry*/
-    if (!isPvNode && ttHit) {
+    if (!is_pvnode && ttHit) {
         if ((tte.flag == HFALPHA && tte.score <= alpha) ||
             (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
             return tte.score;
@@ -107,7 +106,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     /* Bestscore is our static evaluation in quiscence search */
 
     int bestscore = standing_pat;
-    int moveCount = 0;
+    int move_count = 0;
     int score = -INF_BOUND;
 
     Move bestmove = NO_MOVE;
@@ -122,30 +121,30 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     /* Moves loop */
     for (int i = 0; i < list.size; i++) {
         /* Pick next move with highest score */
-        pickNextMove(i, list);
+        pick_nextmove(i, list);
 
         Move move = list[i].move;
 
-        /* SEE pruning in Quiescence search */
+        /* SEE pruning in qsearch search */
         /* If we do not SEE a good capture move, we can skip the move.*/
-        if (list[i].value < GoodCaptureScore && moveCount >= 1) {
+        if (list[i].value < GoodCaptureScore && move_count >= 1) {
             continue;
         }
 
         /* Make move on board */
         board.makeMove(move);
-        table->prefetchTT(board.hashKey);
+        table->prefetch_tt(board.hashKey);
 
         /* Increment ply, nodes and movecount */
         (ss + 1)->ply = ss->ply + 1;
-        info.nodes++;
-        moveCount++;
+        info.nodes_reached++;
+        move_count++;
 
         ss->move = move;
-        ss->movedPiece = board.pieceAtB(to(move));
+        ss->moved_piece = board.pieceAtB(to(move));
 
-        /* Recursive call of Quiescence on current position */
-        score = -Quiescence(-beta, -alpha, board, info, ss + 1);
+        /* Recursive call of qsearch on current position */
+        score = -qsearch(-beta, -alpha, board, info, ss + 1);
 
         /* Undo move on board */
         board.unmakeMove(move);
@@ -178,8 +177,8 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
     int flag = bestscore >= beta ? HFBETA : HFALPHA;
 
     /* Store transposition table entry */
-    table->storeEntry(board.hashKey, flag, bestmove, 0, bestscore, standing_pat,
-                      ss->ply, isPvNode);
+    table->store(board.hashKey, flag, bestmove, 0, bestscore, standing_pat,
+                      ss->ply, is_pvnode);
 
     /* Return bestscore achieved */
     return bestscore;
@@ -187,7 +186,7 @@ int Quiescence(int alpha, int beta, Board &board, SearchInfo &info,
 
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
-int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
+int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info,
               SearchStack *ss) {
 
     /* Initialize our pv table lenght. */
@@ -197,31 +196,31 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
      * and also end recursion.*/
     if (depth <= 0) {
-        return Quiescence(alpha, beta, board, info, ss);
+        return qsearch(alpha, beta, board, info, ss);
     }
 
     /* Checking for time every 2048 nodes */
-    if ((info.nodes & 2047) == 0) {
-        CheckUp(info);
+    if ((info.nodes_reached & 2047) == 0) {
+        check_time(info);
     }
 
     /* Initialize helper variables */
-    bool isRoot = (ss->ply == 0);
-    bool inCheck = board.isSquareAttacked(~board.sideToMove,
+    bool is_root = (ss->ply == 0);
+    bool in_check = board.isSquareAttacked(~board.sideToMove,
                                           board.KingSQ(board.sideToMove));
-    bool isPvNode = (beta - alpha) > 1;
+    bool is_pvnode = (beta - alpha) > 1;
     int eval = 0;
     bool improving = false;
 
     /* In check extension. We search an extra ply if we are in check. */
-    if (inCheck) {
+    if (in_check) {
         depth++;
     }
 
-    if (!isRoot) {
+    if (!is_root) {
         /* We return static evaluation if we exceed max depth.*/
         if (ss->ply > MAXPLY - 1) {
-            return Evaluate(board);
+            return evaluate(board);
         }
 
         /* Repetition check*/
@@ -232,7 +231,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
     /* Probe transposition table */
     bool ttHit = false;
-    TTEntry &tte = table->probeEntry(board.hashKey, ttHit, ss->ply);
+    TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
     if (ss->excluded) {
         ttHit = false;
@@ -241,7 +240,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     /* If we hit a transposition table entry and the depth >= tt entry depth
        and the following conditions meet we will return the tt score. */
 
-    if (!isPvNode && ttHit && tte.depth >= depth) {
+    if (!is_pvnode && ttHit && tte.depth >= depth) {
         if ((tte.flag == HFALPHA && tte.score <= alpha) ||
             (tte.flag == HFBETA && tte.score >= beta) || (tte.flag == HFEXACT))
             return tte.score;
@@ -252,23 +251,23 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     /* We can use the tt entry's evaluation if we have a tt hit so we don't have
      * to re-evaluate from scratch */
 
-    ss->static_eval = eval = ttHit ? tte.eval : Evaluate(board);
+    ss->static_eval = eval = ttHit ? tte.eval : evaluate(board);
 
     /* If we our static evaluation is better than what it was 2 plies ago, we
      * are improving */
-    improving = !inCheck && ss->static_eval > (ss - 2)->static_eval;
+    improving = !in_check && ss->static_eval > (ss - 2)->static_eval;
 
     /* We set static evaluation to 0 if we are in check or if we have hit an
      * excluded move. */
     /* and also set improving to false. */
-    if (inCheck || ss->excluded) {
+    if (in_check || ss->excluded) {
         ss->static_eval = eval = 0;
         improving = false;
         goto movesloop;
     }
 
     /* Reverse Futility Pruning || Null Move Pruning */
-    if (!isPvNode && !inCheck && !isRoot && !ss->excluded) {
+    if (!is_pvnode && !in_check && !is_root && !ss->excluded) {
 
         /* We can use tt entry's score as score if we hit one.*/
         /* This score is from search so this is more accurate */
@@ -302,7 +301,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
             (ss + 1)->ply = ss->ply + 1;
 
             int score =
-                -AlphaBeta(-beta, -beta + 1, depth - R, board, info, ss + 1);
+                -negamax(-beta, -beta + 1, depth - R, board, info, ss + 1);
 
             board.unmakeNullMove();
 
@@ -331,7 +330,7 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
             score_moves(board, list, ss, info, tte.move);
             int score = 0;
             for (int i = 0; i < list.size; i++) {
-                pickNextMove(i, list);
+                pick_nextmove(i, list);
                 Move move = list[i].move;
 
                 if (list[i].value < GoodCaptureScore) {
@@ -344,19 +343,19 @@ int AlphaBeta(int alpha, int beta, int depth, Board &board, SearchInfo &info,
 
                 board.makeMove(move);
 
-                score = -Quiescence(-rbeta, -rbeta + 1, board, info, ss);
+                score = -qsearch(-rbeta, -rbeta + 1, board, info, ss);
 
                 if (score >= rbeta) {
-                    score = -AlphaBeta(-rbeta, -rbeta + 1, depth - 4, board,
+                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board,
                                        info, ss);
                 }
 
                 board.unmakeMove(move);
 
                 if (score >= rbeta) {
-                    table->storeEntry(board.hashKey, HFBETA, move, depth - 3,
+                    table->store(board.hashKey, HFBETA, move, depth - 3,
                                       score, ss->static_eval, ss->ply,
-                                      isPvNode);
+                                      is_pvnode);
                     return score;
                 }
             }
@@ -367,7 +366,7 @@ movesloop:
 
     /* Initialize variables */
     int bestscore = -INF_BOUND;
-    int moveCount = 0;
+    int move_count = 0;
     int oldAlpha = alpha;
     int score = -INF_BOUND;
     Move bestmove = NO_MOVE;
@@ -383,28 +382,28 @@ movesloop:
     // Score moves and pass the tt move so it can be sorted highest
     score_moves(board, list, ss, info, tte.move);
 
-    bool skipQuiets = false;
+    bool skip_quiet_moves = false;
 
     // Moves loop
     for (int i = 0; i < list.size; i++) {
         // Pick move with highest possible score
-        pickNextMove(i, list);
+        pick_nextmove(i, list);
 
         // Initialize move variable
         Move move = list[i].move;
-        Piece movedPiece = board.pieceAtB(from(move));
+        Piece moved_piece = board.pieceAtB(from(move));
 
         // Skip excluded moves from extension
         if (move == ss->excluded)
             continue;
 
-        bool isQuiet = (!promoted(move) && !is_capture(board, move));
+        bool is_quiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
         int contHistScore =
-            isQuiet ? GetConthHistoryScore(board, info, ss, move) : 0;
+            is_quiet ? GetConthHistoryScore(board, info, ss, move) : 0;
 
         int historyScore =
-            isQuiet ? info.searchHistory[board.pieceAtB(from(move))][to(move)]
+            is_quiet ? info.searchHistory[board.pieceAtB(from(move))][to(move)]
                     : 0;
 
         int allHistoryScore = contHistScore + historyScore;
@@ -412,35 +411,35 @@ movesloop:
         bool refutationMove =
             (ss->killers[0] == move || ss->killers[1] == move);
 
-        if (isQuiet && skipQuiets) {
+        if (is_quiet && skip_quiet_moves) {
             continue;
         }
 
         /* Various pruning techniques */
-        if (!isRoot && bestscore > -ISMATE) {
+        if (!is_root && bestscore > -ISMATE) {
 
             // Initialize lmrDepth which we will use soon.
             int lmrDepth =
-                LMRTable[std::min(depth, 63)][std::min(moveCount, 63)];
+                LMRTable[std::min(depth, 63)][std::min(move_count, 63)];
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
-            if (isQuiet && !inCheck && !isPvNode && depth <= 5 &&
+            if (is_quiet && !in_check && !is_pvnode && depth <= 5 &&
                 quietList.size >= depth * depth * (2 + 2 * improving)) {
-                skipQuiets = true;
+                skip_quiet_moves = true;
                 continue;
             }
 
             // Futility pruning
-            if (lmrDepth <= 6 && !inCheck && isQuiet &&
+            if (lmrDepth <= 6 && !in_check && is_quiet &&
                 eval + 217 + 71 * depth <= alpha) {
-                skipQuiets = true;
+                skip_quiet_moves = true;
             }
 
             // SEE Pruning
             // Dont search moves at low depths that seem to lose material
-            if ((isQuiet ? depth < 6 : depth < 4) &&
-                !see(board, move, (isQuiet ? -50 * depth : -45 * depth))) {
+            if ((is_quiet ? depth < 6 : depth < 4) &&
+                !see(board, move, (is_quiet ? -50 * depth : -45 * depth))) {
                 continue;
             }
         }
@@ -448,48 +447,48 @@ movesloop:
         /* Extensions
          * Search extra ply if move comes from tt
          */
-        if (!isRoot && depth >= 7 && (move == tte.move) &&
+        if (!is_root && depth >= 7 && (move == tte.move) &&
             (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
             tte.depth >= depth - 3) {
-            int singularBeta = tte.score - 3 * depth;
+            int singular_beta = tte.score - 3 * depth;
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = tte.move;
-            int singularScore = AlphaBeta(singularBeta - 1, singularBeta,
+            int singular_score = negamax(singular_beta - 1, singular_beta,
                                           singularDepth, board, info, ss);
             ss->excluded = NO_MOVE;
 
-            if (singularScore < singularBeta) {
+            if (singular_score < singular_beta) {
                 extension = 1;
-            } else if (singularBeta >= beta) {
-                return (singularBeta); // Multicut
+            } else if (singular_beta >= beta) {
+                return (singular_beta); // Multicut
             }
         }
 
         /* Initialize new depth based on extension*/
-        int newDepth = depth + extension;
+        int new_depth = depth + extension;
 
         /* Make move on current board. */
         board.makeMove(move);
-        table->prefetchTT(board.hashKey); // TT Prefetch
+        table->prefetch_tt(board.hashKey); // TT Prefetch
 
         /* Set stack move to current move */
         ss->move = move;
-        ss->movedPiece = movedPiece;
+        ss->moved_piece = moved_piece;
 
         /* Increment ply, nodes and movecount */
         (ss + 1)->ply = ss->ply + 1;
 
-        info.nodes++;
-        moveCount++;
+        info.nodes_reached++;
+        move_count++;
 
         /* Add quiet to quiet list if it's a quiet move. */
-        if (isQuiet) {
+        if (is_quiet) {
             quietList.Add(move);
         }
 
         /* A condition for full search.*/
-        bool do_fullsearch = do_fullsearch = !isPvNode || moveCount > 1;
+        bool do_fullsearch = do_fullsearch = !is_pvnode || move_count > 1;
 
         /* Late move reduction
          * Later moves will be searched in a reduced depth.
@@ -497,12 +496,12 @@ movesloop:
          * full depth.
          */
         // clang-format off
-        if (!inCheck && depth >= 3 && moveCount > (2 + 2 * isPvNode)) {
-            int reduction = LMRTable[std::min(depth, 63)][std::min(63, moveCount)];
+        if (!in_check && depth >= 3 && move_count > (2 + 2 * is_pvnode)) {
+            int reduction = LMRTable[std::min(depth, 63)][std::min(63, move_count)];
 
             reduction += !improving; /* Increase reduction if we're not improving. */
-            reduction += !isPvNode; /* Increase for non pv nodes */
-            reduction += isQuiet && !see(board, move, -50 * depth); /* Increase
+            reduction += !is_pvnode; /* Increase for non pv nodes */
+            reduction += is_quiet && !see(board, move, -50 * depth); /* Increase
                                           for quiets and not winning captures */
 
             // Reduce two plies if it's a counter or killer
@@ -512,7 +511,7 @@ movesloop:
              * extension*/
             reduction = std::min(depth - 1, std::max(1, reduction));
 
-            score = -AlphaBeta(-alpha - 1, -alpha, newDepth - reduction, board,
+            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board,
                                info, ss + 1);
             
 
@@ -524,13 +523,13 @@ movesloop:
 
         /* Full depth search on a zero window. */
         if (do_fullsearch) {
-            score = -AlphaBeta(-alpha - 1, -alpha, newDepth - 1, board, info,
+            score = -negamax(-alpha - 1, -alpha, new_depth - 1, board, info,
                                ss + 1);
         }
 
         // Principal Variation Search (PVS)
-        if (isPvNode && (moveCount == 1 || (score > alpha && score < beta))) {
-            score = -AlphaBeta(-beta, -alpha, newDepth - 1, board, info, ss + 1);
+        if (is_pvnode && (move_count == 1 || (score > alpha && score < beta))) {
+            score = -negamax(-beta, -alpha, new_depth - 1, board, info, ss + 1);
         }
 
         // clang-format on
@@ -538,7 +537,7 @@ movesloop:
         // Undo move on board
         board.unmakeMove(move);
 
-        if (info.stopped == true && !isRoot) {
+        if (info.stopped == true && !is_root) {
             return 0;
         }
 
@@ -552,7 +551,7 @@ movesloop:
 
                 // clang-format off
                 if (score >= beta) {
-                    if (isQuiet) {
+                    if (is_quiet) {
                         // Update killers
                         ss->killers[1] = ss->killers[0];
                         ss->killers[0] = move;
@@ -573,13 +572,13 @@ movesloop:
 
         // We are safe to break out of the loop if we are sure that we don't
         // return illegal move
-        if (info.stopped == true && isRoot && info.bestmove != NO_MOVE) {
+        if (info.stopped == true && is_root && info.bestmove != NO_MOVE) {
             break;
         }
     }
 
-    if (!isRoot && moveCount == 0) {
-        if (inCheck) {
+    if (!is_root && move_count == 0) {
+        if (in_check) {
             return -ISMATE + ss->ply; // Checkmate
         } else {
             return 0; // Stalemate
@@ -591,8 +590,8 @@ movesloop:
                                      : HFALPHA;
 
     if (ss->excluded == NO_MOVE) {
-        table->storeEntry(board.hashKey, flag, bestmove, depth, bestscore,
-                          ss->static_eval, ss->ply, isPvNode);
+        table->store(board.hashKey, flag, bestmove, depth, bestscore,
+                          ss->static_eval, ss->ply, is_pvnode);
     }
 
     if (alpha != oldAlpha) {
@@ -637,34 +636,43 @@ static void getPvLines(Board &board, std::vector<U64>& positions) {
     return;
 }
 
-void SearchPosition(Board &board, SearchInfo &info) {
-    ClearForSearch(info, table);
+void iterative_deepening(Board &board, SearchInfo &info) {
+    clear_for_search(info, table);
 
     int score = 0;
 
-    long startime = GetTimeMs();
+    auto startime = misc::tick();
     Move bestmove = NO_MOVE;
 
     for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
-        score = AspirationWindowSearch(score, current_depth, board, info);
+        score = aspiration_window(score, current_depth, board, info);
 
-        // score = AlphaBeta(-INF_BOUND, INF_BOUND, current_depth, board, info,
-        // ss);
-
-        if (info.stopped == true || StopEarly(info)) {
+        if (info.stopped == true || stop_early(info)) {
             break;
         }
+
+        auto time_elapsed = misc::tick() - startime;
 
         bestmove = info.bestmove;
 
         std::cout << "info score cp ";
-        F_number(score, info.uci, FANCY_Yellow);
+
+        FancyNumber(score, info.uci, FANCY_Yellow);
+
         std::cout << " depth ";
-        F_number(current_depth, info.uci, FANCY_Green);
+
+        FancyNumber(current_depth, info.uci, FANCY_Green);
+
         std::cout << " nodes ";
-        F_number(info.nodes, info.uci, FANCY_Blue);
+
+        FancyNumber(info.nodes_reached, info.uci, FANCY_Blue);
+
+        std::cout << " nps ";
+        FancyNumber(info.nodes_reached / std::max<uint64_t>(1, time_elapsed / 1000), info.uci, FANCY_Green);
+
         std::cout << " time ";
-        F_number((GetTimeMs() - startime), info.uci, FANCY_Cyan);
+
+        FancyNumber(time_elapsed, info.uci, FANCY_Cyan);
 
         // info.pvTable.print();
         std::cout << " pv";
@@ -678,7 +686,7 @@ void SearchPosition(Board &board, SearchInfo &info) {
     std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;
 }
 
-int AspirationWindowSearch(int prevEval, int depth, Board &board,
+int aspiration_window(int prevEval, int depth, Board &board,
                            SearchInfo &info) {
     int score = 0;
 
@@ -696,9 +704,9 @@ int AspirationWindowSearch(int prevEval, int depth, Board &board,
 
     while (true) {
 
-        score = AlphaBeta(alpha, beta, depth, board, info, ss);
+        score = negamax(alpha, beta, depth, board, info, ss);
 
-        if (StopEarly(info)) {
+        if (stop_early(info)) {
             break;
         }
 

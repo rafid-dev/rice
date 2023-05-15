@@ -246,11 +246,11 @@ void uci_loop(int argv, char **argc) {
         movestogo = 1;
       }
       if (nodes != -1) {
-        info.stopNodes = nodes;
+        info.nodes = nodes;
         info.nodeset = true;
       }
 
-      info.start_time = GetTimeMs();
+      info.start_time = misc::tick();
       info.depth = depth;
       if (uciTime != -1) {
         info.timeset = true;
@@ -263,8 +263,8 @@ void uci_loop(int argv, char **argc) {
 
         int time_slot = uciTime / movestogo;
 
-        info.stoptimeMax = info.start_time + time_slot;
-        info.stoptimeOpt = info.start_time + time_slot;
+        info.stoptime_max = info.start_time + time_slot;
+        info.stoptime_opt = info.start_time + time_slot;
       } else if (info.timeset) {
 
         uciTime /= 40;
@@ -277,8 +277,8 @@ void uci_loop(int argv, char **argc) {
 
         // max time is the time we can spend max on a search
         int maxtime = std::min(uciTime, basetime * 2);
-        info.stoptimeMax = info.start_time + maxtime;
-        info.stoptimeOpt = info.start_time + optime;
+        info.stoptime_max = info.start_time + maxtime;
+        info.stoptime_opt = info.start_time + optime;
       }
 
       if (depth == -1) {
@@ -291,12 +291,12 @@ void uci_loop(int argv, char **argc) {
       if (IS_DEBUG) {
         std::cout << "movestogo: " << movestogo << " time:" << uciTime
                   << " start:" << info.start_time
-                  << " stop:" << info.stoptimeMax << " depth:" << info.depth
+                  << " stop:" << info.stoptime_max << " depth:" << info.depth
                   << " timeset: " << info.timeset << "\n";
       }
-      SearchPosition(board, info);
+      iterative_deepening(board, info);
       // mainSearchThread =
-      //     std::thread(SearchPosition, std::ref(board), std::ref(info));
+      //     std::thread(iterative_deepening, std::ref(board), std::ref(info));
     }
 
     else if (token == "setoption") {
@@ -317,7 +317,7 @@ void uci_loop(int argv, char **argc) {
       set_option(is, token, "NMPDivison", NMPDivision);
       set_option(is, token, "NMPMargin", NMPMargin);
 
-      InitSearch();
+      init_search();
 
       if (CurrentHashSize != LastHashSize) {
         CurrentHashSize = std::min(CurrentHashSize, MAXHASH);
@@ -330,42 +330,51 @@ void uci_loop(int argv, char **argc) {
     else if (token == "print") {
       std::cout << board << std::endl;
       continue;
-    } else if (token == "be") {
-      int64_t sum = 0;
-      int count = 100000000;
+    } else if (token == "bencheval") {
+
+      size_t count = 100000000;
+      uint64_t sum = 0;
       int64_t score = 0;
-      auto start = std::chrono::high_resolution_clock::now();
 
-      for (int i = 0; i < count; i++) {
+      auto start = misc::tick<std::chrono::nanoseconds>();
 
-        score += Evaluate(board);
+      for (size_t i = 0; i < count; i++) {
+        score += evaluate(board);
       }
-      auto stop = std::chrono::high_resolution_clock::now();
-      auto duration =
-          std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
-      sum += duration.count();
-      std::cout << "Average NS: " << (sum / count) << std::endl;
+
+      auto stop = misc::tick<std::chrono::nanoseconds>();
+      auto duration = stop - start;
+      
+      sum += duration;
+
+      std::cout << "Average NS: " << float(sum / count) << std::endl;
       std::cout << score << std::endl;
 
       continue;
     } else if (token == "eval") {
-      std::cout << "Eval: " << Evaluate(board) << std::endl;
+      std::cout << "Eval: " << evaluate(board) << std::endl;
     } else if (token == "repetition") {
       std::cout << board.isRepetition() << std::endl;
     } else if (token == "side") {
       std::cout << (board.sideToMove == White ? "White" : "Black\n")
                 << std::endl;
     } else if (token == "bench") {
+      
       info.depth = 13;
       info.timeset = false;
       StartBenchmark(board, info);
+
     } else if (token == "datagen") {
+
       table->Initialize(64 * 6);
       generateData(1000000, 6);
+
     } else if (token == "perft") {
+
       is >> std::skipws >> token;
       int depth = stoi(token);
       PerftTest(board, depth);
+      
     }
   }
 

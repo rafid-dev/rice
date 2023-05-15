@@ -59,23 +59,23 @@ void StartBenchmark(Board &board, SearchInfo &info) {
   info.timeset = false;
 
   uint64_t total = 0;
-  uint64_t time_elasped = 0;
+  uint64_t time_elapsed = 0;
 
   for (auto &fen : BenchmarkFen) {
     board.applyFen(fen);
 
     std::cout << "Position " << fen << std::endl;
 
-    auto start = GetTimeMs();
-    SearchPosition(board, info);
-    auto end = GetTimeMs();
+    auto start = misc::tick();
+    iterative_deepening(board, info);
+    auto end = misc::tick();
 
-    total += info.nodes;
-    time_elasped += (end - start);
+    total += info.nodes_reached;
+    time_elapsed += (end - start);
   }
 
   std::cout << "Total nodes: " << total << std::endl;
-  std::cout << "Total time elasped (MS): " << time_elasped << std::endl;
-  std::cout << "Speed: " << (total / (time_elasped / 1000)) << " NPS"
+  std::cout << "Total time elasped (MS): " << time_elapsed << std::endl;
+  std::cout << "Speed: " << (total / (time_elapsed / 1000)) << " NPS"
             << std::endl;
 }

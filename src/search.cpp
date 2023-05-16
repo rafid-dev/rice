@@ -17,7 +17,8 @@ void init_search() {
     float division = static_cast<float>(static_cast<float>(LMRDivision) / 100);
     for (int depth = 1; depth < MAXDEPTH; depth++) {
         for (int played = 1; played < 64; played++) {
-            LMRTable[depth][played] = base + log(depth) * log(played) / division;
+            LMRTable[depth][played] =
+                base + log(depth) * log(played) / division;
         }
     }
 }
@@ -58,7 +59,7 @@ void clear_for_search(SearchInfo &info, TranspositionTable *table) {
 
 /* qsearch Search to prevent Horizon Effect.*/
 int qsearch(int alpha, int beta, Board &board, SearchInfo &info,
-               SearchStack *ss) {
+            SearchStack *ss) {
 
     /* Checking for time every 2048 nodes */
     if ((info.nodes_reached & 2047) == 0) {
@@ -178,7 +179,7 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info,
 
     /* Store transposition table entry */
     table->store(board.hashKey, flag, bestmove, 0, bestscore, standing_pat,
-                      ss->ply, is_pvnode);
+                 ss->ply, is_pvnode);
 
     /* Return bestscore achieved */
     return bestscore;
@@ -187,7 +188,7 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info,
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
 int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info,
-              SearchStack *ss) {
+            SearchStack *ss) {
 
     /* Initialize our pv table lenght. */
     /* UNUSED */
@@ -207,7 +208,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info,
     /* Initialize helper variables */
     bool is_root = (ss->ply == 0);
     bool in_check = board.isSquareAttacked(~board.sideToMove,
-                                          board.KingSQ(board.sideToMove));
+                                           board.KingSQ(board.sideToMove));
     bool is_pvnode = (beta - alpha) > 1;
     int eval = 0;
     bool improving = false;
@@ -346,16 +347,15 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info,
                 score = -qsearch(-rbeta, -rbeta + 1, board, info, ss);
 
                 if (score >= rbeta) {
-                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board,
-                                       info, ss);
+                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info,
+                                     ss);
                 }
 
                 board.unmakeMove(move);
 
                 if (score >= rbeta) {
-                    table->store(board.hashKey, HFBETA, move, depth - 3,
-                                      score, ss->static_eval, ss->ply,
-                                      is_pvnode);
+                    table->store(board.hashKey, HFBETA, move, depth - 3, score,
+                                 ss->static_eval, ss->ply, is_pvnode);
                     return score;
                 }
             }
@@ -399,14 +399,9 @@ movesloop:
 
         bool is_quiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
-        int contHistScore =
-            is_quiet ? GetConthHistoryScore(board, info, ss, move) : 0;
 
-        int historyScore =
-            is_quiet ? info.searchHistory[board.pieceAtB(from(move))][to(move)]
-                    : 0;
-
-        int allHistoryScore = contHistScore + historyScore;
+        int h, ch, fh;
+        int history;
 
         bool refutationMove =
             (ss->killers[0] == move || ss->killers[1] == move);
@@ -415,12 +410,22 @@ movesloop:
             continue;
         }
 
+        if (is_quiet) {
+            get_history_scores(h, ch, fh, board, info, ss, move);
+            history = h + ch + fh;
+        }
+
         /* Various pruning techniques */
         if (!is_root && bestscore > -ISMATE) {
 
             // Initialize lmrDepth which we will use soon.
             int lmrDepth =
                 LMRTable[std::min(depth, 63)][std::min(move_count, 63)];
+
+            if (!refutationMove && lmrDepth <= (3 - improving) &&
+                history < -6000 * depth) {
+                continue;
+            }
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
@@ -455,13 +460,15 @@ movesloop:
 
             ss->excluded = tte.move;
             int singular_score = negamax(singular_beta - 1, singular_beta,
-                                          singularDepth, board, info, ss);
+                                         singularDepth, board, info, ss);
             ss->excluded = NO_MOVE;
 
             if (singular_score < singular_beta) {
                 extension = 1;
             } else if (singular_beta >= beta) {
                 return (singular_beta); // Multicut
+            } else if (tte.score >= beta) {
+                extension = -2; // Negative extension
             }
         }
 
@@ -515,7 +522,7 @@ movesloop:
                                info, ss + 1);
             
 
-            reduction -= allHistoryScore/12000;
+            reduction -= history/12000;
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;
@@ -591,7 +598,7 @@ movesloop:
 
     if (ss->excluded == NO_MOVE) {
         table->store(board.hashKey, flag, bestmove, depth, bestscore,
-                          ss->static_eval, ss->ply, is_pvnode);
+                     ss->static_eval, ss->ply, is_pvnode);
     }
 
     if (alpha != oldAlpha) {
@@ -613,9 +620,9 @@ static inline bool moveExists(Board &board, Move move) {
 }
 
 // Recursive implementation to fetch pv lines.
-static void getPvLines(Board &board, std::vector<U64>& positions) {
+static void getPvLines(Board &board, std::vector<U64> &positions) {
 
-    if (positions.size() >= MAXPLY){
+    if (positions.size() >= MAXPLY) {
         return;
     }
 
@@ -668,7 +675,9 @@ void iterative_deepening(Board &board, SearchInfo &info) {
         FancyNumber(info.nodes_reached, info.uci, FANCY_Blue);
 
         std::cout << " nps ";
-        FancyNumber(info.nodes_reached / std::max<uint64_t>(1, time_elapsed / 1000), info.uci, FANCY_Green);
+        FancyNumber(info.nodes_reached /
+                        std::max<uint64_t>(1, time_elapsed / 1000),
+                    info.uci, FANCY_Green);
 
         std::cout << " time ";
 
@@ -686,8 +695,7 @@ void iterative_deepening(Board &board, SearchInfo &info) {
     std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;
 }
 
-int aspiration_window(int prevEval, int depth, Board &board,
-                           SearchInfo &info) {
+int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info) {
     int score = 0;
 
     SearchStack stack[MAXPLY + 10], *ss = stack + 7;

@@ -166,6 +166,26 @@ void UpdateContHistory(Board &board, SearchInfo &info, SearchStack *ss,
     }
 }
 
+void get_history_scores(int& his, int& ch, int& fmh, Board &board, SearchInfo &info, SearchStack *ss, const Move move){
+    Move previous_move = (ss - 1)->move;
+    Move previous_previous_move = (ss - 2)->move;
+    Piece previous_piece = (ss - 1)->moved_piece;
+    Piece previous_previous_piece = (ss - 2)->moved_piece;
+    Piece moved_piece = board.pieceAtB(from(move));
+
+    his = info.searchHistory[board.pieceAtB(from(move))][to(move)];
+
+    ch = previous_move
+                             ? info.contHist[previous_piece][to(previous_move)]
+                                            [moved_piece][to(move)] : 0;
+    fmh =
+        previous_previous_move
+            ? info.contHist[previous_previous_piece][to(previous_previous_move)]
+                           [moved_piece][to(move)] : 0;
+
+    
+}
+
 // TODO: Implement this soon.
 void UpdateCaptureHistory(Board& board, SearchInfo& info, Move bestmove, int depth){
     // Update best move score

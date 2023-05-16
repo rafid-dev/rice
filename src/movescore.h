@@ -14,3 +14,5 @@ void UpdateCaptureHistory(Board& board, SearchInfo& info, Move bestmove, int dep
 void UpdateContHistory(Board& board, SearchInfo& info, SearchStack *ss, Move bestmove, Movelist &quietList, int depth);
 int GetConthHistoryScore(Board &board, SearchInfo &info,
                                        SearchStack *ss, const Move move);
+
+void get_history_scores(int& hus, int& ch, int& fmh, Board &board, SearchInfo &info, SearchStack *ss, const Move move);

@@ -522,7 +522,7 @@ movesloop:
                                info, ss + 1);
             
 
-            reduction -= history/12000;
+            reduction -= history/24196;
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;

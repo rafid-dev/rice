@@ -15,7 +15,6 @@ struct SearchInfo {
 
     HistoryTable searchHistory;
     ContinuationHistoryTable contHist;
-    CaptureHistoryTable captureHistory;
     
     uint64_t nodes_reached{};
 
@@ -41,7 +40,6 @@ struct SearchStack {
     Move excluded {NO_MOVE};
     Move move {NO_MOVE};
     Move killers[2] = {NO_MOVE, NO_MOVE};
-    Move counter {NO_MOVE};
 
     Piece moved_piece {None};
 };

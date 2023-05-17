@@ -435,6 +435,7 @@ movesloop:
                 continue;
             }
 
+
             // Futility pruning
             if (lmrDepth <= 6 && !in_check && is_quiet &&
                 eval + 217 + 71 * depth <= alpha) {
@@ -522,7 +523,7 @@ movesloop:
                                info, ss + 1);
             
 
-            reduction -= history/24196;
+            reduction -= history/12000;
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;
@@ -564,13 +565,10 @@ movesloop:
                         ss->killers[0] = move;
 
                         // Record history score
-                        UpdateHistory(board, info, bestmove, quietList, depth);
-                        UpdateContHistory(board, info, ss, bestmove, quietList, depth);
+                        update_hist(board, info, bestmove, quietList, depth);
+                        update_conthist(board, info, ss, bestmove, quietList, depth);
 
                     }
-
-                    // TODO: Add capture history.
-                    // UpdateCaptureHistory(board, info, move, depth);
                     break;
                 }
                 // clang-format on

@@ -77,6 +77,7 @@ void uci_loop(int argv, char **argc) {
     info.depth = 13;
     info.timeset = false;
     StartBenchmark(board, info);
+    exit(0);
   }
 
   std::string command;

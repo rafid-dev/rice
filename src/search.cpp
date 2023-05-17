@@ -467,8 +467,8 @@ movesloop:
                 extension = 1;
             } else if (singular_beta >= beta) {
                 return (singular_beta); // Multicut
-            } else if (tte.score >= beta) {
-                extension = -2; // Negative extension
+            } else if (tte.score >= beta){
+              extension = -2;
             }
         }
 

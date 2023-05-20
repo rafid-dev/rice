@@ -83,13 +83,10 @@ void uci_loop(int argv, char **argc) {
   std::string command;
   std::string token;
 
-  while (true) {
-    token.clear();
-    command.clear();
-
-    std::getline(std::cin, command);
+  while (std::getline(std::cin, command)) {
     std::istringstream is(command);
 
+    token.clear();
     is >> std::skipws >> token;
 
     if (token == "stop") {

@@ -334,20 +334,18 @@ void uci_loop(int argv, char **argc) {
       uint64_t sum = 0;
       int64_t score = 0;
 
-      auto start = misc::tick<std::chrono::nanoseconds>();
+      auto start = std::chrono::steady_clock::now();
 
       for (size_t i = 0; i < count; i++) {
         score += evaluate(board);
       }
 
-      auto stop = misc::tick<std::chrono::nanoseconds>();
-      auto duration = stop - start;
+      auto stop = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
       
       sum += duration;
 
-      std::cout << "Average NS: " << float(sum / count) << std::endl;
-      std::cout << score << std::endl;
-
+      std::cout << "Average NS: " << sum << std::endl;
       continue;
     } else if (token == "eval") {
       std::cout << "Eval: " << evaluate(board) << std::endl;

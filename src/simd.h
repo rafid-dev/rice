@@ -1,10 +1,5 @@
 #pragma once
 
-#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
-
-#endif
-
-#ifdef USE_SIMD
 #include <immintrin.h>
 
 #if defined(__AVX512F__)
@@ -40,8 +35,11 @@ using avx_register_type_32 = __m512i;
 #define avx_max_epi16  _mm512_max_epi16
 #define avx_load_reg   _mm512_load_si512
 #define avx_store_reg  _mm512_store_si512
+
 #endif
 
+
+#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
 inline int32_t sumRegisterEpi32(avx_register_type_32& reg) {
     // first summarize in case of avx512 registers into one 256 bit register
 #if defined(__AVX512F__)

@@ -1,7 +1,7 @@
 #include "bench.h"
 #include "misc.h"
 
-std::string BenchmarkFen[] = {
+std::string bench_fens[] = {
     "r3k2r/2pb1ppp/2pp1q2/p7/1nP1B3/1P2P3/P2N1PPP/R2QK2R w KQkq a6 0 14",
     "4rrk1/2p1b1p1/p1p3q1/4p3/2P2n1p/1P1NR2P/PB3PP1/3R1QK1 b - - 2 24",
     "r3qbrk/6p1/2b2pPp/p3pP1Q/PpPpP2P/3P1B2/2PB3K/R5R1 w - - 16 42",
@@ -54,28 +54,34 @@ std::string BenchmarkFen[] = {
     "2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93",
 };
 
-void StartBenchmark(Board &board, SearchInfo &info) {
-  info.depth = 13;
-  info.timeset = false;
+void StartBenchmark(Board& board, SearchInfo& info) {
+    info.depth            = 13;
+    info.timeset          = false;
 
-  uint64_t total = 0;
-  uint64_t time_elapsed = 0;
+    uint64_t nodes        = 0;
+    uint64_t count        = 0;
+    uint64_t time_elapsed = 0;
 
-  for (auto &fen : BenchmarkFen) {
-    board.applyFen(fen);
+    // Inspired from Koivisto
 
-    std::cout << "Position " << fen << std::endl;
+    for (auto& fen : bench_fens) {
+        board.applyFen(fen);
 
-    auto start = misc::tick();
-    iterative_deepening(board, info);
-    auto end = misc::tick();
+        auto start = misc::tick();
+        iterative_deepening<false>(board, info);
+        auto end = misc::tick();
 
-    total += info.nodes_reached;
-    time_elapsed += (end - start);
-  }
+        count++;
+        nodes += info.nodes_reached;
+        time_elapsed += (end - start);
 
-  std::cout << "Total nodes: " << total << std::endl;
-  std::cout << "Total time elasped (MS): " << time_elapsed << std::endl;
-  std::cout << "Speed: " << (total / (time_elapsed / 1000)) << " NPS"
-            << std::endl;
+        printf("Position [%2d] -> cp %5d bestmove %s %12ld nodes %8d nps", int(count),
+               int(info.score), convertMoveToUci(info.bestmove).c_str(), nodes,
+               static_cast<int>(1000.0f * nodes / (time_elapsed + 1)));
+        std::cout << std::endl;
+    }
+
+    printf("Finished: %42d nodes %8d nps\n", static_cast<int>(nodes),
+           static_cast<int>(1000.0f * nodes / (time_elapsed + 1)));
+    std::cout << std::flush;
 }

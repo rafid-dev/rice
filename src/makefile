@@ -3,7 +3,7 @@ _ROOT     := $(_THIS)
 CXX       := clang++
 TARGET    := Rice
 CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=c++20 -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wunused -Wundef -DNDEBUG
-NATIVE     = -march=native	
+NATIVE     = -march=native
 
 # engine name
 NAME      := Rice

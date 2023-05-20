@@ -1,6 +1,7 @@
 #pragma once
 
 #include "chess.hpp"
+#include "nnue.h" 
 
 using namespace Chess;
 
@@ -24,35 +25,7 @@ static inline uint32_t reduce_hash(uint32_t x, uint32_t N)
     return ((uint64_t)x * (uint64_t)N) >> 32;
 }
 
-struct Score{   
-    int16_t mg = 0;
-    int16_t eg = 0;
-    Score(int16_t a, int16_t b){
-        mg = a;
-        eg = b;
-    }
-    Score(){
-        mg = 0;
-        eg = 0;
-    }
-    Score operator+(const Score x){
-        return Score(mg + x.mg, eg + x.eg);
-    }
-    Score operator-(const Score x){
-        return Score(mg - x.mg, eg - x.eg);
-    }
-    Score operator*(int16_t x){
-        return Score(mg*x, eg*x);
-    }
-    void operator+=(const Score x){
-        mg += x.mg;
-        eg += x.eg;
-    }
-    void operator-=(const Score x){
-        mg -= x.mg;
-        eg -= x.eg;
-    }
-};
+extern NNUE::Net* nnue;
 
 enum {HFNONE, HFBETA, HFALPHA, HFEXACT};
 

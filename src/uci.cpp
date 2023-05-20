@@ -83,13 +83,10 @@ void uci_loop(int argv, char **argc) {
   std::string command;
   std::string token;
 
-  while (true) {
-    token.clear();
-    command.clear();
-
-    std::getline(std::cin, command);
+  while (std::getline(std::cin, command)) {
     std::istringstream is(command);
 
+    token.clear();
     is >> std::skipws >> token;
 
     if (token == "stop") {
@@ -295,7 +292,7 @@ void uci_loop(int argv, char **argc) {
                   << " stop:" << info.stoptime_max << " depth:" << info.depth
                   << " timeset: " << info.timeset << "\n";
       }
-      iterative_deepening(board, info);
+      iterative_deepening<true>(board, info);
       // mainSearchThread =
       //     std::thread(iterative_deepening, std::ref(board), std::ref(info));
     }

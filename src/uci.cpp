@@ -13,7 +13,7 @@
 #include <sstream>
 #include <thread>
 
-bool TUNING = true;
+bool TUNING = false;
 
 void print_tuning_parameter(std::string str, int value) {
   std::cout << "option name " << str << " type spin default " << value
@@ -31,12 +31,13 @@ static void uci_send_id() {
   std::cout << "id author " << AUTHOR << "\n";
   std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH
             << "\n";
+  std::cout << "option name Threads type spin default 1 min 1 max 1\n";
 
   if (TUNING) {
     print_tuning_parameters();
   }
 
-  std::cout << "uciok\n";
+  std::cout << "uciok" << std::endl;
 }
 
 static void set_option(std::istream &is, std::string &token, std::string name,

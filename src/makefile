@@ -1,6 +1,6 @@
 _THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 _ROOT     := $(_THIS)
-CXX       := clang++
+CXX       := g++
 TARGET    := Rice
 CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=c++20 -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wunused -Wundef -DNDEBUG
 NATIVE     = -march=native
@@ -12,10 +12,21 @@ NAME      := Rice
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	SUFFIX  := .exe
-	FLAGS    = 
-	CXXFLAGS += -v -static -fuse-ld=lld
+	ifeq ($(CXX),g++)
+  		FLAGS    = -pthread -lstdc++ -static
+		CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
+	else ifeq ($(CXX),clang++)
+  		CXXFLAGS += -v -static -fuse-ld=lld
+	else
+  		CXXFLAGS += $(UNKNOWN_CXXFLAGS)
 else
-	FLAGS   = -static -fuse-ld=lld
+	ifeq ($(CXX),g++)
+		FLAGS   = -lpthread -lstdc++
+	else ifeq ($(CXX),clang++)
+  		CXXFLAGS += -v -static -fuse-ld=lld
+	else
+  		CXXFLAGS += $(UNKNOWN_CXXFLAGS)
+
 	SUFFIX  :=
 	uname_S := $(shell uname -s)
 endif

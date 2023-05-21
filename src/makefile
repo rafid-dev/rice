@@ -12,23 +12,25 @@ NAME      := Rice
 ifeq ($(OS), Windows_NT)
 	uname_S := Windows
 	SUFFIX  := .exe
+
 	ifeq ($(CXX),g++)
   		FLAGS    = -pthread -lstdc++ -static
 		CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 	else ifeq ($(CXX),clang++)
   		CXXFLAGS += -v -static -fuse-ld=lld
-	else
-  		CXXFLAGS += $(UNKNOWN_CXXFLAGS)
+	endif
+	
 else
+
+	SUFFIX  :=
+	uname_S := $(shell uname -s)
+
 	ifeq ($(CXX),g++)
 		FLAGS   = -lpthread -lstdc++
 	else ifeq ($(CXX),clang++)
   		CXXFLAGS += -v -static -fuse-ld=lld
-	else
-  		CXXFLAGS += $(UNKNOWN_CXXFLAGS)
+	endif
 
-	SUFFIX  :=
-	uname_S := $(shell uname -s)
 endif
 
 # Different native flag for macOS

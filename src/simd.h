@@ -1,6 +1,8 @@
 #pragma once
 
+#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
 #include <immintrin.h>
+#endif
 
 #if defined(__AVX512F__)
 #define BIT_ALIGNMENT (512)

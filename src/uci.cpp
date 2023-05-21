@@ -330,22 +330,18 @@ void uci_loop(int argv, char **argc) {
       continue;
     } else if (token == "bencheval") {
 
-      size_t count = 100000000;
-      uint64_t sum = 0;
-      int64_t score = 0;
+      long samples = 1000000000;
+      long long timeSum = 0;
+    int output;
+    for (int i = 0; i < samples; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+        output = evaluate(board);
+        auto stop = std::chrono::high_resolution_clock::now();
+        timeSum += std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+    }
+    auto timeAvg = (double)timeSum / samples;
+    std::cout << "Output: " << output << " , Time: " << timeAvg << "ns" << std::endl;
 
-      auto start = std::chrono::steady_clock::now();
-
-      for (size_t i = 0; i < count; i++) {
-        score += evaluate(board);
-      }
-
-      auto stop = std::chrono::steady_clock::now();
-      auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-      
-      sum += duration;
-
-      std::cout << "Average NS: " << sum << std::endl;
       continue;
     } else if (token == "eval") {
       std::cout << "Eval: " << evaluate(board) << std::endl;

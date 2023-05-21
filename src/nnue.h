@@ -42,7 +42,7 @@ namespace NNUE {
 static inline int16_t relu(int16_t input) { return std::max(static_cast<int16_t>(0), input); }
 
 struct Accumulator {
-#ifdef USE_SIMD
+#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
     alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> white;
     alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> black;
 #else
@@ -105,12 +105,47 @@ struct Net {
                            Chess::Square kingSquare_White, Chess::Square kingSquare_Black) {
 
         Accumulator& accumulator = accumulator_stack[currentAccumulator];
+
+#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
+        if constexpr (add) {
+
+            for (auto side : {Chess::White, Chess::Black}) {
+                const int            input = index(pieceType, pieceColor, square, side,
+                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
+                avx_register_type_16 reg0;
+                avx_register_type_16 reg1;
+
+                for (int i = 0; i < HIDDEN_SIZE; i += STRIDE_16_BIT) {
+                    reg0 = avx_load_reg((avx_register_type_16 const*) &accumulator[side][i]);
+                    reg1 = avx_load_reg(
+                        (avx_register_type_16 const*) &inputWeights[input * HIDDEN_SIZE + i]);
+                    reg0 = avx_add_epi16(reg0, reg1);
+                    avx_store_reg((avx_register_type_16*) &accumulator[side][i], reg0);
+                }
+            }
+        } else {
+            for (auto side : {Chess::White, Chess::Black}) {
+                const int            input = index(pieceType, pieceColor, square, side,
+                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
+                                        
+                avx_register_type_16 reg0;
+                avx_register_type_16 reg1;
+
+                for (int i = 0; i < HIDDEN_SIZE; i += STRIDE_16_BIT) {
+                    reg0 = avx_load_reg((avx_register_type_16 const*) &accumulator[side][i]);
+                    reg1 = avx_load_reg(
+                        (avx_register_type_16 const*) &inputWeights[input * HIDDEN_SIZE + i]);
+                    reg0 = avx_sub_epi16(reg0, reg1);
+                    avx_store_reg((avx_register_type_16*) &accumulator[side][i], reg0);
+                }
+            }
+        }
+#else
         if constexpr (add) {
 
             for (auto side : {Chess::White, Chess::Black}) {
                 const int input = index(pieceType, pieceColor, square, side,
                                         side == Chess::White ? kingSquare_White : kingSquare_Black);
-
                 for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
                     const int offset = chunks * 256;
                     for (int i = offset; i < 256 + offset; i++) {
@@ -119,19 +154,14 @@ struct Net {
                 }
             }
         } else {
-
-            for (auto side : {Chess::White, Chess::Black}) {
-                const int input = index(pieceType, pieceColor, square, side,
-                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
-
-                for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
-                    const int offset = chunks * 256;
-                    for (int i = offset; i < 256 + offset; i++) {
-                        accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
-                    }
+            for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
+                const int offset = chunks * 256;
+                for (int i = offset; i < 256 + offset; i++) {
+                    accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
                 }
             }
         }
+#endif
     }
 
     void    updateAccumulator(Chess::PieceType pieceType, Chess::Color pieceColor,
@@ -139,7 +169,6 @@ struct Net {
                               Chess::Square kingSquare_White, Chess::Square kingSquare_Black);
 
     int32_t Evaluate(Chess::Color side);
-
     void    print_n_accumulator_inputs(const Accumulator& accumulator, size_t N) {
            for (size_t i = 0; i < N; i++) {
                std::cout << accumulator.white[i] << ", ";
@@ -164,4 +193,5 @@ struct Net {
 };
 
 void Init(const std::string& file_name);
-};    // namespace NNUE
+
+}    // namespace NNUE

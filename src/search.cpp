@@ -413,10 +413,6 @@ movesloop:
             // Initialize lmrDepth which we will use soon.
             int lmrDepth = LMRTable[std::min(depth, 63)][std::min(move_count, 63)];
 
-            if (!refutationMove && lmrDepth <= (3 - improving) && history < -6000 * depth) {
-                continue;
-            }
-
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
             if (is_quiet && !in_check && !is_pvnode && depth <= 5

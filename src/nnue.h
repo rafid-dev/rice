@@ -154,12 +154,15 @@ struct Net {
                 }
             }
         } else {
-            for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
-                const int offset = chunks * 256;
-                for (int i = offset; i < 256 + offset; i++) {
-                    accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
+           for (auto side : {Chess::White, Chess::Black}) {
+                const int input = index(pieceType, pieceColor, square, side,
+                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
+                for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
+                    const int offset = chunks * 256;
+                    for (int i = offset; i < 256 + offset; i++) {
+                        accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
+                    }
                 }
-            }
         }
 #endif
     }

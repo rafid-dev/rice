@@ -22,6 +22,6 @@ Rice
 *.sh
 sprt.bat
 sprt.sh
-src/nn.nnue
-src/test4.nn
-src/epoch_760.net
+./src/nn.nnue
+./src/test4.nn
+./src/epoch_760.net

@@ -1,5 +1,6 @@
 #include "eval.h"
+#include "nnue.h"
 
 int evaluate(Board &board) {
-    return board.nnue->Evaluate(board.sideToMove);
+    return nnue->Evaluate(board.sideToMove);
 }

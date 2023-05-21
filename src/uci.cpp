@@ -292,7 +292,7 @@ void uci_loop(int argv, char **argc) {
                   << " stop:" << info.stoptime_max << " depth:" << info.depth
                   << " timeset: " << info.timeset << "\n";
       }
-      iterative_deepening(board, info);
+      iterative_deepening<true>(board, info);
       // mainSearchThread =
       //     std::thread(iterative_deepening, std::ref(board), std::ref(info));
     }
@@ -330,23 +330,17 @@ void uci_loop(int argv, char **argc) {
       continue;
     } else if (token == "bencheval") {
 
-      size_t count = 100000000;
-      uint64_t sum = 0;
-      int64_t score = 0;
-
-      auto start = misc::tick<std::chrono::nanoseconds>();
-
-      for (size_t i = 0; i < count; i++) {
-        score += evaluate(board);
-      }
-
-      auto stop = misc::tick<std::chrono::nanoseconds>();
-      auto duration = stop - start;
-      
-      sum += duration;
-
-      std::cout << "Average NS: " << float(sum / count) << std::endl;
-      std::cout << score << std::endl;
+      long samples = 1000000000;
+      long long timeSum = 0;
+    int output;
+    for (int i = 0; i < samples; i++) {
+        auto start = std::chrono::high_resolution_clock::now();
+        output = evaluate(board);
+        auto stop = std::chrono::high_resolution_clock::now();
+        timeSum += std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+    }
+    auto timeAvg = (double)timeSum / samples;
+    std::cout << "Output: " << output << " , Time: " << timeAvg << "ns" << std::endl;
 
       continue;
     } else if (token == "eval") {

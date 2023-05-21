@@ -48,7 +48,7 @@ int search_best_move(Board &board, SearchInfo &info)
 
     clear_for_search(info, table);
     
-    board.Refresh();
+    board.refresh();
 
     int score = 0;
 
@@ -106,7 +106,7 @@ int sanity_search(Board &board, SearchInfo &info)
     SearchStack *ss = stack + 7; // Have some safety overhead.
 
     clear_for_search(info, table);
-    board.Refresh();
+    board.refresh();
 
     int score = 0;
 

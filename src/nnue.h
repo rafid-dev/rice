@@ -42,7 +42,7 @@ namespace NNUE {
 static inline int16_t relu(int16_t input) { return std::max(static_cast<int16_t>(0), input); }
 
 struct Accumulator {
-#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
+#if defined(__AVX__) || defined(__AVX2__)
     alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> white;
     alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> black;
 #else

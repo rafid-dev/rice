@@ -9,7 +9,7 @@ INCBIN(EVAL, "./epoch_510.net");
 
 using namespace Chess;
 
-#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
+#if defined(__AVX__) || defined(__AVX2__)
 alignas(ALIGNMENT) std::array<int16_t, INPUT_SIZE * HIDDEN_SIZE> inputWeights;
 alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> inputBias;
 alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE * 2> hiddenWeights;
@@ -28,7 +28,7 @@ void NNUE::Net::updateAccumulator(Chess::PieceType pieceType, Chess::Color piece
                                   Chess::Square kingSquare_White, Chess::Square kingSquare_Black) {
 
     Accumulator& accumulator = accumulator_stack[currentAccumulator];
-#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
+#if defined(__AVX__) || defined(__AVX2__)
     for (auto side : {White, Black}) {
         const int            inputClear = index(pieceType, pieceColor, from_square, side,
                                      side == Chess::White ? kingSquare_White : kingSquare_Black);
@@ -70,7 +70,7 @@ void NNUE::Net::updateAccumulator(Chess::PieceType pieceType, Chess::Color piece
 int32_t NNUE::Net::Evaluate(Color side) {
     Accumulator& accumulator = accumulator_stack[currentAccumulator];
 
-#if defined(__AVX512F__) || defined(__AVX__) || defined(__AVX2__)
+#if defined(__AVX__) || defined(__AVX2__)
 
     avx_register_type_16 reluBias {};
     avx_register_type_32 res {};

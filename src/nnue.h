@@ -163,6 +163,7 @@ struct Net {
                         accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
                     }
                 }
+           }
         }
 #endif
     }

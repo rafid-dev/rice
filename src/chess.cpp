@@ -2,7 +2,6 @@
 #include "types.h"
 
 NNUE::Net* nnue     = new NNUE::Net();
-NNUE::Net* testNNUE = new NNUE::Net();
 
 Board::Board(std::string fen) {
     initializeLookupTables();
@@ -108,10 +107,6 @@ void Board::applyFen(const std::string& fen) {
 
 void Board::refresh() {
     nnue->refresh(*this);
-
-#ifdef DEBUG
-    testNNUE->refresh(*this);
-#endif
 }
 
 void Board::makeMove(Move move) {
@@ -265,40 +260,6 @@ void Board::makeMove(Move move) {
     }
 
     sideToMove = ~sideToMove;
-
-#ifdef DEBUG
-    testNNUE->refresh(*this);
-    testNNUE->reset_accumulators();
-
-    for (int i = 0; i < 512; i++) {
-        if (!testNNUE->accumulator_stack[testNNUE->currentAccumulator][White][i]
-            == nnue->accumulator_stack[nnue->currentAccumulator][White][i]) {
-            std::cout << "Expected: "
-                      << testNNUE->accumulator_stack[testNNUE->currentAccumulator][White][i]
-                      << std::endl;
-            std::cout << "Got: " << nnue->accumulator_stack[nnue->currentAccumulator][White][i]
-                      << std::endl;
-            std::cout << "Piece: " << pieceToChar[p] << std::endl;
-            std::cout << "From: " << squareToString[from_sq] << std::endl;
-            std::cout << "To: " << squareToString[to_sq] << std::endl;
-            std::cout << "Fen: " << getFen() << std::endl;
-            exit(0);
-        }
-        if (!testNNUE->accumulator_stack[testNNUE->currentAccumulator][Black][i]
-            == nnue->accumulator_stack[nnue->currentAccumulator][Black][i]) {
-            std::cout << "Expected: "
-                      << testNNUE->accumulator_stack[testNNUE->currentAccumulator][Black][i]
-                      << std::endl;
-            std::cout << "Got: " << nnue->accumulator_stack[nnue->currentAccumulator][Black][i]
-                      << std::endl;
-            std::cout << "Piece: " << pieceToChar[p] << std::endl;
-            std::cout << "From: " << squareToString[from_sq] << std::endl;
-            std::cout << "To: " << squareToString[to_sq] << std::endl;
-            std::cout << "Fen: " << getFen() << std::endl;
-            exit(0);
-        }
-    }
-#endif
 }
 
 void Board::unmakeMove(Move move) {
@@ -359,10 +320,6 @@ void Board::unmakeMove(Move move) {
 
         placePiece(capture, to_sq);
     }
-
-#ifdef DEBUG
-    testNNUE->refresh(*this);
-#endif
 }
 
 void Board::makeNullMove() {

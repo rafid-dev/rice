@@ -6,10 +6,9 @@
 
 extern TranspositionTable* table;
 
-using HistoryTable = std::array<std::array<int16_t, 64>, 12>;
+using HistoryTable = std::array<std::array<int16_t, 64>, 13>;
 using ContinuationHistoryTable =
-    std::array<std::array<std::array<std::array<int16_t, 64>, 12>, 64>, 12>;
-using CaptureHistoryTable = std::array<std::array<std::array<int16_t, 12>, 64>, 12>;
+    std::array<std::array<std::array<std::array<int16_t, 64>, 13>, 64>, 13>;
 
 struct SearchInfo {
     int32_t                  score;

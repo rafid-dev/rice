@@ -25,3 +25,4 @@ sprt.sh
 ./src/nn.nnue
 ./src/test4.nn
 ./src/epoch_760.net
+./src/simd.h

@@ -652,6 +652,9 @@ template void iterative_deepening<true>(Chess::Board& board, SearchInfo& info);
 template<bool print_info> void iterative_deepening(Board& board, SearchInfo& info) {
     clear_for_search(info, table);
 
+    nnue->reset_accumulators();
+    board.refresh();
+
     int  score    = 0;
 
     auto startime = misc::tick();
@@ -690,6 +693,7 @@ template<bool print_info> void iterative_deepening(Board& board, SearchInfo& inf
                        static_cast<float>(info.nodes_reached / 1000000.0f),
                        static_cast<float>(1000.0f * info.nodes_reached / (time_elapsed + 1))
                            / 1000000.0f);
+                           
                 std::vector<uint64_t> positions;
                 getPvLinesCstr(board, positions);
                 std::cout << std::endl;

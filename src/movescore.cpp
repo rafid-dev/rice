@@ -15,13 +15,16 @@ int mvv_lva[12][12] = {
     402, 502, 602, 101, 201, 301, 401, 501, 601, 101, 201, 301, 401, 501, 601,
     100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600};
 
-int get_conthist_score(Board &board, SearchInfo &info, SearchStack *ss,
-                       const Move move) {
+static inline int get_conthist_score(Board &board, SearchInfo &info, SearchStack *ss,
+                       const Move& move) {
 
     int score = 0;
-    for (int i = 1; i <= 2; i++) {
-        if ((ss-i)->move) {
-            score += info.contHist[(ss - i)->moved_piece][to((ss - i)->move)][board.pieceAtB(from(move))][to(move)];
+
+    if (ss->ply >= 1 && (ss-1)->move && (ss-1)->moved_piece != None && move){
+         score += info.contHist[(ss - 1)->moved_piece][to((ss - 1)->move)][board.pieceAtB(from(move))][to(move)];
+
+        if (ss->ply >= 2 && (ss-2)->move && (ss-2)->moved_piece != None && move) {
+            score += info.contHist[(ss - 2)->moved_piece][to((ss - 2)->move)][board.pieceAtB(from(move))][to(move)];
         }
     }
 
@@ -55,8 +58,7 @@ void score_moves(Board &board, Movelist &list, SearchStack *ss,
             list[i].value = Killer2Score;
         } else {
             // Otherwise, history score.
-            list[i].value = info.searchHistory[attacker][to(list[i].move)] +
-                            get_conthist_score(board, info, ss, list[i].move);
+            list[i].value = info.searchHistory[attacker][to(list[i].move)] + get_conthist_score(board, info, ss, list[i].move);
         }
     }
 }
@@ -130,9 +132,11 @@ void update_hist(Board &board, SearchInfo &info, Move bestmove,
 static inline void update_ch(Board &board, SearchInfo &info, SearchStack *ss,
                              const Move move, const int score) {
 
-    for (int i = 1; i <= 2; i++) {
-        if (ss->ply >= i) {
-            info.contHist[(ss - i)->moved_piece][to((ss - i)->move)]
+    if (ss->ply >= 1 && (ss - 1)->moved_piece != None){
+        info.contHist[(ss - 1)->moved_piece][to((ss - 1)->move)]
+                         [board.pieceAtB(from(move))][to(move)] += score;
+        if (ss->ply >= 2 && (ss - 1)->moved_piece != None) {
+            info.contHist[(ss - 2)->moved_piece][to((ss - 2)->move)]
                          [board.pieceAtB(from(move))][to(move)] += score;
         }
     }
@@ -164,17 +168,11 @@ void get_history_scores(int &his, int &ch, int &fmh, Board &board,
                         SearchInfo &info, SearchStack *ss, const Move move) {
     Move previous_move = (ss - 1)->move;
     Move previous_previous_move = (ss - 2)->move;
-    Piece previous_piece = (ss - 1)->moved_piece;
-    Piece previous_previous_piece = (ss - 2)->moved_piece;
     Piece moved_piece = board.pieceAtB(from(move));
 
     his = info.searchHistory[board.pieceAtB(from(move))][to(move)];
 
-    ch = previous_move ? info.contHist[previous_piece][to(previous_move)]
-                                      [moved_piece][to(move)]
-                       : 0;
-    fmh = previous_previous_move
-              ? info.contHist[previous_previous_piece]
-                             [to(previous_previous_move)][moved_piece][to(move)]
-              : 0;
+    ch = previous_move && (ss-1)->moved_piece != None ? info.contHist.at((ss-1)->moved_piece).at(to(previous_move)).at(moved_piece).at(to(move)) : 0;
+
+    fmh = previous_previous_move && (ss - 2)->moved_piece != None ? info.contHist.at((ss - 2)->moved_piece).at(to(previous_previous_move)).at(moved_piece).at(to(move)) : 0;
 }

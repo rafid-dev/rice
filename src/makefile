@@ -17,7 +17,7 @@ ifeq ($(OS), Windows_NT)
   		FLAGS    = -pthread -lstdc++ -static
 		CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
 	else ifeq ($(CXX),clang++)
-  		CXXFLAGS += -v -static -fuse-ld=lld
+  		CXXFLAGS += -static -fuse-ld=lld
 	endif
 	
 else
@@ -28,7 +28,7 @@ else
 	ifeq ($(CXX),g++)
 		FLAGS   = -lpthread -lstdc++
 	else ifeq ($(CXX),clang++)
-  		CXXFLAGS += -v -static -fuse-ld=lld
+  		CXXFLAGS += -static -fuse-ld=lld
 	endif
 
 endif

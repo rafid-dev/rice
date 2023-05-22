@@ -688,7 +688,7 @@ template<bool print_info> void iterative_deepening(Board& board, SearchInfo& inf
             } else {
                 auto time_elapsed = misc::tick() - startime;
 
-                printf("[%2d/64] > eval: %-4.2f nodes: %6.2fM speed: %-5.2f MNPS", current_depth,
+                printf("[%2d/%2d] > eval: %-4.2f nodes: %6.2fM speed: %-5.2f MNPS", current_depth, info.depth,
                        static_cast<float>(score / 100.0f),
                        static_cast<float>(info.nodes_reached / 1000000.0f),
                        static_cast<float>(1000.0f * info.nodes_reached / (time_elapsed + 1))

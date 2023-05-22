@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 #include "sliders.hpp"
-#ifdef _WIN64 // MSVC, WIN64
+#if defined(_MSC_VER) && defined(_WIN64) // MSVC, WIN64
 #include <intrin.h>
 #endif
 

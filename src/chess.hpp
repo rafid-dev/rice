@@ -12,6 +12,9 @@
 #include <unordered_map>
 #include <vector>
 #include "sliders.hpp"
+#ifdef _WIN64 // MSVC, WIN64
+#include <intrin.h>
+#endif
 
 using namespace Chess_Lookup::Fancy;
 
@@ -666,8 +669,6 @@ inline Square msb(U64 b)
 
 #elif defined(_MSC_VER) // MSVC
 
-#ifdef _WIN64 // MSVC, WIN64
-#include <intrin.h>
 inline Square lsb(U64 b)
 {
     unsigned long idx;
@@ -681,8 +682,6 @@ inline Square msb(U64 b)
     _BitScanReverse64(&idx, b);
     return (Square)idx;
 }
-
-#endif
 
 #else
 

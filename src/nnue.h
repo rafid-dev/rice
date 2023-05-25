@@ -10,7 +10,9 @@
 #include <numeric>
 #include <vector>
 
-#define INPUT_SIZE               (64 * 12)
+
+#define BUCKETS (4)
+#define INPUT_SIZE               (64 * 12 * BUCKETS)
 #define HIDDEN_SIZE              (512)
 #define HIDDEN_DSIZE             (HIDDEN_SIZE * 2)
 #define OUTPUT_SIZE              (1)
@@ -23,19 +25,35 @@ extern std::array<int16_t, HIDDEN_SIZE>              inputBias;
 extern std::array<int16_t, HIDDEN_SIZE * 2>          hiddenWeights;
 extern std::array<int32_t, OUTPUT_SIZE>              hiddenBias;
 
-// Credits to Luecx and Disservin
+
 namespace NNUE {
+constexpr int KING_BUCKET[64] {
+    0, 0, 1, 1, 1, 1, 0, 0,
+    0, 0, 1, 1, 1, 1, 0, 0,
+    0, 0, 1, 1, 1, 1, 0, 0,
+    0, 0, 1, 1, 1, 1, 0, 0,
+    2, 2, 3, 3, 3, 3, 2, 2,
+    2, 2, 3, 3, 3, 3, 2, 2,
+    2, 2, 3, 3, 3, 3, 2, 2,
+    2, 2, 3, 3, 3, 3, 2, 2,
+};
+// Credits to Luecx and Disservin
 
-[[nodiscard]] inline int index(Chess::PieceType pieceType, Chess::Color pieceColor,
+inline int kingSquareIndex(Chess::Square kingSquare, Chess::Color kingColor){
+    kingSquare = Chess::Square((56 * kingColor) ^ kingSquare);
+    return KING_BUCKET[kingSquare];
+}
+
+inline int index(Chess::PieceType pieceType, Chess::Color pieceColor,
                                Chess::Square square, Chess::Color view, Chess::Square kingSquare) {
-
+    const int ksIndex = kingSquareIndex(kingSquare, view);
     square = Chess::Square(square ^ (56 * view));
     square = Chess::Square(square ^ (7 * !!(kingSquare & 0x4)));
 
     // clang-format off
     return square
            + pieceType * 64
-           + !(pieceColor ^ view) * 64 * 6;
+           + !(pieceColor ^ view) * 64 * 6 + ksIndex * 64 * 6 * 2;
     // clang-format on
 }
 

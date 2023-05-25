@@ -216,7 +216,7 @@ void Board::makeMove(Move move) {
         const Piece rook = sideToMove == White ? WhiteRook : BlackRook;
         Square rookToSq  = file_rank_square(to_sq > from_sq ? FILE_F : FILE_D, square_rank(from_sq));
         Square kingToSq  = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
-        if (NNUE::KING_BUCKET[from_sq] != NNUE::KING_BUCKET[kingToSq]) {
+        if (NNUE::KING_BUCKET[from_sq] != NNUE::KING_BUCKET[kingToSq] || square_file(from_sq) + square_file(kingToSq) == 7) {
             removePiece(p, from_sq);
             removePiece(rook, to_sq);
 
@@ -392,7 +392,7 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White,
     board[fromSq] = None;
     board[toSq]   = piece;
 
-    if (type_of_piece(piece) == KING && NNUE::KING_BUCKET[fromSq] != NNUE::KING_BUCKET[toSq]) {
+    if (type_of_piece(piece) == KING && NNUE::KING_BUCKET[fromSq] != NNUE::KING_BUCKET[toSq]  || square_file(fromSq) + square_file(toSq) == 7) {
         refresh();
     } else {
         nnue->updateAccumulator(type_of_piece(piece), piece < BlackPawn ? White : Black, fromSq, toSq,

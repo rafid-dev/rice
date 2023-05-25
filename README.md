@@ -76,6 +76,7 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 * <a href="https://github.com/Ciekce">Ciekce, author of <a href="https://github.com/Ciekce/Polaris">Polaris<a> for helping write good C++ code
 
 ## Acknowledgements: 
+* <a href="https://github.com/AndyGrant"> Andrew Grant </a>, for his extremely clear and concise code which led to better understanding.
 * <a href="https://github.com/pgg106">Zuppa</a>
 * <a href="https://github.com/raklaptudirm">Rak</a>
 * <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a> for help in NNUE

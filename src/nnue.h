@@ -69,18 +69,49 @@ struct Accumulator {
     std::array<int16_t, HIDDEN_SIZE> white;
     std::array<int16_t, HIDDEN_SIZE> black;
 #endif
-
-    inline void copy(const NNUE::Accumulator &acc) {
-        std::copy(std::begin(acc.white), std::end(acc.white), std::begin(white));
-        std::copy(std::begin(acc.black), std::end(acc.black), std::begin(black));
-    }
-
     std::array<int16_t, HIDDEN_SIZE> &operator[](Chess::Color side) { return side == Chess::White ? white : black; }
     std::array<int16_t, HIDDEN_SIZE> &operator[](bool side) { return side ? black : white; }
 
+    inline void copy(NNUE::Accumulator &acc) {
+#if defined(__AVX__) || defined(__AVX2__)
+        for (auto side : {Chess::White, Chess::Black}) {
+            const auto inp = reinterpret_cast<avx_register_type_16 *>(acc[side].data());
+            const auto out = reinterpret_cast<avx_register_type_16 *>(this->operator[](side).data());
+
+            for (int i = 0; i < HIDDEN_SIZE / (STRIDE_16_BIT * 4); i++) {
+                const int baseIdx = i * 4;
+
+                out[baseIdx] = inp[baseIdx];
+                out[baseIdx + 1] = inp[baseIdx + 1];
+                out[baseIdx + 2] = inp[baseIdx + 2];
+                out[baseIdx + 3] = inp[baseIdx + 3];
+            }
+        }
+#else
+        std::copy(std::begin(acc.white), std::end(acc.white), std::begin(white));
+        std::copy(std::begin(acc.black), std::end(acc.black), std::begin(black));
+#endif
+    }
+
     inline void clear() {
+#if defined(__AVX__) || defined(__AVX2__)
+        for (auto side : {Chess::White, Chess::Black}) {
+            const auto wgt = reinterpret_cast<avx_register_type_16 *>(inputBias.data());
+            const auto out = reinterpret_cast<avx_register_type_16 *>(this->operator[](side).data());
+
+            for (int i = 0; i < HIDDEN_SIZE / (STRIDE_16_BIT * 4); i++) {
+                const int baseIdx = i * 4;
+
+                out[baseIdx] = wgt[baseIdx];
+                out[baseIdx + 1] = wgt[baseIdx + 1];
+                out[baseIdx + 2] = wgt[baseIdx + 2];
+                out[baseIdx + 3] = wgt[baseIdx + 3];
+            }
+        }
+#else
         std::copy(std::begin(inputBias), std::end(inputBias), std::begin(white));
         std::copy(std::begin(inputBias), std::end(inputBias), std::begin(black));
+#endif
     }
 };
 
@@ -125,56 +156,79 @@ struct Net {
         Accumulator &accumulator = accumulator_stack[currentAccumulator];
 
 #if defined(__AVX__) || defined(__AVX2__)
-        if constexpr (add) {
 
-            for (auto side : {Chess::White, Chess::Black}) {
-                const int input = index(pieceType, pieceColor, square, side,
-                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
-                avx_register_type_16 reg0;
-                avx_register_type_16 reg1;
+        for (auto side : {Chess::White, Chess::Black}) {
+            const int input =
+                index(pieceType, pieceColor, square, side, side == Chess::White ? kingSquare_White : kingSquare_Black);
 
-                for (int i = 0; i < HIDDEN_SIZE; i += STRIDE_16_BIT) {
-                    reg0 = avx_load_reg((avx_register_type_16 const *)&accumulator[side][i]);
-                    reg1 = avx_load_reg((avx_register_type_16 const *)&inputWeights[input * HIDDEN_SIZE + i]);
-                    reg0 = avx_add_epi16(reg0, reg1);
-                    avx_store_reg((avx_register_type_16 *)&accumulator[side][i], reg0);
+            const auto wgt = reinterpret_cast<avx_register_type_16 *>(inputWeights.data());
+            const auto inp = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
+            const auto out = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
+
+            constexpr int blockSize = 4; // Adjust the block size for optimal cache usage
+
+            if constexpr (add) {
+                for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
+                    const int baseIdx = (input * HIDDEN_SIZE / STRIDE_16_BIT) + (block * blockSize);
+
+                    avx_register_type_16 *outPtr = out + (block * blockSize);
+                    const avx_register_type_16 *wgtPtr = wgt + baseIdx;
+                    const avx_register_type_16 *inpPtr = inp + (block * blockSize);
+
+                    avx_register_type_16 sum0 = avx_add_epi16(inpPtr[0], wgtPtr[0]);
+                    avx_register_type_16 sum1 = avx_add_epi16(inpPtr[1], wgtPtr[1]);
+                    avx_register_type_16 sum2 = avx_add_epi16(inpPtr[2], wgtPtr[2]);
+                    avx_register_type_16 sum3 = avx_add_epi16(inpPtr[3], wgtPtr[3]);
+
+                    for (int i = 4; i < blockSize; i++) {
+                        sum0 = avx_add_epi16(sum0, wgtPtr[i]);
+                        sum1 = avx_add_epi16(sum1, wgtPtr[i + blockSize]);
+                        sum2 = avx_add_epi16(sum2, wgtPtr[i + blockSize * 2]);
+                        sum3 = avx_add_epi16(sum3, wgtPtr[i + blockSize * 3]);
+                    }
+
+                    outPtr[0] = sum0;
+                    outPtr[1] = sum1;
+                    outPtr[2] = sum2;
+                    outPtr[3] = sum3;
                 }
-            }
-        } else {
-            for (auto side : {Chess::White, Chess::Black}) {
-                const int input = index(pieceType, pieceColor, square, side,
-                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
+            } else {
+                for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
+                    const int baseIdx = (input * HIDDEN_SIZE / STRIDE_16_BIT) + (block * blockSize);
 
-                avx_register_type_16 reg0;
-                avx_register_type_16 reg1;
-                for (int i = 0; i < HIDDEN_SIZE; i += STRIDE_16_BIT) {
-                    reg0 = avx_load_reg((avx_register_type_16 const *)&accumulator[side][i]);
-                    reg1 = avx_load_reg((avx_register_type_16 const *)&inputWeights[input * HIDDEN_SIZE + i]);
-                    reg0 = avx_sub_epi16(reg0, reg1);
-                    avx_store_reg((avx_register_type_16 *)&accumulator[side][i], reg0);
+                    avx_register_type_16 *outPtr = out + (block * blockSize);
+                    const avx_register_type_16 *wgtPtr = wgt + baseIdx;
+                    const avx_register_type_16 *inpPtr = inp + (block * blockSize);
+
+                    avx_register_type_16 diff0 = avx_sub_epi16(inpPtr[0], wgtPtr[0]);
+                    avx_register_type_16 diff1 = avx_sub_epi16(inpPtr[1], wgtPtr[1]);
+                    avx_register_type_16 diff2 = avx_sub_epi16(inpPtr[2], wgtPtr[2]);
+                    avx_register_type_16 diff3 = avx_sub_epi16(inpPtr[3], wgtPtr[3]);
+
+                    for (int i = 4; i < blockSize; i++) {
+                        diff0 = avx_sub_epi16(diff0, wgtPtr[i]);
+                        diff1 = avx_sub_epi16(diff1, wgtPtr[i + blockSize]);
+                        diff2 = avx_sub_epi16(diff2, wgtPtr[i + blockSize * 2]);
+                        diff3 = avx_sub_epi16(diff3, wgtPtr[i + blockSize * 3]);
+                    }
+
+                    outPtr[0] = diff0;
+                    outPtr[1] = diff1;
+                    outPtr[2] = diff2;
+                    outPtr[3] = diff3;
                 }
             }
         }
 #else
-        if constexpr (add) {
-
-            for (auto side : {Chess::White, Chess::Black}) {
-                const int input = index(pieceType, pieceColor, square, side,
-                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
-                for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
-                    const int offset = chunks * 256;
-                    for (int i = offset; i < 256 + offset; i++) {
+        for (auto side : {Chess::White, Chess::Black}) {
+            const int input =
+                index(pieceType, pieceColor, square, side, side == Chess::White ? kingSquare_White : kingSquare_Black);
+            for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
+                const int offset = chunks * 256;
+                for (int i = offset; i < 256 + offset; i++) {
+                    if constexpr (add) {
                         accumulator[side][i] += inputWeights[input * HIDDEN_SIZE + i];
-                    }
-                }
-            }
-        } else {
-            for (auto side : {Chess::White, Chess::Black}) {
-                const int input = index(pieceType, pieceColor, square, side,
-                                        side == Chess::White ? kingSquare_White : kingSquare_Black);
-                for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
-                    const int offset = chunks * 256;
-                    for (int i = offset; i < 256 + offset; i++) {
+                    } else {
                         accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
                     }
                 }

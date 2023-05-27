@@ -35,18 +35,42 @@ void NNUE::Net::updateAccumulator(Chess::PieceType pieceType, Chess::Color piece
         const int inputAdd =
             index(pieceType, pieceColor, to_square, side, side == Chess::White ? kingSquare_White : kingSquare_Black);
 
-        avx_register_type_16 reg0;
-        avx_register_type_16 reg1;
-        avx_register_type_16 reg2;
+        const auto wgtSub = reinterpret_cast<avx_register_type_16 *>(inputWeights.data() + inputClear * HIDDEN_SIZE);
+        const auto wgtAdd = reinterpret_cast<avx_register_type_16 *>(inputWeights.data() + inputAdd * HIDDEN_SIZE);
+        const auto inp = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
+        const auto out = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
 
-        for (int i = 0; i < HIDDEN_SIZE; i += STRIDE_16_BIT) {
-            reg0 = avx_load_reg((avx_register_type_16 const *)&accumulator[side][i]);
-            reg1 = avx_load_reg((avx_register_type_16 const *)&inputWeights[inputClear * HIDDEN_SIZE + i]);
-            reg2 = avx_load_reg((avx_register_type_16 const *)&inputWeights[inputAdd * HIDDEN_SIZE + i]);
-            reg0 = avx_sub_epi16(reg0, reg1);
-            reg0 = avx_add_epi16(reg0, reg2);
+        constexpr int blockSize = 4; // Adjust the block size for optimal cache usage
 
-            avx_store_reg((avx_register_type_16 *)&accumulator[side][i], reg0);
+        for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
+            const int baseIdx = block * blockSize;
+
+            avx_register_type_16 *outPtr = out + (baseIdx);
+            const avx_register_type_16 *wgtSubPtr = wgtSub + (baseIdx);
+            const avx_register_type_16 *wgtAddPtr = wgtAdd + (baseIdx);
+            const avx_register_type_16 *inpPtr = inp + (baseIdx);
+
+            avx_register_type_16 sum0 = avx_sub_epi16(inpPtr[0], wgtSubPtr[0]);
+            avx_register_type_16 sum1 = avx_sub_epi16(inpPtr[1], wgtSubPtr[1]);
+            avx_register_type_16 sum2 = avx_sub_epi16(inpPtr[2], wgtSubPtr[2]);
+            avx_register_type_16 sum3 = avx_sub_epi16(inpPtr[3], wgtSubPtr[3]);
+
+            sum0 = avx_add_epi16(sum0, wgtAddPtr[0]);
+            sum1 = avx_add_epi16(sum1, wgtAddPtr[1]);
+            sum2 = avx_add_epi16(sum2, wgtAddPtr[2]);
+            sum3 = avx_add_epi16(sum3, wgtAddPtr[3]);
+
+            for (int i = 4; i < blockSize; i++) {
+                sum0 = avx_add_epi16(sum0, wgtAddPtr[i]);
+                sum1 = avx_add_epi16(sum1, wgtAddPtr[i + blockSize]);
+                sum2 = avx_add_epi16(sum2, wgtAddPtr[i + blockSize * 2]);
+                sum3 = avx_add_epi16(sum3, wgtAddPtr[i + blockSize * 3]);
+            }
+
+            outPtr[0] = sum0;
+            outPtr[1] = sum1;
+            outPtr[2] = sum2;
+            outPtr[3] = sum3;
         }
     }
 #else
@@ -72,8 +96,8 @@ int32_t NNUE::Net::Evaluate(Color side) {
 
 #if defined(__AVX__) || defined(__AVX2__)
 
-    avx_register_type_16 reluBias {};
-    avx_register_type_32 res {};
+    avx_register_type_16 reluBias{};
+    avx_register_type_32 res{};
 
     const auto acc_act = (avx_register_type_16 *)accumulator[side].data();
     const auto acc_nac = (avx_register_type_16 *)accumulator[!side].data();

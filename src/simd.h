@@ -10,6 +10,7 @@
 
 #define STRIDE_16_BIT (BIT_ALIGNMENT / 16)
 #define ALIGNMENT     (BIT_ALIGNMENT / 8)
+#define REG_COUNT (16)
 
 #if defined(__AVX2__) || defined(__AVX__)
 using avx_register_type_16 = __m256i;

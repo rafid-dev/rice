@@ -22,7 +22,7 @@ using avx_register_type_32 = __m256i;
 #define avx_add_epi16  _mm256_add_epi16
 #define avx_sub_epi16  _mm256_sub_epi16
 #define avx_max_epi16  _mm256_max_epi16
-
+#define avx_zero _mm256_setzero_si256
 #endif
 
 

@@ -433,10 +433,10 @@ movesloop:
         /* Extensions
          * Search extra ply if move comes from tt
          */
-        if (!is_root && depth >= 5 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
+        if (!is_root && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
             tte.depth >= depth - 3) {
 
-            int singular_beta = tte.score - 3 * depth;
+            int singular_beta = tte.score - depth;
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = tte.move;
@@ -450,10 +450,6 @@ movesloop:
             } else if (tte.score >= beta) {
                 extension = -2;
             }
-            else if (tte.score <= singular_score)
-                extension = -1;
-            else if (tte.score <= alpha)
-                extension = -1;
         }
 
         /* Initialize new depth based on extension*/

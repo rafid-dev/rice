@@ -452,7 +452,7 @@ movesloop:
             } else if (singular_beta >= beta) {
                 return (singular_beta);    // Multicut
             } else if (tte.score >= beta) {
-                extension = -2 + is_pvnode;
+                extension = -2 - !is_pvnode;
             }
         }
 

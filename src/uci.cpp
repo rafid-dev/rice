@@ -162,11 +162,8 @@ void uci_loop(int argv, char **argc) {
 
             // Initialize variables
             int depth = -1;
-            int uciTime = -1;
-            int inc = 0;
-            int movestogo = -1;
-            int movetime = -1;
-            int nodes = -1;
+
+            uint64_t nodes = -1;
 
             while (token != "none") {
                 if (token == "infinite") {
@@ -175,7 +172,7 @@ void uci_loop(int argv, char **argc) {
                 }
                 if (token == "movestogo") {
                     is >> std::skipws >> token;
-                    movestogo = stoi(token);
+                    info.tm.movestogo = stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
@@ -191,17 +188,13 @@ void uci_loop(int argv, char **argc) {
                 // Time
                 if (token == "wtime") {
                     is >> std::skipws >> token;
-                    if (board.sideToMove == White) {
-                        uciTime = stoi(token);
-                    }
+                    info.tm.wtime = std::stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
                 if (token == "btime") {
                     is >> std::skipws >> token;
-                    if (board.sideToMove == Black) {
-                        uciTime = stoi(token);
-                    }
+                    info.tm.btime = std::stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
@@ -209,24 +202,20 @@ void uci_loop(int argv, char **argc) {
                 // Increment
                 if (token == "winc") {
                     is >> std::skipws >> token;
-                    if (board.sideToMove == White) {
-                        inc = stoi(token);
-                    }
+                    info.tm.winc = std::stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
                 if (token == "binc") {
                     is >> std::skipws >> token;
-                    if (board.sideToMove == Black) {
-                        inc = stoi(token);
-                    }
+                    info.tm.binc = std::stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
 
                 if (token == "movetime") {
                     is >> std::skipws >> token;
-                    movetime = stoi(token);
+                    info.tm.movetime = stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
@@ -237,25 +226,15 @@ void uci_loop(int argv, char **argc) {
                 }
                 token = "none";
             }
-            if (movetime != -1) {
-                uciTime = movetime;
-                movestogo = 1;
-            }
+
             if (nodes != -1) {
                 info.nodes = nodes;
                 info.nodeset = true;
             }
 
-            info.tm.start_time = misc::tick();
             info.depth = depth;
-            if (uciTime != -1) {
+            if (info.tm.wtime != -1 || info.tm.btime != -1 || info.tm.movetime != -1) {
                 info.timeset = true;
-            }
-
-            if (info.timeset && movestogo != -1) {
-                info.tm.set_time(uciTime, inc, movestogo);
-            } else if (info.timeset) {
-                info.tm.set_time(uciTime, inc);
             }
 
             if (depth == -1) {
@@ -265,11 +244,6 @@ void uci_loop(int argv, char **argc) {
             info.stopped = false;
             info.uci = IsUci;
 
-            if (IS_DEBUG) {
-                std::cout << "movestogo: " << movestogo << " time:" << uciTime << " start:" << info.tm.start_time
-                          << " stop:" << info.tm.stoptime_max << " depth:" << info.depth << " timeset: " << info.timeset
-                          << "\n";
-            }
             iterative_deepening<true>(board, info);
             // mainSearchThread =
             //     std::thread(iterative_deepening, std::ref(board), std::ref(info));

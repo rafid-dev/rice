@@ -26,8 +26,7 @@ void init_search() {
 
 // Check if we have to stop the search.
 static void check_time(SearchInfo &info) {
-    if ((info.timeset && info.tm.check_time()) ||
-        (info.nodeset && info.nodes_reached >= info.nodes)) {
+    if ((info.timeset && info.tm.check_time()) || (info.nodeset && info.nodes_reached >= info.nodes)) {
         info.stopped = true;
     }
 }
@@ -537,7 +536,7 @@ movesloop:
                 // Record PV
                 alpha = score;
                 bestmove = move;
-                
+
                 // clang-format off
                 if (score >= beta) {
                     if (is_quiet) {
@@ -649,12 +648,18 @@ template void iterative_deepening<true>(Chess::Board &board, SearchInfo &info);
 template <bool print_info> void iterative_deepening(Board &board, SearchInfo &info) {
     clear_for_search(info, table);
 
+    info.tm.start_time = misc::tick();
+
+    if (info.timeset) {
+        info.tm.set_time(board.sideToMove);
+    }
+
     nnue->reset_accumulators();
     board.refresh();
 
     int score = 0;
 
-    auto startime = misc::tick();
+    auto startime = info.tm.start_time;
     Move bestmove = NO_MOVE;
 
     for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
@@ -666,7 +671,7 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
         bestmove = info.bestmove;
         info.score = score;
 
-        if (info.timeset){
+        if (info.timeset) {
             info.tm.update_tm(bestmove);
         }
 

@@ -76,7 +76,7 @@ void score_moves(Board &board, Movelist &list, Move tt_move) {
             // If it's a capture move, we score using MVVLVA (Most valuable
             // victim, Least Valuable Attacker)
             list[i].value = mvv_lva[attacker][victim] +
-                            (GoodCaptureScore * see(board, list[i].move, 0));
+                            (GoodCaptureScore * see(board, list[i].move, -107));
         }
     }
 }

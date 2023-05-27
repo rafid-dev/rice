@@ -55,6 +55,7 @@ struct TimeMan {
             Time maxtime = std::min<Time>(uci_time, basetime * 2);
             stoptime_max = maxtime;
             stoptime_opt = optime;
+            
         }
     }
 

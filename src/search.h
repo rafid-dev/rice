@@ -3,6 +3,7 @@
 #include "misc.h"
 #include "tt.h"
 #include "types.h"
+#include <cmath>
 
 extern TranspositionTable *table;
 
@@ -28,6 +29,7 @@ struct TimeMan {
 
     int stability{};
 
+    int prev_score{};
     Move prev_bestmove{NO_MOVE};
 
     void set_time(Color side) {
@@ -55,7 +57,7 @@ struct TimeMan {
             Time maxtime = std::min<Time>(uci_time, basetime * 2);
             stoptime_max = maxtime;
             stoptime_opt = optime;
-            
+
         }
     }
 
@@ -63,7 +65,14 @@ struct TimeMan {
 
     bool stop_search() { return (misc::tick() > (start_time + stoptime_opt)); }
 
-    void update_tm(Move bestmove) {
+    double score_difference_scale(int s){
+        constexpr int X = 100;
+        constexpr double T = 2.0;
+
+        return (std::pow(T, std::clamp(s, -X, X) / (double)X));
+    }
+
+    void update_tm(Move bestmove, int score) {
 
         // Stability scale from Stash
         constexpr double stability_scale[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
@@ -77,12 +86,19 @@ struct TimeMan {
 
         double scale = stability_scale[stability];
 
+        if (score != 0){
+            scale *= score_difference_scale(prev_score - score);
+        }
+
+        prev_score = score;
+
         stoptime_opt = std::min<int>(stoptime_max, average_time * scale);
     }
 
     void reset() {
         stability = 0;
         prev_bestmove = NO_MOVE;
+        prev_score = 0;
     }
 };
 

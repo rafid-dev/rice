@@ -672,7 +672,7 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
         info.score = score;
 
         if (info.timeset) {
-            info.tm.update_tm(bestmove);
+            info.tm.update_tm(bestmove, score);
         }
 
         if constexpr (print_info) {

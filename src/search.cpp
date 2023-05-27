@@ -26,13 +26,14 @@ void init_search() {
 
 // Check if we have to stop the search.
 static void check_time(SearchInfo &info) {
-    if ((info.timeset && misc::tick() > info.stoptime_max) || (info.nodeset && info.nodes_reached >= info.nodes)) {
+    if ((info.timeset && info.tm.check_time()) ||
+        (info.nodeset && info.nodes_reached >= info.nodes)) {
         info.stopped = true;
     }
 }
 
 static bool stop_early(SearchInfo &info) {
-    if (info.timeset && (misc::tick() > info.stoptime_opt || info.stopped)) {
+    if (info.timeset && (info.tm.stop_search() || info.stopped)) {
         return true;
     } else {
         return false;
@@ -43,6 +44,7 @@ static bool stop_early(SearchInfo &info) {
 void clear_for_search(SearchInfo &info, TranspositionTable *table) {
     info.nodes_reached = 0;
     info.stopped = false;
+    info.tm.reset();
 
     // Reset history
     for (int x = 0; x < 12; x++) {
@@ -535,7 +537,7 @@ movesloop:
                 // Record PV
                 alpha = score;
                 bestmove = move;
-
+                
                 // clang-format off
                 if (score >= beta) {
                     if (is_quiet) {
@@ -663,6 +665,10 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
         }
         bestmove = info.bestmove;
         info.score = score;
+
+        if (info.timeset){
+            info.tm.update_tm(bestmove);
+        }
 
         if constexpr (print_info) {
             if (info.uci) {

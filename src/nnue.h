@@ -10,6 +10,12 @@
 #include <numeric>
 #include <vector>
 
+/*
+    Credits:
+    Luecx (Author of Koivisto)
+    Disservin (Author of Smallbrain)
+*/
+
 #define BUCKETS (4)
 #define INPUT_SIZE (64 * 12 * BUCKETS)
 #define HIDDEN_SIZE (768)
@@ -39,7 +45,6 @@ constexpr int KING_BUCKET[64] {
 };
 // clang-format on
 
-// Credits to Luecx and Disservin
 
 inline int kingSquareIndex(Chess::Square kingSquare, Chess::Color kingColor) {
     kingSquare = Chess::Square((56 * kingColor) ^ kingSquare);

@@ -16,6 +16,8 @@ using namespace Chess;
 
 #define IS_DEBUG true
 
+typedef uint64_t Time;
+
 static inline bool is_capture(Board& board, Move move){
     return (board.pieceAtB(to(move)) != None);
 }

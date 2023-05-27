@@ -1,8 +1,8 @@
 #pragma once
 
+#include "misc.h"
 #include "tt.h"
 #include "types.h"
-#include "misc.h"
 
 extern TranspositionTable *table;
 
@@ -10,58 +10,76 @@ using HistoryTable = std::array<std::array<int16_t, 64>, 13>;
 using ContinuationHistoryTable = std::array<std::array<std::array<std::array<int16_t, 64>, 13>, 64>, 13>;
 
 struct TimeMan {
-    uint64_t start_time{};
-    uint64_t end_time{};
-    uint64_t stoptime_max{};
-    uint64_t stoptime_opt{};
-    uint64_t average_time{};
+    int movestogo = -1;
+
+    Time wtime = -1;
+    Time btime = -1;
+
+    Time winc = 0;
+    Time binc = 0;
+
+    Time movetime = -1;
+
+    Time start_time{};
+    Time end_time{};
+    Time stoptime_max{};
+    Time stoptime_opt{};
+    Time average_time{};
 
     int stability{};
 
     Move prev_bestmove{NO_MOVE};
 
-    void set_time(uint64_t uci_time, uint64_t inc, int moves_to_go) {
+    void set_time(Color side) {
         constexpr int safety_overhead = 50;
+        Time uci_time = (side == White ? wtime : btime);
 
-        uci_time -= safety_overhead;
+        if (movestogo != -1) {
 
-        int time_slot = average_time = uci_time / moves_to_go;
+            uci_time -= safety_overhead;
 
-        stoptime_max = start_time + time_slot;
-        stoptime_opt = start_time + time_slot;
+            Time time_slot = average_time = uci_time / movestogo;
+
+            stoptime_max = start_time + time_slot;
+            stoptime_opt = start_time + time_slot;
+        } else {
+            Time inc = (side == White ? winc : binc);
+
+            uci_time /= 20;
+
+            Time time_slot = average_time = uci_time + inc;
+            Time basetime = (time_slot);
+
+            Time optime = basetime * 0.6;
+
+            Time maxtime = std::min<Time>(uci_time, basetime * 2);
+            stoptime_max = maxtime;
+            stoptime_opt = optime;
+        }
     }
 
-    void set_time(uint64_t uci_time, uint64_t inc) {
-        uci_time /= 20;
+    bool check_time() { return (misc::tick() > (start_time + stoptime_max)); }
 
-        int time_slot = average_time = uci_time + inc;
-        int basetime = (time_slot);
-
-        int optime = basetime * 0.6;
-
-        int maxtime = std::min<uint64_t>(uci_time, basetime * 2);
-        stoptime_max = start_time + maxtime;
-        stoptime_opt = start_time + optime;
-    }
-
-    bool check_time() { return (misc::tick() > stoptime_max); }
-
-    bool stop_search() { return (misc::tick() > stoptime_opt); }
+    bool stop_search() { return (misc::tick() > (start_time + stoptime_opt)); }
 
     void update_tm(Move bestmove) {
+
+        // Stability scale from Stash
+        constexpr double stability_scale[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
+
         if (prev_bestmove != bestmove) {
             prev_bestmove = bestmove;
             stability = 0;
         } else {
-            stability++;
+            stability = std::min(stability + 1, 4);
         }
 
-        // double scale = 1.2 - 0.04 * std::min(stability, 10);
+        double scale = stability_scale[stability];
 
-        // stoptime_opt = std::min<uint64_t>(stoptime_max, average_time * scale);
+        stoptime_opt = std::min<int>(stoptime_max, average_time * scale);
     }
 
-    void reset(){
+    void reset() {
         stability = 0;
         prev_bestmove = NO_MOVE;
     }

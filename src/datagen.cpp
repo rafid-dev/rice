@@ -54,7 +54,7 @@ int search_best_move(Board &board, SearchInfo &info)
 
     for (int i = 1; i <= info.depth; i++)
     {
-        score = negamax(-INF_BOUND, INF_BOUND, i, board, info, ss);
+        score = negamax(-INF_BOUND, INF_BOUND, i, board, info, ss, false);
         NodesOver(info);
         if (info.stopped)
         {
@@ -110,7 +110,7 @@ int sanity_search(Board &board, SearchInfo &info)
 
     int score = 0;
 
-    score = negamax(-INF_BOUND, INF_BOUND, 10, board, info, ss);
+    score = negamax(-INF_BOUND, INF_BOUND, 10, board, info, ss, false);
 
 
     return score;

@@ -193,7 +193,7 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
 
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
-int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss) {
+int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss, bool cutnode) {
 
     /* Initialize our pv table lenght. */
     /* UNUSED */
@@ -303,7 +303,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
             (ss + 1)->ply = ss->ply + 1;
 
-            int score = -negamax(-beta, -beta + 1, depth - R, board, info, ss + 1);
+            int score = -negamax(-beta, -beta + 1, depth - R, board, info, ss + 1, !cutnode);
 
             board.unmakeNullMove();
 
@@ -347,7 +347,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
                 score = -qsearch(-rbeta, -rbeta + 1, board, info, ss);
 
                 if (score >= rbeta) {
-                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss);
+                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss, !cutnode);
                 }
 
                 board.unmakeMove(move);
@@ -448,7 +448,7 @@ movesloop:
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = tte.move;
-            int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, board, info, ss);
+            int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, board, info, ss, cutnode);
             ss->excluded = NO_MOVE;
 
             if (singular_score < singular_beta) {
@@ -496,18 +496,20 @@ movesloop:
 
             reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !is_pvnode; /* Increase for non pv nodes */
-            reduction += is_quiet && !see(board, move, -50 * depth); /* Increase
+            reduction += !see(board, move, -50 * depth); /* Increase
                                           for quiets and not winning captures */
 
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
+
+            reduction += cutnode * 2; // Increase if cut nodes
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/
             reduction = std::min(depth - 1, std::max(1, reduction));
 
             score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board,
-                               info, ss + 1);
+                               info, ss + 1, true);
             
 
             reduction -= history/12000;
@@ -519,12 +521,12 @@ movesloop:
         /* Full depth search on a zero window. */
         if (do_fullsearch) {
             score = -negamax(-alpha - 1, -alpha, new_depth - 1, board, info,
-                               ss + 1);
+                               ss + 1, !cutnode);
         }
 
         // Principal Variation Search (PVS)
         if (is_pvnode && (move_count == 1 || (score > alpha && score < beta))) {
-            score = -negamax(-beta, -alpha, new_depth - 1, board, info, ss + 1);
+            score = -negamax(-beta, -alpha, new_depth - 1, board, info, ss + 1, false);
         }
 
         // clang-format on
@@ -733,7 +735,7 @@ int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info) {
 
     while (true) {
 
-        score = negamax(alpha, beta, depth, board, info, ss);
+        score = negamax(alpha, beta, depth, board, info, ss, false);
 
         if (stop_early(info)) {
             break;

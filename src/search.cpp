@@ -502,6 +502,7 @@ movesloop:
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
 
+
             reduction += cutnode * 2; // Increase if cut nodes
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an

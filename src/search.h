@@ -68,22 +68,7 @@ struct TimeMan {
 
     bool stop_search() { return (misc::tick() > (start_time + stoptime_opt)); }
 
-    double score_difference_scale(int s) {
-        constexpr int X = 100;
-        constexpr double T = 2.0;
-
-        // Clamp score to the range [-100, 100], and convert it to a time scale in
-        // the range [0.5, 2.0].
-        // Examples:
-        // -100 -> 2.000x time
-        //  -50 -> 1.414x time
-        //    0 -> 1.000x time
-        //  +50 -> 0.707x time
-        // +100 -> 0.500x time
-        return (std::pow(T, std::clamp<double>(s, -X, X) / (double)X));
-    }
-
-    void update_tm(Move bestmove, int score, int prev_score) {
+    void update_tm(Move bestmove) {
 
         // Stability scale from Stash
         constexpr double stability_scale[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
@@ -96,9 +81,6 @@ struct TimeMan {
         }
 
         double scale = stability_scale[stability];
-        if (prev_score != 0) {
-            scale *= score_difference_scale(prev_score - score);
-        }
 
         stoptime_opt = std::min<Time>(stoptime_max, average_time * scale);
     }

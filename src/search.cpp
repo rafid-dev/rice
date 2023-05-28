@@ -662,9 +662,6 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
     auto startime = info.tm.start_time;
     Move bestmove = NO_MOVE;
 
-    int scores_arr[MAXDEPTH + 10] {};
-    int *scores = scores_arr + 7;
-
     for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
         score = aspiration_window(score, current_depth, board, info);
 
@@ -673,10 +670,9 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
         }
         bestmove = info.bestmove;
         info.score = score;
-        scores[current_depth] = score;
 
         if (info.timeset) {
-            info.tm.update_tm(bestmove, score, *(scores_arr-3));
+            info.tm.update_tm(bestmove);
         }
 
         if constexpr (print_info) {

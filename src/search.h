@@ -29,7 +29,6 @@ struct TimeMan {
 
     int stability{};
 
-    int prev_score{};
     Move prev_bestmove{NO_MOVE};
 
     void set_time(Color side) {
@@ -40,12 +39,13 @@ struct TimeMan {
 
             uci_time -= safety_overhead;
 
-            Time time_slot = average_time = uci_time / movestogo;
+            Time time_slot = average_time = uci_time / (double)movestogo;
 
-            stoptime_max = start_time + time_slot;
-            stoptime_opt = start_time + time_slot;
-        } else {
+            stoptime_max = time_slot;
+            stoptime_opt = time_slot;
+        } else if (movetime == -1) {
             Time inc = (side == White ? winc : binc);
+            uci_time -= safety_overhead;
 
             uci_time /= 20;
 
@@ -58,6 +58,9 @@ struct TimeMan {
             stoptime_max = maxtime;
             stoptime_opt = optime;
 
+        } else if (movetime != -1) {
+            movetime -= safety_overhead;
+            stoptime_max = stoptime_opt = average_time = movetime;
         }
     }
 
@@ -65,14 +68,22 @@ struct TimeMan {
 
     bool stop_search() { return (misc::tick() > (start_time + stoptime_opt)); }
 
-    double score_difference_scale(int s){
+    double score_difference_scale(int s) {
         constexpr int X = 100;
         constexpr double T = 2.0;
 
-        return (std::pow(T, std::clamp(s, -X, X) / (double)X));
+        // Clamp score to the range [-100, 100], and convert it to a time scale in
+        // the range [0.5, 2.0].
+        // Examples:
+        // -100 -> 2.000x time
+        //  -50 -> 1.414x time
+        //    0 -> 1.000x time
+        //  +50 -> 0.707x time
+        // +100 -> 0.500x time
+        return (std::pow(T, std::clamp<double>(s, -X, X) / (double)X));
     }
 
-    void update_tm(Move bestmove, int score) {
+    void update_tm(Move bestmove, int score, int prev_score) {
 
         // Stability scale from Stash
         constexpr double stability_scale[5] = {2.50, 1.20, 0.90, 0.80, 0.75};
@@ -85,20 +96,16 @@ struct TimeMan {
         }
 
         double scale = stability_scale[stability];
-
-        if (score != 0){
+        if (prev_score != 0) {
             scale *= score_difference_scale(prev_score - score);
         }
 
-        prev_score = score;
-
-        stoptime_opt = std::min<int>(stoptime_max, average_time * scale);
+        stoptime_opt = std::min<Time>(stoptime_max, average_time * scale);
     }
 
     void reset() {
         stability = 0;
         prev_bestmove = NO_MOVE;
-        prev_score = 0;
     }
 };
 

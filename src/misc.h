@@ -6,10 +6,10 @@
 namespace misc {
 
 template<typename Duration = std::chrono::milliseconds>
-inline uint64_t tick()
+inline double tick()
 {
     
-    return std::chrono::duration_cast<Duration>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    return (double)std::chrono::duration_cast<Duration>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 }

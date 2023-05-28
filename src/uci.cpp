@@ -180,7 +180,7 @@ void uci_loop(int argv, char **argc) {
                 // Depth
                 if (token == "depth") {
                     is >> std::skipws >> token;
-                    depth = stoi(token);
+                    depth = std::stoi(token);
                     is >> std::skipws >> token;
                     continue;
                 }
@@ -188,13 +188,13 @@ void uci_loop(int argv, char **argc) {
                 // Time
                 if (token == "wtime") {
                     is >> std::skipws >> token;
-                    info.tm.wtime = std::stoi(token);
+                    info.tm.wtime = std::stod(token);
                     is >> std::skipws >> token;
                     continue;
                 }
                 if (token == "btime") {
                     is >> std::skipws >> token;
-                    info.tm.btime = std::stoi(token);
+                    info.tm.btime = std::stod(token);
                     is >> std::skipws >> token;
                     continue;
                 }
@@ -202,20 +202,20 @@ void uci_loop(int argv, char **argc) {
                 // Increment
                 if (token == "winc") {
                     is >> std::skipws >> token;
-                    info.tm.winc = std::stoi(token);
+                    info.tm.winc = std::stod(token);
                     is >> std::skipws >> token;
                     continue;
                 }
                 if (token == "binc") {
                     is >> std::skipws >> token;
-                    info.tm.binc = std::stoi(token);
+                    info.tm.binc = std::stod(token);
                     is >> std::skipws >> token;
                     continue;
                 }
 
                 if (token == "movetime") {
                     is >> std::skipws >> token;
-                    info.tm.movetime = stoi(token);
+                    info.tm.movetime = stod(token);
                     is >> std::skipws >> token;
                     continue;
                 }

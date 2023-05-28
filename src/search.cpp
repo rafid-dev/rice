@@ -413,7 +413,7 @@ movesloop:
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
-            if (is_quiet && !in_check && !is_pvnode && depth <= 5 &&
+            if (is_quiet && !in_check && !is_pvnode && depth <= 7 &&
                 quietList.size >= depth * depth * (2 + 2 * improving)) {
                 skip_quiet_moves = true;
                 continue;

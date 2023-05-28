@@ -398,8 +398,8 @@ movesloop:
         bool is_quiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
 
-        int h, ch, fh;
-        int history;
+        int h = 0, ch = 0, fh = 0;
+        int history = 0;
 
         bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
 
@@ -483,7 +483,7 @@ movesloop:
         }
 
         /* A condition for full search.*/
-        bool do_fullsearch = do_fullsearch = !is_pvnode || move_count > 1;
+        bool do_fullsearch = !is_pvnode || move_count > 1;
 
         /* Late move reduction
          * Later moves will be searched in a reduced depth.
@@ -502,8 +502,9 @@ movesloop:
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
 
-
-            reduction += cutnode * 2; // Increase if cut nodes
+            if (cutnode){
+                reduction += 2; // Increase if cut nodes
+            }
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/

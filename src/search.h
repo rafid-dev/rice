@@ -3,6 +3,7 @@
 #include "misc.h"
 #include "tt.h"
 #include "types.h"
+#include <cmath>
 
 extern TranspositionTable *table;
 
@@ -38,12 +39,13 @@ struct TimeMan {
 
             uci_time -= safety_overhead;
 
-            Time time_slot = average_time = uci_time / movestogo;
+            Time time_slot = average_time = uci_time / (double)movestogo;
 
-            stoptime_max = start_time + time_slot;
-            stoptime_opt = start_time + time_slot;
-        } else {
+            stoptime_max = time_slot;
+            stoptime_opt = time_slot;
+        } else if (movetime == -1) {
             Time inc = (side == White ? winc : binc);
+            uci_time -= safety_overhead;
 
             uci_time /= 20;
 
@@ -55,7 +57,10 @@ struct TimeMan {
             Time maxtime = std::min<Time>(uci_time, basetime * 2);
             stoptime_max = maxtime;
             stoptime_opt = optime;
-            
+
+        } else if (movetime != -1) {
+            movetime -= safety_overhead;
+            stoptime_max = stoptime_opt = average_time = movetime;
         }
     }
 
@@ -77,7 +82,7 @@ struct TimeMan {
 
         double scale = stability_scale[stability];
 
-        stoptime_opt = std::min<int>(stoptime_max, average_time * scale);
+        stoptime_opt = std::min<Time>(stoptime_max, average_time * scale);
     }
 
     void reset() {

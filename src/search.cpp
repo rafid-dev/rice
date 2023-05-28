@@ -683,7 +683,7 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
                 std::cout << " depth " << current_depth;
                 std::cout << " nodes " << info.nodes_reached;
                 std::cout << " nps " << static_cast<int>(1000.0f * info.nodes_reached / (time_elapsed + 1));
-                std::cout << " time " << time_elapsed;
+                std::cout << " time " << static_cast<uint64_t>(time_elapsed);
                 std::cout << " pv";
 
                 std::vector<uint64_t> positions;

@@ -10,17 +10,24 @@
 #include <cstring>
 #include <iostream>
 
-int LMRTable[MAXDEPTH][64];
-constexpr int ProbcutDepth = 5;
+int lmr_table[MAXDEPTH][64];
+int lmp_table[2][8];
+
+constexpr int probcut_depth = 5;
 
 /* Initialize LMR table using the log formula */
 void init_search() {
-    float base = static_cast<float>(static_cast<float>(LMRBase) / 100);
-    float division = static_cast<float>(static_cast<float>(LMRDivision) / 100);
+    float base = LMRBase / 100.0f;
+    float division = LMRDivision / 100.0f;
     for (int depth = 1; depth < MAXDEPTH; depth++) {
         for (int played = 1; played < 64; played++) {
-            LMRTable[depth][played] = base + log(depth) * log(played) / division;
+            lmr_table[depth][played] = base + log(depth) * log(played) / division;
         }
+    }
+
+    for (int depth = 1; depth < 8; depth++) {
+        lmp_table[0][depth] = 2.5 + 2 * depth * depth / 4.5;
+        lmp_table[1][depth] = 4.0 + 4 * depth * depth / 4.5;
     }
 }
 
@@ -318,7 +325,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
         // Probcut (~10 elo)
         int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
-        if (depth >= ProbcutDepth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
+        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
             Movelist list;
             Movegen::legalmoves<CAPTURE>(board, list);
             score_moves(board, list, ss, info, tte.move);
@@ -409,12 +416,12 @@ movesloop:
         if (!is_root && bestscore > -ISMATE) {
 
             // Initialize lmrDepth which we will use soon.
-            int lmrDepth = LMRTable[std::min(depth, 63)][std::min(move_count, 63)];
+            int lmrDepth = lmr_table[std::min(depth, 63)][std::min(move_count, 63)];
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
-            if (is_quiet && !in_check && !is_pvnode && depth <= 5 &&
-                quietList.size >= depth * depth * (2 + 2 * improving)) {
+            if (is_quiet && !in_check && !is_pvnode && depth <= 7 &&
+                quietList.size >= lmp_table[improving][depth]) {
                 skip_quiet_moves = true;
                 continue;
             }
@@ -485,7 +492,7 @@ movesloop:
          */
         // clang-format off
         if (!in_check && depth >= 3 && move_count > (2 + 2 * is_pvnode)) {
-            int reduction = LMRTable[std::min(depth, 63)][std::min(63, move_count)];
+            int reduction = lmr_table[std::min(depth, 63)][std::min(63, move_count)];
 
             reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !is_pvnode; /* Increase for non pv nodes */

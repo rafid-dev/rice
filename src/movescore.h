@@ -3,8 +3,9 @@
 #include "types.h"
 #include "search.h"
 
-#define MAXHISTORY 8196
-#define MAXCOUNTERHISTORY 16000
+constexpr int MAXHISTORY = 8000;
+constexpr int MAXCOUNTERHISTORY = 16000;
+constexpr int TOTALMAXHISTORY = (MAXHISTORY + MAXCOUNTERHISTORY);
 
 void score_moves(Board &board, Movelist &list, SearchStack *ss, SearchInfo &info, Move tt_move);
 void score_moves(Board &board, Movelist &list, Move tt_move);

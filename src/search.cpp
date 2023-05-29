@@ -325,7 +325,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
         // Probcut (~10 elo)
         int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
-        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
+        if (cutnode && depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
             Movelist list;
             Movegen::legalmoves<CAPTURE>(board, list);
             score_moves(board, list, ss, info, tte.move);
@@ -496,15 +496,12 @@ movesloop:
 
             reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !is_pvnode; /* Increase for non pv nodes */
-            reduction += !see(board, move, -50 * depth); /* Increase
+            reduction += is_quiet && !see(board, move, -50 * depth); /* Increase
                                           for quiets and not winning captures */
 
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
 
-            if (cutnode){
-                reduction += 2; // Increase if cut nodes
-            }
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/
@@ -512,9 +509,6 @@ movesloop:
 
             score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board,
                                info, ss + 1, true);
-            
-
-            reduction -= history/12000;
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;

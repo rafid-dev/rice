@@ -323,9 +323,9 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             }
         }
 
-        // Probcut (~10 elo)
+        // Probcut
         int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
-        if (cutnode && depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
+        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
             Movelist list;
             Movegen::legalmoves<CAPTURE>(board, list);
             score_moves(board, list, ss, info, tte.move);
@@ -457,7 +457,7 @@ movesloop:
                 return (singular_beta); // Multicut
             } else if (tte.score >= beta) {
                 extension = -2;
-            }
+            } 
         }
 
         /* Initialize new depth based on extension*/
@@ -501,7 +501,7 @@ movesloop:
 
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
-
+            reduction += cutnode * 2;
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/

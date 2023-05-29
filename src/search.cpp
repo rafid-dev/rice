@@ -214,8 +214,9 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     bool is_root = (ss->ply == 0);
     bool in_check = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
     bool is_pvnode = (beta - alpha) > 1;
-    int eval = 0;
     bool improving = false;
+    int eval = 0;
+    int rbeta = 0;
 
     /* In check extension. We search an extra ply if we are in check. */
     if (in_check) {
@@ -322,45 +323,52 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
                 return score;
             }
         }
+    }
 
-        // Probcut
-        int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
-        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
-            Movelist list;
-            Movegen::legalmoves<CAPTURE>(board, list);
-            score_moves(board, list, ss, info, tte.move);
-            int score = 0;
-            for (int i = 0; i < list.size; i++) {
-                pick_nextmove(i, list);
-                Move move = list[i].move;
+    // Probcut
+    rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
+    if (!is_pvnode && !in_check && depth >= probcut_depth && abs(beta) < ISMATE &&
+        (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
+        Movelist list;
+        Movegen::legalmoves<CAPTURE>(board, list);
+        score_moves(board, list, ss, info, tte.move);
+        int score = 0;
+        for (int i = 0; i < list.size; i++) {
+            pick_nextmove(i, list);
+            Move move = list[i].move;
 
-                if (list[i].value < GoodCaptureScore) {
-                    continue;
-                }
+            if (list[i].value < GoodCaptureScore) {
+                continue;
+            }
 
-                if (move == tte.move) {
-                    continue;
-                }
+            if (move == tte.move) {
+                continue;
+            }
 
-                board.makeMove(move);
+            board.makeMove(move);
 
-                score = -qsearch(-rbeta, -rbeta + 1, board, info, ss);
+            score = -qsearch(-rbeta, -rbeta + 1, board, info, ss);
 
-                if (score >= rbeta) {
-                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss, !cutnode);
-                }
+            if (score >= rbeta) {
+                score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss, !cutnode);
+            }
 
-                board.unmakeMove(move);
+            board.unmakeMove(move);
 
-                if (score >= rbeta) {
-                    table->store(board.hashKey, HFBETA, move, depth - 3, score, ss->static_eval, ss->ply, is_pvnode);
-                    return score;
-                }
+            if (score >= rbeta) {
+                table->store(board.hashKey, HFBETA, move, depth - 3, score, ss->static_eval, ss->ply, is_pvnode);
+                return score;
             }
         }
     }
 
 movesloop:
+
+    rbeta = beta + 430;
+    if (in_check && !is_pvnode && depth >= 2 && tte.flag & HFBETA && tte.depth >= depth - 4 && tte.score >= rbeta &&
+        abs(tte.score) <= ISMATE && abs(beta) <= ISMATE) {
+        return rbeta;
+    }
 
     /* Initialize variables */
     int bestscore = -INF_BOUND;
@@ -420,8 +428,7 @@ movesloop:
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
-            if (is_quiet && !in_check && !is_pvnode && depth <= 7 &&
-                quietList.size >= lmp_table[improving][depth]) {
+            if (is_quiet && !in_check && !is_pvnode && depth <= 7 && quietList.size >= lmp_table[improving][depth]) {
                 skip_quiet_moves = true;
                 continue;
             }
@@ -457,7 +464,7 @@ movesloop:
                 return (singular_beta); // Multicut
             } else if (tte.score >= beta) {
                 extension = -2;
-            } 
+            }
         }
 
         /* Initialize new depth based on extension*/
@@ -491,8 +498,8 @@ movesloop:
          * full depth.
          */
         // clang-format off
+        int reduction = lmr_table[std::min(depth, 63)][std::min(63, move_count)];
         if (!in_check && depth >= 3 && move_count > (2 + 2 * is_pvnode)) {
-            int reduction = lmr_table[std::min(depth, 63)][std::min(63, move_count)];
 
             reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !is_pvnode; /* Increase for non pv nodes */
@@ -501,7 +508,6 @@ movesloop:
 
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
-            reduction += cutnode * 2;
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/

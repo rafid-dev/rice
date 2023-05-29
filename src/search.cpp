@@ -365,7 +365,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 movesloop:
 
     rbeta = beta + 430;
-    if (in_check && !is_pvnode && depth >= 2 && tte.flag & HFBETA && tte.depth >= depth - 4 && tte.score >= rbeta &&
+    if (in_check && !is_pvnode && depth >= 5 && is_capture(board, tte.move) && tte.flag & HFBETA && tte.depth >= depth - 4 && tte.score >= rbeta &&
         abs(tte.score) <= ISMATE && abs(beta) <= ISMATE) {
         return rbeta;
     }

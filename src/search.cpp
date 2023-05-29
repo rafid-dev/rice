@@ -252,6 +252,10 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             return tte.score;
     }
 
+    if (ttHit && !in_check && !ss->excluded && is_pvnode && depth >= 3 && !tte.move){
+        depth--;
+    }
+
     /* Set static evaluation and evaluation to our current evaluation of the
      * board*/
     /* We can use the tt entry's evaluation if we have a tt hit so we don't have
@@ -363,12 +367,6 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     }
 
 movesloop:
-
-    rbeta = beta + 430;
-    if (in_check && !is_pvnode && depth >= 5 && is_capture(board, tte.move) && tte.flag & HFBETA && tte.depth >= depth - 4 && tte.score >= rbeta &&
-        abs(tte.score) <= ISMATE && abs(beta) <= ISMATE) {
-        return rbeta;
-    }
 
     /* Initialize variables */
     int bestscore = -INF_BOUND;

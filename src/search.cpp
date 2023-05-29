@@ -398,8 +398,8 @@ movesloop:
         bool is_quiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
 
-        int h, ch, fh;
-        int history;
+        int h = 0, ch = 0, fh = 0;
+        int history = 0;
 
         bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
 

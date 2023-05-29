@@ -252,7 +252,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             return tte.score;
     }
 
-    if (ttHit && !in_check && !ss->excluded && is_pvnode && depth >= 3 && !tte.move){
+    if (!tte.move && !in_check && !ss->excluded && depth >= 3 && (is_pvnode || cutnode)){
         depth--;
     }
 

@@ -420,8 +420,7 @@ movesloop:
 
             /* Late Move Pruning/Movecount pruning
                  If we have searched many moves, we can skip the rest. */
-            if (is_quiet && !in_check && !is_pvnode && depth <= 7 &&
-                quietList.size >= lmp_table[improving][depth]) {
+            if (is_quiet && !in_check && !is_pvnode && depth <= 7 && quietList.size >= lmp_table[improving][depth]) {
                 skip_quiet_moves = true;
                 continue;
             }
@@ -726,6 +725,8 @@ int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info) {
     int alpha = -INF_BOUND;
     int beta = INF_BOUND;
 
+    int initial_depth = depth;
+
     if (depth > 3) {
         alpha = std::max(-INF_BOUND, prevEval - delta);
         beta = std::min(INF_BOUND, prevEval + delta);
@@ -742,8 +743,13 @@ int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info) {
         if (score <= alpha) {
             beta = (alpha + beta) / 2;
             alpha = std::max(-INF_BOUND, score - delta);
+
+            depth = initial_depth;
         } else if (score >= beta) {
             beta = std::min(score + delta, INF_BOUND);
+            if (abs(score) <= ISMATE/2 && depth > 1){
+                depth--;
+            }
         } else {
             break;
         }

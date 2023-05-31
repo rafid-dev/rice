@@ -150,7 +150,7 @@ void uci_loop(int argv, char **argc) {
 
                 while (is >> moveString) {
                     // std::cout << moveString << std::endl;
-                    board.makeMove(convertUciToMove(board, moveString));
+                    board.makeMove<false>(convertUciToMove(board, moveString));
                 }
             }
             continue;

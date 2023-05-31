@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sliders.hpp"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -11,15 +12,14 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "sliders.hpp"
+
 #if defined(_MSC_VER) && defined(_WIN64) // MSVC, WIN64
 #include <intrin.h>
 #endif
 
 using namespace Chess_Lookup::Fancy;
 
-namespace Chess
-{
+namespace Chess {
 
 // *******************
 // TYPES DEFINITION
@@ -28,28 +28,13 @@ namespace Chess
 #define MAX_SQ 64
 #define DEFAULT_POS std::string("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 
-enum Movetype : uint8_t
-{
-    ALL,
-    CAPTURE,
-    QUIET
-};
+enum Movetype : uint8_t { ALL, CAPTURE, QUIET };
 
-enum Move : uint16_t
-{
-    NO_MOVE = 0,
-    NULL_MOVE = 65
-};
+enum Move : uint16_t { NO_MOVE = 0, NULL_MOVE = 65 };
 
-enum Color : uint8_t
-{
-    White,
-    Black,
-    NO_COLOR
-};
+enum Color : uint8_t { White, Black, NO_COLOR };
 
-enum Piece : uint8_t
-{
+enum Piece : uint8_t {
     WhitePawn,
     WhiteKnight,
     WhiteBishop,
@@ -65,51 +50,15 @@ enum Piece : uint8_t
     None
 };
 
-enum PieceType : uint8_t
-{
-    PAWN,
-    KNIGHT,
-    BISHOP,
-    ROOK,
-    QUEEN,
-    KING,
-    NONETYPE
-};
+enum PieceType : uint8_t { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONETYPE };
 
-enum Rank : uint8_t
-{
-    RANK_1,
-    RANK_2,
-    RANK_3,
-    RANK_4,
-    RANK_5,
-    RANK_6,
-    RANK_7,
-    RANK_8
-};
+enum Rank : uint8_t { RANK_1, RANK_2, RANK_3, RANK_4, RANK_5, RANK_6, RANK_7, RANK_8 };
 
-enum File : uint8_t
-{
-    FILE_A,
-    FILE_B,
-    FILE_C,
-    FILE_D,
-    FILE_E,
-    FILE_F,
-    FILE_G,
-    FILE_H
-};
+enum File : uint8_t { FILE_A, FILE_B, FILE_C, FILE_D, FILE_E, FILE_F, FILE_G, FILE_H };
 
-enum CastlingRight : uint8_t
-{
-    wk = 1,
-    wq = 2,
-    bk = 4,
-    bq = 8
-};
+enum CastlingRight : uint8_t { wk = 1, wq = 2, bk = 4, bq = 8 };
 
-enum Direction : int8_t
-{
+enum Direction : int8_t {
     NORTH = 8,
     WEST = -1,
     SOUTH = -8,
@@ -163,18 +112,11 @@ static constexpr U64 DEFAULT_CHECKMASK = 18446744073709551615ULL;
 // Type operations
 // *******************
 
-constexpr Color operator~(Color C)
-{
-    return Color(C ^ Black);
-}
+constexpr Color operator~(Color C) { return Color(C ^ Black); }
 
 #define INCR_OP_ON(T)                                                                                                  \
-    constexpr inline T &operator++(T &p)                                                                               \
-    {                                                                                                                  \
-        return p = static_cast<T>(static_cast<int>(p) + 1);                                                            \
-    }                                                                                                                  \
-    constexpr inline T operator++(T &p, int)                                                                           \
-    {                                                                                                                  \
+    constexpr inline T &operator++(T &p) { return p = static_cast<T>(static_cast<int>(p) + 1); }                       \
+    constexpr inline T operator++(T &p, int) {                                                                         \
         auto old = p;                                                                                                  \
         ++p;                                                                                                           \
         return old;                                                                                                    \
@@ -189,22 +131,10 @@ INCR_OP_ON(File)
 #undef INCR_OP_ON
 
 #define BASE_OP_ON(T)                                                                                                  \
-    inline constexpr Square operator+(Square s, T d)                                                                   \
-    {                                                                                                                  \
-        return Square(int(s) + int(d));                                                                                \
-    }                                                                                                                  \
-    inline constexpr Square operator-(Square s, T d)                                                                   \
-    {                                                                                                                  \
-        return Square(int(s) - int(d));                                                                                \
-    }                                                                                                                  \
-    inline constexpr Square &operator+=(Square &s, T d)                                                                \
-    {                                                                                                                  \
-        return s = s + d;                                                                                              \
-    }                                                                                                                  \
-    inline constexpr Square &operator-=(Square &s, T d)                                                                \
-    {                                                                                                                  \
-        return s = s - d;                                                                                              \
-    }
+    inline constexpr Square operator+(Square s, T d) { return Square(int(s) + int(d)); }                               \
+    inline constexpr Square operator-(Square s, T d) { return Square(int(s) - int(d)); }                               \
+    inline constexpr Square &operator+=(Square &s, T d) { return s = s + d; }                                          \
+    inline constexpr Square &operator-=(Square &s, T d) { return s = s - d; }
 
 BASE_OP_ON(Direction)
 
@@ -512,8 +442,8 @@ static std::unordered_map<char, Piece> charToPiece({{'P', WhitePawn},
                                                     {'k', BlackKing},
                                                     {'.', None}});
 
-static std::unordered_map<PieceType, char> PieceTypeToPromPiece(
-    {{KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}});
+static std::unordered_map<PieceType, char>
+    PieceTypeToPromPiece({{KNIGHT, 'n'}, {BISHOP, 'b'}, {ROOK, 'r'}, {QUEEN, 'q'}});
 
 static std::unordered_map<char, PieceType> pieceToInt(
     {{'n', KNIGHT}, {'b', BISHOP}, {'r', ROOK}, {'q', QUEEN}, {'N', KNIGHT}, {'B', BISHOP}, {'R', ROOK}, {'Q', QUEEN}});
@@ -526,39 +456,24 @@ static std::unordered_map<char, CastlingRight> readCastleString({{'K', wk}, {'k'
 // Move encoding
 // *******************
 
-constexpr inline Square from(Move move)
-{
-    return Square(move & 0b111111);
-}
+constexpr inline Square from(Move move) { return Square(move & 0b111111); }
 
-constexpr inline Square to(Move move)
-{
-    return Square((move & 0b111111000000) >> 6);
-}
+constexpr inline Square to(Move move) { return Square((move & 0b111111000000) >> 6); }
 
-constexpr inline PieceType piece(Move move)
-{
-    return PieceType((move & 0b111000000000000) >> 12);
-}
+constexpr inline PieceType piece(Move move) { return PieceType((move & 0b111000000000000) >> 12); }
 
-constexpr inline bool promoted(Move move)
-{
-    return bool((move & 0b1000000000000000) >> 15);
-}
+constexpr inline bool promoted(Move move) { return bool((move & 0b1000000000000000) >> 15); }
 
 constexpr inline Move make(PieceType piece = NONETYPE, Square source = NO_SQ, Square target = NO_SQ,
-                           bool promoted = false)
-{
+                           bool promoted = false) {
     return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
 }
 
-template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ)
-{
+template <PieceType piece, bool promoted> Move make(Square source = NO_SQ, Square target = NO_SQ) {
     return Move((uint16_t)source | (uint16_t)target << 6 | (uint16_t)piece << 12 | (uint16_t)promoted << 15);
 }
 
-struct State
-{
+struct State {
     Square enPassant{};
     uint8_t castling{};
     uint8_t halfMove{};
@@ -566,80 +481,53 @@ struct State
     State(Square enpassantCopy = {}, uint8_t castlingRightsCopy = {}, uint8_t halfMoveCopy = {},
           Piece capturedPieceCopy = None)
         : enPassant(enpassantCopy), castling(castlingRightsCopy), halfMove(halfMoveCopy),
-          capturedPiece(capturedPieceCopy)
-    {
-    }
+          capturedPiece(capturedPieceCopy) {}
 };
 
-struct ExtMove
-{
+struct ExtMove {
     int value;
     Move move;
 };
 
-inline constexpr bool operator==(const ExtMove &a, const ExtMove &b)
-{
-    return a.move == b.move;
-}
+inline constexpr bool operator==(const ExtMove &a, const ExtMove &b) { return a.move == b.move; }
 
-inline constexpr bool operator>(const ExtMove &a, const ExtMove &b)
-{
-    return a.value > b.value;
-}
+inline constexpr bool operator>(const ExtMove &a, const ExtMove &b) { return a.value > b.value; }
 
-inline constexpr bool operator<(const ExtMove &a, const ExtMove &b)
-{
-    return a.value < b.value;
-}
+inline constexpr bool operator<(const ExtMove &a, const ExtMove &b) { return a.value < b.value; }
 
-struct Movelist
-{
+struct Movelist {
     ExtMove list[MAX_MOVES];
     uint8_t size = 0;
     typedef ExtMove *iterator;
     typedef const ExtMove *const_iterator;
 
-    inline void Add(Move move)
-    {
+    inline void Add(Move move) {
         list[size].move = move;
         list[size].value = 0;
         size++;
     }
 
-    inline constexpr ExtMove &operator[](int i)
-    {
-        return list[i];
-    }
+    inline constexpr ExtMove &operator[](int i) { return list[i]; }
 
     /// @brief
     /// @param m
     /// @return -1 if move was not found
-    inline constexpr int find(Move m)
-    {
-        for (int i = 0; i < size; i++)
-        {
+    inline constexpr int find(Move m) {
+        for (int i = 0; i < size; i++) {
             if (list[i].move == m)
                 return i;
         }
         return -1;
     }
 
-    inline iterator begin()
-    {
-        return (std::begin(list));
-    }
-    inline const_iterator begin() const
-    {
-        return (std::begin(list));
-    }
-    inline iterator end()
-    {
+    inline iterator begin() { return (std::begin(list)); }
+    inline const_iterator begin() const { return (std::begin(list)); }
+    inline iterator end() {
         auto it = std::begin(list);
         std::advance(it, size);
         return it;
     }
-    inline const_iterator end() const
-    {
+    inline const_iterator end() const {
         auto it = std::begin(list);
         std::advance(it, size);
         return it;
@@ -653,15 +541,13 @@ struct Movelist
 // Compiler specific functions, taken from Stockfish https://github.com/official-stockfish/Stockfish
 #if defined(__GNUC__) // GCC, Clang, ICC
 
-inline Square lsb(U64 b)
-{
+inline Square lsb(U64 b) {
     if (!b)
         return NO_SQ;
     return Square(__builtin_ctzll(b));
 }
 
-inline Square msb(U64 b)
-{
+inline Square msb(U64 b) {
     if (!b)
         return NO_SQ;
     return Square(63 ^ __builtin_clzll(b));
@@ -669,15 +555,13 @@ inline Square msb(U64 b)
 
 #elif defined(_MSC_VER) // MSVC
 
-inline Square lsb(U64 b)
-{
+inline Square lsb(U64 b) {
     unsigned long idx;
     _BitScanForward64(&idx, b);
     return (Square)idx;
 }
 
-inline Square msb(U64 b)
-{
+inline Square msb(U64 b) {
     unsigned long idx;
     _BitScanReverse64(&idx, b);
     return (Square)idx;
@@ -689,8 +573,7 @@ inline Square msb(U64 b)
 
 #endif
 
-inline uint8_t popcount(U64 mask)
-{
+inline uint8_t popcount(U64 mask) {
 #if defined(_MSC_VER) || defined(__INTEL_COMPILER)
 
     return (uint8_t)_mm_popcnt_u64(mask);
@@ -705,8 +588,7 @@ inline uint8_t popcount(U64 mask)
 /// @brief return the lsb and remove it
 /// @param mask
 /// @return
-inline Square poplsb(U64 &mask)
-{
+inline Square poplsb(U64 &mask) {
     int8_t s = lsb(mask);
     mask &= mask - 1;
     return Square(s);
@@ -715,14 +597,12 @@ inline Square poplsb(U64 &mask)
 /// @brief splits a string into multiple parts, delimiter is whitespace
 /// @param fen
 /// @return std::vector
-inline std::vector<std::string> splitInput(const std::string &input)
-{
+inline std::vector<std::string> splitInput(const std::string &input) {
     std::stringstream input_stream(input);
     std::string segment;
     std::vector<std::string> seglist;
 
-    while (std::getline(input_stream, segment, ' '))
-    {
+    while (std::getline(input_stream, segment, ' ')) {
         seglist.push_back(segment);
     }
 
@@ -732,44 +612,30 @@ inline std::vector<std::string> splitInput(const std::string &input)
 /// @brief Gets the file index of the square where 0 is the a-file
 /// @param sq
 /// @return the file of the square
-inline constexpr File square_file(Square sq)
-{
-    return File(sq & 7);
-}
+inline constexpr File square_file(Square sq) { return File(sq & 7); }
 
 /// @brief Gets the rank index of the square where 0 is the first rank.
 /// @param sq
 /// @return the rank of the square
-inline constexpr Rank square_rank(Square sq)
-{
-    return Rank(sq >> 3);
-}
+inline constexpr Rank square_rank(Square sq) { return Rank(sq >> 3); }
 
 /// @brief makes a square out of rank and file
 /// @param f
 /// @param r
 /// @return
-inline constexpr Square file_rank_square(File f, Rank r)
-{
-    return Square((r << 3) + f);
-}
+inline constexpr Square file_rank_square(File f, Rank r) { return Square((r << 3) + f); }
 
 /// @brief distance between two squares
 /// @param a
 /// @param b
 /// @return
-inline uint8_t square_distance(Square a, Square b)
-{
+inline uint8_t square_distance(Square a, Square b) {
     return std::max(std::abs(square_file(a) - square_file(b)), std::abs(square_rank(a) - square_rank(b)));
 }
 
-inline uint8_t diagonal_of(Square sq)
-{
-    return 7 + square_rank(sq) - square_file(sq);
-}
+inline uint8_t diagonal_of(Square sq) { return 7 + square_rank(sq) - square_file(sq); }
 
-inline uint8_t anti_diagonal_of(Square sq)
-{
+inline uint8_t anti_diagonal_of(Square sq) {
     return static_cast<uint8_t>(square_rank(sq)) + static_cast<uint8_t>(square_file(sq));
 }
 
@@ -777,22 +643,17 @@ inline uint8_t anti_diagonal_of(Square sq)
 /// @param sq1
 /// @param sq2
 /// @return
-inline uint8_t manhatten_distance(Square sq1, Square sq2)
-{
+inline uint8_t manhatten_distance(Square sq1, Square sq2) {
     return std::abs(square_file(sq1) - square_file(sq2)) + std::abs(square_rank(sq1) - square_rank(sq2));
 }
 
 /// @brief color of a square, has nothing to do with whose piece is on that square
 /// @param square
 /// @return
-inline Color get_square_color(Square square)
-{
-    if ((square % 8) % 2 == (square / 8) % 2)
-    {
+inline Color get_square_color(Square square) {
+    if ((square % 8) % 2 == (square / 8) % 2) {
         return Black;
-    }
-    else
-    {
+    } else {
         return White;
     }
 }
@@ -800,17 +661,13 @@ inline Color get_square_color(Square square)
 /// @brief get the piecetype of a piece
 /// @param piece
 /// @return the piecetype
-inline PieceType type_of_piece(Piece piece)
-{
-    return PieceToPieceType[piece];
-}
+inline PieceType type_of_piece(Piece piece) { return PieceToPieceType[piece]; }
 
 /// @brief makes a piece out of a PieceType and Color
 /// @param type
 /// @param c
 /// @return
-inline Piece makePiece(PieceType type, Color c)
-{
+inline Piece makePiece(PieceType type, Color c) {
     if (type == NONETYPE)
         return None;
     return Piece(type + 6 * c);
@@ -818,12 +675,10 @@ inline Piece makePiece(PieceType type, Color c)
 
 /// @brief prints any bitboard
 /// @param bb
-inline void printBitboard(U64 bb)
-{
+inline void printBitboard(U64 bb) {
     std::bitset<64> b(bb);
     std::string str_bitset = b.to_string();
-    for (int i = 0; i < MAX_SQ; i += 8)
-    {
+    for (int i = 0; i < MAX_SQ; i += 8) {
         std::string x = str_bitset.substr(i, 8);
         reverse(x.begin(), x.end());
         std::cout << x << std::endl;
@@ -831,23 +686,13 @@ inline void printBitboard(U64 bb)
     std::cout << '\n' << std::endl;
 }
 
-inline U64 PawnAttacks(Square sq, Color c)
-{
-    return PAWN_ATTACKS_TABLE[c][sq];
-}
+inline U64 PawnAttacks(Square sq, Color c) { return PAWN_ATTACKS_TABLE[c][sq]; }
 
-inline U64 KnightAttacks(Square sq)
-{
-    return KNIGHT_ATTACKS_TABLE[sq];
-}
+inline U64 KnightAttacks(Square sq) { return KNIGHT_ATTACKS_TABLE[sq]; }
 
-inline U64 KingAttacks(Square sq)
-{
-    return KING_ATTACKS_TABLE[sq];
-}
+inline U64 KingAttacks(Square sq) { return KING_ATTACKS_TABLE[sq]; }
 
-class Board
-{
+class Board {
   public:
     Color sideToMove;
 
@@ -905,6 +750,7 @@ class Board
     U64 enemyEmptyBB;
 
     U64 SQUARES_BETWEEN_BB[MAX_SQ][MAX_SQ];
+
   private:
     // keeps track of previous hashes, used for
     // repetition detection
@@ -956,33 +802,20 @@ class Board
     U64 EnemyEmpty(Color c) const;
     U64 Us(Color c) const;
 
-    template <Color c> U64 Us() const
-    {
+    template <Color c> U64 Us() const {
         return piecesBB[PAWN + c * 6] | piecesBB[KNIGHT + c * 6] | piecesBB[BISHOP + c * 6] | piecesBB[ROOK + c * 6] |
                piecesBB[QUEEN + c * 6] | piecesBB[KING + c * 6];
     }
 
-    inline U64 All() const
-    {
-        return Us<White>() | Us<Black>();
-    }
+    inline U64 All() const { return Us<White>() | Us<Black>(); }
 
     // Gets individual piece bitboards
 
-    template <Piece p> constexpr U64 pieces() const
-    {
-        return piecesBB[p];
-    }
+    template <Piece p> constexpr U64 pieces() const { return piecesBB[p]; }
 
-    template <PieceType p, Color c> constexpr U64 pieces() const
-    {
-        return piecesBB[p + c * 6];
-    }
+    template <PieceType p, Color c> constexpr U64 pieces() const { return piecesBB[p + c * 6]; }
 
-    inline constexpr U64 pieces(PieceType p, Color c) const
-    {
-        return piecesBB[p + c * 6];
-    }
+    inline constexpr U64 pieces(PieceType p, Color c) const { return piecesBB[p + c * 6]; }
 
     /// @brief returns the color of a piece at a square
     /// @param loc
@@ -1000,11 +833,11 @@ class Board
 
     /// @brief plays the move on the internal board
     /// @param move
-    void makeMove(Move move);
+    template <bool updateNNUE = true> void makeMove(Move move);
 
     /// @brief unmake a move played on the internal board
     /// @param move
-    void unmakeMove(Move move);
+    template <bool updateNNUE = true> void unmakeMove(Move move);
 
     /// @brief make a nullmove
     void makeNullMove();
@@ -1016,20 +849,22 @@ class Board
     /// @param piece
     /// @param sq
     void removePiece(Piece piece, Square sq);
-    void removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
+
+    template <bool updateNNUE> void removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
 
     /// @brief Place a Piece on the board
     /// @param piece
     /// @param sq
     void placePiece(Piece piece, Square sq);
-    void placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
-
+    template <bool updateNNUE> void placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
 
     /// @brief Move a piece on the board
     /// @param piece
     /// @param fromSq
     /// @param toSq
     void movePiece(Piece piece, Square fromSq, Square toSq);
+
+    template <bool updateNNUE>
     void movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black);
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c) const;
@@ -1037,7 +872,6 @@ class Board
     U64 updateKeyPiece(Piece piece, Square sq) const;
 
     friend inline std::ostream &operator<<(std::ostream &os, const Board &b);
-
 
   private:
     /// @brief calculate the current zobrist hash from scratch
@@ -1057,38 +891,27 @@ class Board
     void removeCastlingRightsRook(Square sq);
 };
 
-inline Piece Board::pieceAtBB(Square sq)
-{
-    for (Piece p = WhitePawn; p < None; p++)
-    {
+inline Piece Board::pieceAtBB(Square sq) {
+    for (Piece p = WhitePawn; p < None; p++) {
         if (piecesBB[p] & (1ULL << sq))
             return p;
     }
     return None;
 }
 
-inline Piece Board::pieceAtB(Square sq) const
-{
-    return board[sq];
-}
+inline Piece Board::pieceAtB(Square sq) const { return board[sq]; }
 
-inline PieceType Board::pieceTypeAtB(Square sq) const
-{
-    return type_of_piece(board[sq]);
-}
+inline PieceType Board::pieceTypeAtB(Square sq) const { return type_of_piece(board[sq]); }
 
-inline std::string Board::getFen() const
-{
+inline std::string Board::getFen() const {
     std::stringstream ss;
 
     // Loop through the ranks of the board in reverse order
-    for (int rank = 7; rank >= 0; rank--)
-    {
+    for (int rank = 7; rank >= 0; rank--) {
         int free_space = 0;
 
         // Loop through the files of the board
-        for (int file = 0; file < 8; file++)
-        {
+        for (int file = 0; file < 8; file++) {
             // Calculate the square index
             int sq = rank * 8 + file;
 
@@ -1096,21 +919,17 @@ inline std::string Board::getFen() const
             Piece piece = pieceAtB(Square(sq));
 
             // If there is a piece at the current square
-            if (piece != None)
-            {
+            if (piece != None) {
                 // If there were any empty squares before this piece,
                 // append the number of empty squares to the FEN string
-                if (free_space)
-                {
+                if (free_space) {
                     ss << free_space;
                     free_space = 0;
                 }
 
                 // Append the character representing the piece to the FEN string
                 ss << pieceToChar[piece];
-            }
-            else
-            {
+            } else {
                 // If there is no piece at the current square, increment the
                 // counter for the number of empty squares
                 free_space++;
@@ -1119,8 +938,7 @@ inline std::string Board::getFen() const
 
         // If there are any empty squares at the end of the rank,
         // append the number of empty squares to the FEN string
-        if (free_space != 0)
-        {
+        if (free_space != 0) {
             ss << free_space;
         }
 
@@ -1157,13 +975,11 @@ inline std::string Board::getFen() const
     return ss.str();
 }
 
-inline bool Board::isRepetition(int draw) const
-{
+inline bool Board::isRepetition(int draw) const {
     uint8_t c = 0;
 
     for (int i = static_cast<int>(hashHistory.size()) - 2;
-         i >= 0 && i >= static_cast<int>(hashHistory.size()) - halfMoveClock - 1; i -= 2)
-    {
+         i >= 0 && i >= static_cast<int>(hashHistory.size()) - halfMoveClock - 1; i -= 2) {
         if (hashHistory[i] == hashKey)
             c++;
         if (c == draw)
@@ -1173,39 +989,24 @@ inline bool Board::isRepetition(int draw) const
     return false;
 }
 
-inline bool Board::nonPawnMat(Color c) const
-{
+inline bool Board::nonPawnMat(Color c) const {
     return pieces(KNIGHT, c) | pieces(BISHOP, c) | pieces(ROOK, c) | pieces(QUEEN, c);
 }
 
-inline Square Board::KingSQ(Color c) const
-{
-    return lsb(pieces(KING, c));
-}
+inline Square Board::KingSQ(Color c) const { return lsb(pieces(KING, c)); }
 
-inline U64 Board::Enemy(Color c) const
-{
-    return Us(~c);
-}
+inline U64 Board::Enemy(Color c) const { return Us(~c); }
 
-inline U64 Board::Us(Color c) const
-{
+inline U64 Board::Us(Color c) const {
     return piecesBB[PAWN + c * 6] | piecesBB[KNIGHT + c * 6] | piecesBB[BISHOP + c * 6] | piecesBB[ROOK + c * 6] |
            piecesBB[QUEEN + c * 6] | piecesBB[KING + c * 6];
 }
 
-inline U64 Board::EnemyEmpty(Color c) const
-{
-    return ~Us(c);
-}
+inline U64 Board::EnemyEmpty(Color c) const { return ~Us(c); }
 
-inline Color Board::colorOf(Square loc) const
-{
-    return Color((pieceAtB(loc) / 6));
-}
+inline Color Board::colorOf(Square loc) const { return Color((pieceAtB(loc) / 6)); }
 
-inline bool Board::isSquareAttacked(Color c, Square sq) const
-{
+inline bool Board::isSquareAttacked(Color c, Square sq) const {
     if (pieces(PAWN, c) & PawnAttacks(sq, ~c))
         return true;
     if (pieces(KNIGHT, c) & KnightAttacks(sq))
@@ -1222,13 +1023,11 @@ inline bool Board::isSquareAttacked(Color c, Square sq) const
     return false;
 }
 
-inline U64 Board::allAttackers(Square sq, U64 occupiedBB)
-{
+inline U64 Board::allAttackers(Square sq, U64 occupiedBB) {
     return attackersForSide(White, sq, occupiedBB) | attackersForSide(Black, sq, occupiedBB);
 }
 
-inline U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB)
-{
+inline U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedBB) {
     U64 attackingBishops = pieces(BISHOP, attackerColor);
     U64 attackingRooks = pieces(ROOK, attackerColor);
     U64 attackingQueens = pieces(QUEEN, attackerColor);
@@ -1247,10 +1046,8 @@ inline U64 Board::attackersForSide(Color attackerColor, Square sq, U64 occupiedB
     return attackers;
 }
 
-inline U64 Board::attacksByPiece(PieceType pt, Square sq, Color c) const
-{
-    switch (pt)
-    {
+inline U64 Board::attacksByPiece(PieceType pt, Square sq, Color c) const {
+    switch (pt) {
     case PAWN:
         return PawnAttacks(sq, c);
     case KNIGHT:
@@ -1270,10 +1067,8 @@ inline U64 Board::attacksByPiece(PieceType pt, Square sq, Color c) const
     }
 }
 
-inline std::ostream &operator<<(std::ostream &os, const Board &b)
-{
-    for (int i = 63; i >= 0; i -= 8)
-    {
+inline std::ostream &operator<<(std::ostream &os, const Board &b) {
+    for (int i = 63; i >= 0; i -= 8) {
         os << " " << pieceToChar[b.board[i - 7]] << " " << pieceToChar[b.board[i - 6]] << " "
            << pieceToChar[b.board[i - 5]] << " " << pieceToChar[b.board[i - 4]] << " " << pieceToChar[b.board[i - 3]]
            << " " << pieceToChar[b.board[i - 2]] << " " << pieceToChar[b.board[i - 1]] << " " << pieceToChar[b.board[i]]
@@ -1296,21 +1091,17 @@ inline std::ostream &operator<<(std::ostream &os, const Board &b)
 // PRIVATE BOARD FUNCTION DECLARTION
 // ***************************
 
-inline U64 Board::zobristHash() const
-{
+inline U64 Board::zobristHash() const {
     U64 hash = 0ULL;
     U64 wPieces = Us(White);
     U64 bPieces = Us(Black);
 
     // Piece hashes
-    while (wPieces)
-    {
+    while (wPieces) {
         Square sq = poplsb(wPieces);
         hash ^= updateKeyPiece(pieceAtB(sq), sq);
-        
     }
-    while (bPieces)
-    {
+    while (bPieces) {
         Square sq = poplsb(bPieces);
         hash ^= updateKeyPiece(pieceAtB(sq), sq);
     }
@@ -1327,14 +1118,11 @@ inline U64 Board::zobristHash() const
     return hash ^ cast_hash ^ turn_hash ^ ep_hash;
 }
 
-inline void Board::initializeLookupTables()
-{
+inline void Board::initializeLookupTables() {
     // initialize squares between table
     U64 sqs;
-    for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1)
-    {
-        for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2)
-        {
+    for (Square sq1 = SQ_A1; sq1 <= SQ_H8; ++sq1) {
+        for (Square sq2 = SQ_A1; sq2 <= SQ_H8; ++sq2) {
             sqs = (1ULL << sq1) | (1ULL << sq2);
             if (sq1 == sq2)
                 SQUARES_BETWEEN_BB[sq1][sq2] = 0ull;
@@ -1346,42 +1134,24 @@ inline void Board::initializeLookupTables()
     }
 }
 
-inline U64 Board::updateKeyPiece(Piece piece, Square sq) const
-{
-    return RANDOM_ARRAY[64 * hash_piece[piece] + sq];
-}
+inline U64 Board::updateKeyPiece(Piece piece, Square sq) const { return RANDOM_ARRAY[64 * hash_piece[piece] + sq]; }
 
-inline U64 Board::updateKeyEnPassant(Square sq) const
-{
-    return RANDOM_ARRAY[772 + square_file(sq)];
-}
+inline U64 Board::updateKeyEnPassant(Square sq) const { return RANDOM_ARRAY[772 + square_file(sq)]; }
 
-inline U64 Board::updateKeyCastling() const
-{
-    return castlingKey[castlingRights];
-}
+inline U64 Board::updateKeyCastling() const { return castlingKey[castlingRights]; }
 
-inline U64 Board::updateKeySideToMove() const
-{
-    return RANDOM_ARRAY[780];
-}
+inline U64 Board::updateKeySideToMove() const { return RANDOM_ARRAY[780]; }
 
-inline void Board::removeCastlingRightsAll(Color c)
-{
-    if (c == White)
-    {
+inline void Board::removeCastlingRightsAll(Color c) {
+    if (c == White) {
         castlingRights &= ~(wk | wq);
-    }
-    else if (c == Black)
-    {
+    } else if (c == Black) {
         castlingRights &= ~(bk | bq);
     }
 }
 
-inline void Board::removeCastlingRightsRook(Square sq)
-{
-    if (castlingMapRook.find(sq) != castlingMapRook.end())
-    {
+inline void Board::removeCastlingRightsRook(Square sq) {
+    if (castlingMapRook.find(sq) != castlingMapRook.end()) {
         castlingRights &= ~castlingMapRook[sq];
     }
 }
@@ -1389,16 +1159,14 @@ inline void Board::removeCastlingRightsRook(Square sq)
 /// @brief uci representation of a move
 /// @param move
 /// @return
-inline std::string convertMoveToUci(Move move)
-{
+inline std::string convertMoveToUci(Move move) {
     std::stringstream ss;
 
     // Get the from and to squares
     Square from_sq = from(move);
     Square to_sq = to(move);
 
-    if (piece(move) == KING && square_distance(to_sq, from_sq) >= 2)
-    {
+    if (piece(move) == KING && square_distance(to_sq, from_sq) >= 2) {
         to_sq = file_rank_square(to_sq > from_sq ? FILE_G : FILE_C, square_rank(from_sq));
     }
 
@@ -1407,8 +1175,7 @@ inline std::string convertMoveToUci(Move move)
     ss << squareToString[to_sq];
 
     // If the move is a promotion, add the promoted piece to the string stream
-    if (promoted(move))
-    {
+    if (promoted(move)) {
         ss << PieceTypeToPromPiece[piece(move)];
     }
 
@@ -1418,8 +1185,7 @@ inline std::string convertMoveToUci(Move move)
 /// @brief helper function
 /// @param squareStr
 /// @return
-inline Square extractSquare(std::string_view squareStr)
-{
+inline Square extractSquare(std::string_view squareStr) {
     char letter = squareStr[0];
     int file = letter - 96;
     int rank = squareStr[1] - 48;
@@ -1431,20 +1197,17 @@ inline Square extractSquare(std::string_view squareStr)
 /// @param board
 /// @param input
 /// @return
-inline Move convertUciToMove(const Board &board, const std::string &input)
-{
+inline Move convertUciToMove(const Board &board, const std::string &input) {
     Square source = extractSquare(input.substr(0, 2));
     Square target = extractSquare(input.substr(2, 2));
     PieceType piece = board.pieceTypeAtB(source);
 
     // convert to king captures rook
-    if (piece == KING && square_distance(target, source) == 2)
-    {
+    if (piece == KING && square_distance(target, source) == 2) {
         target = file_rank_square(target > source ? FILE_H : FILE_A, square_rank(source));
     }
 
-    switch (input.length())
-    {
+    switch (input.length()) {
     case 4:
         return make(piece, source, target, false);
     case 5:
@@ -1457,17 +1220,14 @@ inline Move convertUciToMove(const Board &board, const std::string &input)
 
 } // namespace Chess
 
-namespace Movegen
-{
+namespace Movegen {
 using namespace Chess;
 
-template <Color c> U64 pawnLeftAttacks(const U64 pawns)
-{
+template <Color c> U64 pawnLeftAttacks(const U64 pawns) {
     return c == White ? (pawns << 7) & ~MASK_FILE[FILE_H] : (pawns >> 7) & ~MASK_FILE[FILE_A];
 }
 
-template <Color c> U64 pawnRightAttacks(const U64 pawns)
-{
+template <Color c> U64 pawnRightAttacks(const U64 pawns) {
     return c == White ? (pawns << 9) & ~MASK_FILE[FILE_A] : (pawns >> 9) & ~MASK_FILE[FILE_H];
 }
 
@@ -1477,8 +1237,7 @@ template <Color c> U64 pawnRightAttacks(const U64 pawns)
  * Knight and pawns get themselves added to the checkmask, otherwise the path is added.
  * When there is no check at all all bits are set (DEFAULT_CHECKMASK)
  *******************/
-template <Color c> U64 DoCheckmask(Board &board, Square sq)
-{
+template <Color c> U64 DoCheckmask(Board &board, Square sq) {
     U64 Occ = board.occAll;
     U64 checks = 0ULL;
     U64 pawn_mask = board.pieces<PAWN, ~c>() & PawnAttacks(sq, c);
@@ -1492,34 +1251,29 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
      *******************/
     board.doubleCheck = 0;
 
-    if (pawn_mask)
-    {
+    if (pawn_mask) {
         checks |= pawn_mask;
         board.doubleCheck++;
     }
-    if (knight_mask)
-    {
+    if (knight_mask) {
         checks |= knight_mask;
         board.doubleCheck++;
     }
-    if (bishop_mask)
-    {
+    if (bishop_mask) {
         int8_t index = lsb(bishop_mask);
 
         // Now we add the path!
         checks |= board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index);
         board.doubleCheck++;
     }
-    if (rook_mask)
-    {
+    if (rook_mask) {
         /********************
          * 3nk3/4P3/8/8/8/8/8/2K1R3 w - - 0 1, pawn promotes to queen or rook and
          * suddenly the same piecetype gives check two times
          * in that case we have a double check and can return early
          * because king moves dont require the checkmask.
          *******************/
-        if (popcount(rook_mask) > 1)
-        {
+        if (popcount(rook_mask) > 1) {
             board.doubleCheck = 2;
             return checks;
         }
@@ -1547,13 +1301,11 @@ template <Color c> U64 DoCheckmask(Board &board, Square sq)
  * the possible pinner. We do this by simply using the popcount
  * of our pieces that lay on the pin mask, if it is only 1 piece then that piece is pinned.
  *******************/
-template <Color c> U64 DoPinMaskRooks(Board &board, Square sq)
-{
+template <Color c> U64 DoPinMaskRooks(Board &board, Square sq) {
     U64 rook_mask = (board.pieces<ROOK, ~c>() | board.pieces<QUEEN, ~c>()) & RookAttacks(sq, board.occEnemy);
 
     U64 pinHV = 0ULL;
-    while (rook_mask)
-    {
+    while (rook_mask) {
         const Square index = poplsb(rook_mask);
         const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & board.occUs) == 1)
@@ -1562,14 +1314,12 @@ template <Color c> U64 DoPinMaskRooks(Board &board, Square sq)
     return pinHV;
 }
 
-template <Color c> U64 DoPinMaskBishops(Board &board, Square sq)
-{
+template <Color c> U64 DoPinMaskBishops(Board &board, Square sq) {
     U64 bishop_mask = (board.pieces<BISHOP, ~c>() | board.pieces<QUEEN, ~c>()) & BishopAttacks(sq, board.occEnemy);
 
     U64 pinD = 0ULL;
 
-    while (bishop_mask)
-    {
+    while (bishop_mask) {
         const Square index = poplsb(bishop_mask);
         const U64 possible_pin = (board.SQUARES_BETWEEN_BB[sq][index] | (1ULL << index));
         if (popcount(possible_pin & board.occUs) == 1)
@@ -1584,8 +1334,7 @@ template <Color c> U64 DoPinMaskBishops(Board &board, Square sq)
  * We keep track of all attacked squares by the enemy
  * this is used for king move generation.
  *******************/
-template <Color c> U64 seenSquares(Board &board)
-{
+template <Color c> U64 seenSquares(Board &board) {
     const Square kSq = board.KingSQ(~c);
 
     U64 pawns = board.pieces<PAWN, c>();
@@ -1599,18 +1348,15 @@ template <Color c> U64 seenSquares(Board &board)
 
     U64 seen = pawnLeftAttacks<c>(pawns) | pawnRightAttacks<c>(pawns);
 
-    while (knights)
-    {
+    while (knights) {
         Square index = poplsb(knights);
         seen |= KnightAttacks(index);
     }
-    while (bishops)
-    {
+    while (bishops) {
         Square index = poplsb(bishops);
         seen |= BishopAttacks(index, board.occAll);
     }
-    while (rooks)
-    {
+    while (rooks) {
         Square index = poplsb(rooks);
         seen |= RookAttacks(index, board.occAll);
     }
@@ -1628,8 +1374,7 @@ template <Color c> U64 seenSquares(Board &board)
  * Creates the pinmask and checkmask
  * setup important variables that we use for move generation.
  *******************/
-template <Color c> void init(Board &board, Square sq)
-{
+template <Color c> void init(Board &board, Square sq) {
     board.occUs = board.Us<c>();
     board.occEnemy = board.Us<~c>();
     board.occAll = board.occUs | board.occEnemy;
@@ -1645,10 +1390,8 @@ template <Color c> void init(Board &board, Square sq)
 /// @tparam direction
 /// @param b
 /// @return
-template <Direction direction> constexpr U64 shift(const U64 b)
-{
-    switch (direction)
-    {
+template <Direction direction> constexpr U64 shift(const U64 b) {
+    switch (direction) {
     case NORTH:
         return b << 8;
     case SOUTH:
@@ -1675,8 +1418,7 @@ template <Direction direction> constexpr U64 shift(const U64 b)
 /// @tparam mt
 /// @param board
 /// @param movelist
-template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &movelist)
-{
+template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &movelist) {
     const U64 pawns_mask = board.pieces(PAWN, c);
 
     constexpr Direction UP = c == White ? NORTH : SOUTH;
@@ -1721,14 +1463,12 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
      * Add promotion moves.
      * These are always generated unless we only want quiet moves.
      *******************/
-    if ((mt != Movetype::QUIET) && pawns_mask & RANK_BEFORE_PROMO)
-    {
+    if ((mt != Movetype::QUIET) && pawns_mask & RANK_BEFORE_PROMO) {
         U64 Promote_Left = Lpawns & RANK_PROMO;
         U64 Promote_Right = Rpawns & RANK_PROMO;
         U64 Promote_Move = singlePush & RANK_PROMO;
 
-        while (Promote_Move)
-        {
+        while (Promote_Move) {
             Square to = poplsb(Promote_Move);
             movelist.Add(make<QUEEN, true>(to + DOWN, to));
             movelist.Add(make<ROOK, true>(to + DOWN, to));
@@ -1736,8 +1476,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<BISHOP, true>(to + DOWN, to));
         }
 
-        while (Promote_Right)
-        {
+        while (Promote_Right) {
             Square to = poplsb(Promote_Right);
             movelist.Add(make<QUEEN, true>(to + DOWN_LEFT, to));
             movelist.Add(make<ROOK, true>(to + DOWN_LEFT, to));
@@ -1745,8 +1484,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
             movelist.Add(make<BISHOP, true>(to + DOWN_LEFT, to));
         }
 
-        while (Promote_Left)
-        {
+        while (Promote_Left) {
             Square to = poplsb(Promote_Left);
             movelist.Add(make<QUEEN, true>(to + DOWN_RIGHT, to));
             movelist.Add(make<ROOK, true>(to + DOWN_RIGHT, to));
@@ -1763,8 +1501,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add single pushs.
      *******************/
-    while (mt != Movetype::CAPTURE && singlePush)
-    {
+    while (mt != Movetype::CAPTURE && singlePush) {
         Square to = poplsb(singlePush);
         movelist.Add(make<PAWN, false>(to + DOWN, to));
     }
@@ -1772,8 +1509,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add double pushs.
      *******************/
-    while (mt != Movetype::CAPTURE && doublePush)
-    {
+    while (mt != Movetype::CAPTURE && doublePush) {
         Square to = poplsb(doublePush);
         movelist.Add(make<PAWN, false>(to + DOWN + DOWN, to));
     }
@@ -1781,8 +1517,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add right pawn captures.
      *******************/
-    while (mt != Movetype::QUIET && Rpawns)
-    {
+    while (mt != Movetype::QUIET && Rpawns) {
         Square to = poplsb(Rpawns);
         movelist.Add(make<PAWN, false>(to + DOWN_LEFT, to));
     }
@@ -1790,8 +1525,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add left pawn captures.
      *******************/
-    while (mt != Movetype::QUIET && Lpawns)
-    {
+    while (mt != Movetype::QUIET && Lpawns) {
         Square to = poplsb(Lpawns);
         movelist.Add(make<PAWN, false>(to + DOWN_RIGHT, to));
     }
@@ -1799,8 +1533,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     /********************
      * Add en passant captures.
      *******************/
-    if (mt != Movetype::QUIET && board.enPassantSquare != NO_SQ)
-    {
+    if (mt != Movetype::QUIET && board.enPassantSquare != NO_SQ) {
         const Square ep = board.enPassantSquare;
         const Square epPawn = ep + DOWN;
 
@@ -1824,8 +1557,7 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
         /********************
          * For one en passant square two pawns could potentially take there.
          *******************/
-        while (epBB)
-        {
+        while (epBB) {
             Square from = poplsb(epBB);
             Square to = ep;
 
@@ -1854,37 +1586,30 @@ template <Color c, Movetype mt> void LegalPawnMovesAll(Board &board, Movelist &m
     }
 }
 
-inline U64 LegalKnightMoves(Square sq, U64 movableSquare)
-{
-    return KnightAttacks(sq) & movableSquare;
-}
+inline U64 LegalKnightMoves(Square sq, U64 movableSquare) { return KnightAttacks(sq) & movableSquare; }
 
-inline U64 LegalBishopMoves(const Board &board, Square sq, U64 movableSquare)
-{
+inline U64 LegalBishopMoves(const Board &board, Square sq, U64 movableSquare) {
     // The Bishop is pinned diagonally thus can only move diagonally.
     if (board.pinD & (1ULL << sq))
         return BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
     return BishopAttacks(sq, board.occAll) & movableSquare;
 }
 
-inline U64 LegalRookMoves(const Board &board, Square sq, U64 movableSquare)
-{
+inline U64 LegalRookMoves(const Board &board, Square sq, U64 movableSquare) {
     // The Rook is pinned horizontally thus can only move horizontally.
     if (board.pinHV & (1ULL << sq))
         return RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
     return RookAttacks(sq, board.occAll) & movableSquare;
 }
 
-inline U64 LegalQueenMoves(const Board &board, Square sq, U64 movableSquare)
-{
+inline U64 LegalQueenMoves(const Board &board, Square sq, U64 movableSquare) {
     U64 moves = 0ULL;
 
     if (board.pinD & (1ULL << sq))
         moves |= BishopAttacks(sq, board.occAll) & movableSquare & board.pinD;
     else if (board.pinHV & (1ULL << sq))
         moves |= RookAttacks(sq, board.occAll) & movableSquare & board.pinHV;
-    else
-    {
+    else {
         moves |= RookAttacks(sq, board.occAll) & movableSquare;
         moves |= BishopAttacks(sq, board.occAll) & movableSquare;
     }
@@ -1892,8 +1617,7 @@ inline U64 LegalQueenMoves(const Board &board, Square sq, U64 movableSquare)
     return moves;
 }
 
-template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
-{
+template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq) {
     U64 bb;
 
     if (mt == Movetype::ALL)
@@ -1906,8 +1630,7 @@ template <Movetype mt> U64 LegalKingMoves(const Board &board, Square sq)
     return KingAttacks(sq) & bb & ~board.seen;
 }
 
-template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, Square sq)
-{
+template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, Square sq) {
     U64 bb;
 
     if (mt == Movetype::ALL)
@@ -1952,8 +1675,7 @@ template <Color c, Movetype mt> U64 LegalKingMovesCastling(const Board &board, S
 }
 
 // all legal moves for a position
-template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist)
-{
+template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist) {
     init<c>(board, board.KingSQ(c));
 
     assert(board.doubleCheck <= 2);
@@ -1981,8 +1703,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
     else
         moves = LegalKingMovesCastling<c, mt>(board, from);
 
-    while (moves)
-    {
+    while (moves) {
         Square to = poplsb(moves);
         movelist.Add(make<KING, false>(from, to));
     }
@@ -2018,45 +1739,37 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
      *******************/
     LegalPawnMovesAll<c, mt>(board, movelist);
 
-    while (knights_mask)
-    {
+    while (knights_mask) {
         Square from = poplsb(knights_mask);
         U64 moves = LegalKnightMoves(from, movableSquare);
-        while (moves)
-        {
+        while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make<KNIGHT, false>(from, to));
         }
     }
 
-    while (bishops_mask)
-    {
+    while (bishops_mask) {
         Square from = poplsb(bishops_mask);
         U64 moves = LegalBishopMoves(board, from, movableSquare);
-        while (moves)
-        {
+        while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make<BISHOP, false>(from, to));
         }
     }
 
-    while (rooks_mask)
-    {
+    while (rooks_mask) {
         Square from = poplsb(rooks_mask);
         U64 moves = LegalRookMoves(board, from, movableSquare);
-        while (moves)
-        {
+        while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make<ROOK, false>(from, to));
         }
     }
 
-    while (queens_mask)
-    {
+    while (queens_mask) {
         Square from = poplsb(queens_mask);
         U64 moves = LegalQueenMoves(board, from, movableSquare);
-        while (moves)
-        {
+        while (moves) {
             Square to = poplsb(moves);
             movelist.Add(make<QUEEN, false>(from, to));
         }
@@ -2067,8 +1780,7 @@ template <Color c, Movetype mt> void legalmoves(Board &board, Movelist &movelist
  * Entry function for the
  * Color template.
  *******************/
-template <Movetype mt> void legalmoves(Board &board, Movelist &movelist, int start_index = 0)
-{
+template <Movetype mt> void legalmoves(Board &board, Movelist &movelist, int start_index = 0) {
     movelist.size = start_index;
     if (board.sideToMove == White)
         legalmoves<White, mt>(board, movelist);

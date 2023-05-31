@@ -268,7 +268,6 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     if (in_check || ss->excluded) {
         ss->static_eval = eval = 0;
         improving = false;
-        goto movesloop;
     }
 
     /* Reverse Futility Pruning || Null Move Pruning */
@@ -359,8 +358,6 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             }
         }
     }
-
-movesloop:
 
     /* Initialize variables */
     int bestscore = -INF_BOUND;

@@ -51,6 +51,12 @@ ifeq ($(build), native)
 	CXXFLAGS += -w
 endif
 
+ifeq ($(build), profile)
+	NATIVE   = -march=native
+	ARCH     = -x86-64-native
+	CXXFLAGS += -w -pg
+endif
+
 ifeq ($(build), x86-64)
 	NATIVE       = -mtune=znver1
 	INSTRUCTIONS = -msse -msse2 -mpopcnt

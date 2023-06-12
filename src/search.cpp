@@ -16,45 +16,58 @@ int lmp_table[2][8];
 constexpr int probcut_depth = 5;
 
 /* Initialize LMR table using the log formula */
-void init_search() {
+void init_search()
+{
     float base = LMRBase / 100.0f;
     float division = LMRDivision / 100.0f;
-    for (int depth = 1; depth < MAXDEPTH; depth++) {
-        for (int played = 1; played < 64; played++) {
+    for (int depth = 1; depth < MAXDEPTH; depth++)
+    {
+        for (int played = 1; played < 64; played++)
+        {
             lmr_table[depth][played] = base + log(depth) * log(played) / division;
         }
     }
 
-    for (int depth = 1; depth < 8; depth++) {
+    for (int depth = 1; depth < 8; depth++)
+    {
         lmp_table[0][depth] = 2.5 + 2 * depth * depth / 4.5;
         lmp_table[1][depth] = 4.0 + 4 * depth * depth / 4.5;
     }
 }
 
 // Check if we have to stop the search.
-static void check_time(SearchInfo &info) {
-    if ((info.timeset && info.tm.check_time()) || (info.nodeset && info.nodes_reached >= info.nodes)) {
+static void check_time(SearchInfo &info)
+{
+    if ((info.timeset && info.tm.check_time()) || (info.nodeset && info.nodes_reached >= info.nodes))
+    {
         info.stopped = true;
     }
 }
 
-static bool stop_early(SearchInfo &info) {
-    if (info.timeset && (info.tm.stop_search() || info.stopped)) {
+static bool stop_early(SearchInfo &info)
+{
+    if (info.timeset && (info.tm.stop_search() || info.stopped))
+    {
         return true;
-    } else {
+    }
+    else
+    {
         return false;
     }
 }
 
 /* Clear helper variables for search */
-void clear_for_search(SearchInfo &info, TranspositionTable *table) {
+void clear_for_search(SearchInfo &info, TranspositionTable *table)
+{
     info.nodes_reached = 0;
     info.stopped = false;
     info.tm.reset();
 
     // Reset history
-    for (int x = 0; x < 12; x++) {
-        for (int i = 0; i < 64; i++) {
+    for (int x = 0; x < 12; x++)
+    {
+        for (int i = 0; i < 64; i++)
+        {
             info.searchHistory[x][i] = 0;
         }
     }
@@ -66,20 +79,24 @@ void clear_for_search(SearchInfo &info, TranspositionTable *table) {
 }
 
 /* qsearch Search to prevent Horizon Effect.*/
-int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss) {
+int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss)
+{
 
     /* Checking for time every 2048 nodes */
-    if ((info.nodes_reached & 2047) == 0) {
+    if ((info.nodes_reached & 2047) == 0)
+    {
         check_time(info);
     }
 
     /* We return static evaluation if we exceed max depth */
-    if (ss->ply > MAXPLY - 1) {
+    if (ss->ply > MAXPLY - 1)
+    {
         return evaluate(board);
     }
 
     /* Repetition check */
-    if (board.isRepetition()) {
+    if (board.isRepetition())
+    {
         return 0;
     }
 
@@ -87,12 +104,14 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
     int standing_pat = evaluate(board);
 
     /* if our static evaluation beats beta, we return beta.*/
-    if (standing_pat >= beta) {
+    if (standing_pat >= beta)
+    {
         return beta;
     }
 
     /* if our static evaluation betas alpha, we set alpha to standing_pat */
-    if (standing_pat > alpha) {
+    if (standing_pat > alpha)
+    {
         alpha = standing_pat;
     }
 
@@ -102,7 +121,8 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
     TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
     /* Return TT score if we found a TT entry*/
-    if (!is_pvnode && ttHit) {
+    if (!is_pvnode && ttHit)
+    {
         if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) ||
             (tte.flag == HFEXACT))
             return tte.score;
@@ -127,7 +147,8 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
     score_moves(board, list, tte.move);
 
     /* Moves loop */
-    for (int i = 0; i < list.size; i++) {
+    for (int i = 0; i < list.size; i++)
+    {
         /* Pick next move with highest score */
         pick_nextmove(i, list);
 
@@ -135,7 +156,8 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
 
         /* SEE pruning in qsearch search */
         /* If we do not SEE a good capture move, we can skip the move.*/
-        if (list[i].value < GoodCaptureScore && move_count >= 1) {
+        if (list[i].value < GoodCaptureScore && move_count >= 1)
+        {
             continue;
         }
 
@@ -158,21 +180,25 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
         board.unmakeMove(move);
 
         /* Return 0 if time is up */
-        if (info.stopped) {
+        if (info.stopped)
+        {
             return 0;
         }
 
         /* If our score beats bestscore, bestmove is move that beat bestscore
          * and bestscore is set to the current score*/
-        if (score > bestscore) {
+        if (score > bestscore)
+        {
             bestmove = move;
             bestscore = score;
 
-            if (score > alpha) {
+            if (score > alpha)
+            {
                 alpha = score;
 
                 /* Fail soft */
-                if (score >= beta) {
+                if (score >= beta)
+                {
                     break;
                 }
             }
@@ -193,7 +219,8 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
 
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
-int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss) {
+int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss)
+{
 
     /* Initialize our pv table lenght. */
     /* UNUSED */
@@ -201,12 +228,14 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
     /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
      * and also end recursion.*/
-    if (depth <= 0) {
+    if (depth <= 0)
+    {
         return qsearch(alpha, beta, board, info, ss);
     }
 
     /* Checking for time every 2048 nodes */
-    if ((info.nodes_reached & 2047) == 0) {
+    if ((info.nodes_reached & 2047) == 0)
+    {
         check_time(info);
     }
 
@@ -218,18 +247,22 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     bool improving = false;
 
     /* In check extension. We search an extra ply if we are in check. */
-    if (in_check) {
+    if (in_check)
+    {
         depth++;
     }
 
-    if (!is_root) {
+    if (!is_root)
+    {
         /* We return static evaluation if we exceed max depth.*/
-        if (ss->ply > MAXPLY - 1) {
+        if (ss->ply > MAXPLY - 1)
+        {
             return evaluate(board);
         }
 
         /* Repetition check*/
-        if ((board.isRepetition()) && ss->ply) {
+        if ((board.isRepetition()) && ss->ply)
+        {
             return 0;
         }
     }
@@ -238,14 +271,16 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     bool ttHit = false;
     TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
-    if (ss->excluded) {
+    if (ss->excluded)
+    {
         ttHit = false;
     }
 
     /* If we hit a transposition table entry and the depth >= tt entry depth
        and the following conditions meet we will return the tt score. */
 
-    if (!is_pvnode && ttHit && tte.depth >= depth) {
+    if (!is_pvnode && ttHit && tte.depth >= depth)
+    {
         if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) ||
             (tte.flag == HFEXACT))
             return tte.score;
@@ -265,17 +300,20 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     /* We set static evaluation to 0 if we are in check or if we have hit an
      * excluded move. */
     /* and also set improving to false. */
-    if (in_check || ss->excluded) {
+    if (in_check || ss->excluded)
+    {
         ss->static_eval = eval = 0;
         improving = false;
     }
 
     /* Reverse Futility Pruning || Null Move Pruning */
-    if (!is_pvnode && !in_check && !is_root && !ss->excluded) {
+    if (!is_pvnode && !in_check && !is_root && !ss->excluded)
+    {
 
         /* We can use tt entry's score as score if we hit one.*/
         /* This score is from search so this is more accurate */
-        if (ttHit) {
+        if (ttHit)
+        {
             eval = tte.score;
         }
 
@@ -283,7 +321,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
          * If the eval is well above beta by a margin, then we assume the eval
          * will hold above beta.
          */
-        if (depth <= RFPDepth && eval - ((depth - improving) * RFPMargin) >= beta) {
+        if (depth <= RFPDepth && eval - ((depth - improving) * RFPMargin) >= beta)
+        {
             return eval;
         }
 
@@ -293,7 +332,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
          */
 
         if (eval >= beta && ss->static_eval >= beta && board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
-            ((ss - 1)->move != NULL_MOVE)) {
+            ((ss - 1)->move != NULL_MOVE))
+        {
 
             int R = 3 + depth / 3 + std::min(3, (eval - beta) / 180);
 
@@ -306,15 +346,18 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
             board.unmakeNullMove();
 
-            if (info.stopped) {
+            if (info.stopped)
+            {
                 return 0;
             }
 
-            if (score >= beta) {
+            if (score >= beta)
+            {
 
                 /* We don't return mate scores because it can be a false mate.
                  */
-                if (score > ISMATE) {
+                if (score > ISMATE)
+                {
                     score = beta;
                 }
 
@@ -322,22 +365,26 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             }
         }
 
-        // Probcut (~10 elo)
+        // Probcut
         int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
-        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3)) {
+        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3))
+        {
             Movelist list;
             Movegen::legalmoves<CAPTURE>(board, list);
             score_moves(board, list, ss, info, tte.move);
             int score = 0;
-            for (int i = 0; i < list.size; i++) {
+            for (int i = 0; i < list.size; i++)
+            {
                 pick_nextmove(i, list);
                 Move move = list[i].move;
 
-                if (list[i].value < GoodCaptureScore) {
+                if (list[i].value < GoodCaptureScore)
+                {
                     continue;
                 }
 
-                if (move == tte.move) {
+                if (move == tte.move)
+                {
                     continue;
                 }
 
@@ -345,13 +392,15 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
                 score = -qsearch(-rbeta, -rbeta + 1, board, info, ss);
 
-                if (score >= rbeta) {
+                if (score >= rbeta)
+                {
                     score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss);
                 }
 
                 board.unmakeMove(move);
 
-                if (score >= rbeta) {
+                if (score >= rbeta)
+                {
                     table->store(board.hashKey, HFBETA, move, depth - 3, score, ss->static_eval, ss->ply, is_pvnode);
                     return score;
                 }
@@ -380,7 +429,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     bool skip_quiet_moves = false;
 
     // Moves loop
-    for (int i = 0; i < list.size; i++) {
+    for (int i = 0; i < list.size; i++)
+    {
         // Pick move with highest possible score
         pick_nextmove(i, list);
 
@@ -400,37 +450,57 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
         bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
 
-        if (is_quiet && skip_quiet_moves) {
+        if (is_quiet && skip_quiet_moves)
+        {
             continue;
         }
 
-        if (is_quiet) {
+        if (is_quiet)
+        {
             get_history_scores(h, ch, fh, board, info, ss, move);
             history = h + ch + fh;
         }
 
         /* Various pruning techniques */
-        if (!is_root && bestscore > -ISMATE) {
+        if (!is_root && bestscore > -ISMATE)
+        {
 
             // Initialize lmrDepth which we will use soon.
             int lmrDepth = lmr_table[std::min(depth, 63)][std::min(move_count, 63)];
 
-            /* Late Move Pruning/Movecount pruning
-                 If we have searched many moves, we can skip the rest. */
-            if (is_quiet && !in_check && !is_pvnode && depth <= 7 && quietList.size >= lmp_table[improving][depth]) {
-                skip_quiet_moves = true;
-                continue;
-            }
+            // Pruning for quiets
 
-            // Futility pruning
-            if (lmrDepth <= 6 && !in_check && is_quiet && eval + 217 + 71 * depth <= alpha) {
-                skip_quiet_moves = true;
-            }
+            if (is_quiet)
+            {
+                // Late Move Pruning/Movecount pruning
+                // If we have searched many moves, we can skip the rest.
+                if (!in_check && !is_pvnode && depth <= 7 && quietList.size >= lmp_table[improving][depth])
+                {
+                    skip_quiet_moves = true;
+                    continue;
+                }
 
-            // SEE Pruning
-            // Dont search moves at low depths that seem to lose material
-            if ((is_quiet ? depth < 6 : depth < 4) && !see(board, move, (is_quiet ? -50 * depth : -45 * depth))) {
-                continue;
+                // Futility pruning
+                if (lmrDepth <= 6 && !in_check && eval + 217 + 71 * depth <= alpha)
+                {
+                    skip_quiet_moves = true;
+                }
+
+                // See pruning for quiets
+
+                if (depth < 6 && !see(board, move, -50 * depth))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                // See pruning for noisy
+                if (depth < 4 && !see(board, move, -45 * depth))
+                {
+                    continue;
+                }
+
             }
         }
 
@@ -438,7 +508,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
          * Search extra ply if move comes from tt
          */
         if (!is_root && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
-            tte.depth >= depth - 3) {
+            tte.depth >= depth - 3)
+        {
 
             int singular_beta = tte.score - depth;
             int singularDepth = (depth - 1) / 2;
@@ -447,11 +518,16 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, board, info, ss);
             ss->excluded = NO_MOVE;
 
-            if (singular_score < singular_beta) {
+            if (singular_score < singular_beta)
+            {
                 extension = 1;
-            } else if (singular_beta >= beta) {
+            }
+            else if (singular_beta >= beta)
+            {
                 return (singular_beta); // Multicut
-            } else if (tte.score >= beta) {
+            }
+            else if (tte.score >= beta)
+            {
                 extension = -2;
             }
         }
@@ -474,7 +550,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
         move_count++;
 
         /* Add quiet to quiet list if it's a quiet move. */
-        if (is_quiet) {
+        if (is_quiet)
+        {
             quietList.Add(move);
         }
 
@@ -528,14 +605,17 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
         // Undo move on board
         board.unmakeMove(move);
 
-        if (info.stopped == true && !is_root) {
+        if (info.stopped == true && !is_root)
+        {
             return 0;
         }
 
-        if (score > bestscore) {
+        if (score > bestscore)
+        {
             bestscore = score;
 
-            if (score > alpha) {
+            if (score > alpha)
+            {
                 // Record PV
                 alpha = score;
                 bestmove = move;
@@ -560,37 +640,47 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
         // We are safe to break out of the loop if we are sure that we don't
         // return illegal move
-        if (info.stopped == true && is_root && info.bestmove != NO_MOVE) {
+        if (info.stopped == true && is_root && info.bestmove != NO_MOVE)
+        {
             break;
         }
     }
 
-    if (!is_root && move_count == 0) {
-        if (in_check) {
+    if (!is_root && move_count == 0)
+    {
+        if (in_check)
+        {
             return -ISMATE + ss->ply; // Checkmate
-        } else {
+        }
+        else
+        {
             return 0; // Stalemate
         }
     }
 
-    int flag = bestscore >= beta ? HFBETA : (alpha != oldAlpha) ? HFEXACT : HFALPHA;
+    int flag = bestscore >= beta ? HFBETA : (alpha != oldAlpha) ? HFEXACT
+                                                                : HFALPHA;
 
-    if (ss->excluded == NO_MOVE) {
+    if (ss->excluded == NO_MOVE)
+    {
         table->store(board.hashKey, flag, bestmove, depth, bestscore, ss->static_eval, ss->ply, is_pvnode);
     }
 
-    if (alpha != oldAlpha) {
+    if (alpha != oldAlpha)
+    {
         info.bestmove = bestmove;
     }
 
     return bestscore;
 }
 
-static inline bool moveExists(Board &board, Move move) {
+static inline bool moveExists(Board &board, Move move)
+{
     Movelist list;
     Movegen::legalmoves<ALL>(board, list);
 
-    if (list.find(move) > -1) {
+    if (list.find(move) > -1)
+    {
         return true;
     }
 
@@ -598,17 +688,22 @@ static inline bool moveExists(Board &board, Move move) {
 }
 
 // Recursive implementation to fetch pv lines.
-static void getPvLines(Board &board, std::vector<U64> &positions) {
+static void getPvLines(Board &board, std::vector<U64> &positions)
+{
 
-    if (positions.size() >= MAXPLY) {
+    if (positions.size() >= MAXPLY)
+    {
         return;
     }
 
     const auto pvMove = table->probeMove(board.hashKey);
 
-    if (pvMove && moveExists(board, pvMove)) {
-        for (auto &pos : positions) {
-            if (pos == board.hashKey) {
+    if (pvMove && moveExists(board, pvMove))
+    {
+        for (auto &pos : positions)
+        {
+            if (pos == board.hashKey)
+            {
                 return;
             }
         }
@@ -621,17 +716,22 @@ static void getPvLines(Board &board, std::vector<U64> &positions) {
     return;
 }
 
-static void getPvLinesCstr(Board &board, std::vector<U64> &positions) {
+static void getPvLinesCstr(Board &board, std::vector<U64> &positions)
+{
 
-    if (positions.size() >= MAXPLY) {
+    if (positions.size() >= MAXPLY)
+    {
         return;
     }
 
     const auto pvMove = table->probeMove(board.hashKey);
 
-    if (pvMove && moveExists(board, pvMove)) {
-        for (auto &pos : positions) {
-            if (pos == board.hashKey) {
+    if (pvMove && moveExists(board, pvMove))
+    {
+        for (auto &pos : positions)
+        {
+            if (pos == board.hashKey)
+            {
                 return;
             }
         }
@@ -648,12 +748,15 @@ static void getPvLinesCstr(Board &board, std::vector<U64> &positions) {
 template void iterative_deepening<false>(Chess::Board &board, SearchInfo &info);
 template void iterative_deepening<true>(Chess::Board &board, SearchInfo &info);
 
-template <bool print_info> void iterative_deepening(Board &board, SearchInfo &info) {
+template <bool print_info>
+void iterative_deepening(Board &board, SearchInfo &info)
+{
     clear_for_search(info, table);
 
     info.tm.start_time = misc::tick();
 
-    if (info.timeset) {
+    if (info.timeset)
+    {
         info.tm.set_time(board.sideToMove);
     }
 
@@ -665,21 +768,26 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
     auto startime = info.tm.start_time;
     Move bestmove = NO_MOVE;
 
-    for (int current_depth = 1; current_depth <= info.depth; current_depth++) {
+    for (int current_depth = 1; current_depth <= info.depth; current_depth++)
+    {
         score = aspiration_window(score, current_depth, board, info);
 
-        if (info.stopped == true || stop_early(info)) {
+        if (info.stopped == true || stop_early(info))
+        {
             break;
         }
         bestmove = info.bestmove;
         info.score = score;
 
-        if (info.timeset) {
+        if (info.timeset)
+        {
             info.tm.update_tm(bestmove);
         }
 
-        if constexpr (print_info) {
-            if (info.uci) {
+        if constexpr (print_info)
+        {
+            if (info.uci)
+            {
                 auto time_elapsed = misc::tick() - startime;
 
                 std::cout << "info score cp " << score;
@@ -693,7 +801,9 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
                 getPvLines(board, positions);
 
                 std::cout << std::endl;
-            } else {
+            }
+            else
+            {
                 auto time_elapsed = misc::tick() - startime;
 
                 printf("[%2d/%2d] > eval: %-4.2f nodes: %6.2fM speed: %-5.2f MNPS", current_depth, info.depth,
@@ -707,12 +817,14 @@ template <bool print_info> void iterative_deepening(Board &board, SearchInfo &in
         }
     }
 
-    if (print_info) {
+    if (print_info)
+    {
         std::cout << "bestmove " << convertMoveToUci(bestmove) << std::endl;
     }
 }
 
-int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info) {
+int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info)
+{
     int score = 0;
 
     SearchStack stack[MAXPLY + 10], *ss = stack + 7;
@@ -724,30 +836,39 @@ int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info) {
 
     int initial_depth = depth;
 
-    if (depth > 3) {
+    if (depth > 3)
+    {
         alpha = std::max(-INF_BOUND, prevEval - delta);
         beta = std::min(INF_BOUND, prevEval + delta);
     }
 
-    while (true) {
+    while (true)
+    {
 
         score = negamax(alpha, beta, depth, board, info, ss);
 
-        if (stop_early(info)) {
+        if (stop_early(info))
+        {
             break;
         }
 
-        if (score <= alpha) {
+        if (score <= alpha)
+        {
             beta = (alpha + beta) / 2;
             alpha = std::max(-INF_BOUND, score - delta);
 
             depth = initial_depth;
-        } else if (score >= beta) {
+        }
+        else if (score >= beta)
+        {
             beta = std::min(score + delta, INF_BOUND);
-            if (abs(score) <= ISMATE/2 && depth > 1){
+            if (abs(score) <= ISMATE / 2 && depth > 1)
+            {
                 depth--;
             }
-        } else {
+        }
+        else
+        {
             break;
         }
         delta += delta / 2;

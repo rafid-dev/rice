@@ -331,11 +331,11 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
          * some nodes.
          */
 
-        if (eval >= beta && ss->static_eval >= beta && board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
+        if (eval >= beta && ss->static_eval + improving * 80 >= beta && board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
             ((ss - 1)->move != NULL_MOVE))
         {
 
-            int R = 3 + depth / 4 + std::min(5, (eval - beta) / 170);
+            int R = 3 + depth / 3 + std::min(3, (eval - beta) / 180);
 
             board.makeNullMove();
             ss->move = NULL_MOVE;

@@ -321,7 +321,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
          * If the eval is well above beta by a margin, then we assume the eval
          * will hold above beta.
          */
-        if (depth <= RFPDepth && eval - ((depth - improving) * RFPMargin) >= beta)
+        if (depth < 9 && eval - ((depth - improving) * 77) >= beta)
         {
             return eval;
         }

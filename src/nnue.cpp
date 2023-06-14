@@ -40,37 +40,33 @@ void NNUE::Net::updateAccumulator(Chess::PieceType pieceType, Chess::Color piece
         const auto inp = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
         const auto out = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
 
-        constexpr int blockSize = 4; // Adjust the block size for optimal cache usage
+        constexpr int blockSize = 3; // Adjust the block size for optimal cache usage
 
         for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
             const int baseIdx = block * blockSize;
 
-            avx_register_type_16 *outPtr = out + (baseIdx);
-            const avx_register_type_16 *wgtSubPtr = wgtSub + (baseIdx);
-            const avx_register_type_16 *wgtAddPtr = wgtAdd + (baseIdx);
-            const avx_register_type_16 *inpPtr = inp + (baseIdx);
+            avx_register_type_16 *outPtr = out + baseIdx;
+            const avx_register_type_16 *wgtSubPtr = wgtSub + baseIdx;
+            const avx_register_type_16 *wgtAddPtr = wgtAdd + baseIdx;
+            const avx_register_type_16 *inpPtr = inp + baseIdx;
 
             avx_register_type_16 sum0 = avx_sub_epi16(inpPtr[0], wgtSubPtr[0]);
             avx_register_type_16 sum1 = avx_sub_epi16(inpPtr[1], wgtSubPtr[1]);
             avx_register_type_16 sum2 = avx_sub_epi16(inpPtr[2], wgtSubPtr[2]);
-            avx_register_type_16 sum3 = avx_sub_epi16(inpPtr[3], wgtSubPtr[3]);
 
             sum0 = avx_add_epi16(sum0, wgtAddPtr[0]);
             sum1 = avx_add_epi16(sum1, wgtAddPtr[1]);
             sum2 = avx_add_epi16(sum2, wgtAddPtr[2]);
-            sum3 = avx_add_epi16(sum3, wgtAddPtr[3]);
 
-            for (int i = 4; i < blockSize; i++) {
+            for (int i = 3; i < blockSize; i++) {
                 sum0 = avx_add_epi16(sum0, wgtAddPtr[i]);
                 sum1 = avx_add_epi16(sum1, wgtAddPtr[i + blockSize]);
                 sum2 = avx_add_epi16(sum2, wgtAddPtr[i + blockSize * 2]);
-                sum3 = avx_add_epi16(sum3, wgtAddPtr[i + blockSize * 3]);
             }
 
             outPtr[0] = sum0;
             outPtr[1] = sum1;
             outPtr[2] = sum2;
-            outPtr[3] = sum3;
         }
     }
 #else

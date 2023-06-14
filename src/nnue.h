@@ -45,7 +45,6 @@ constexpr int KING_BUCKET[64] {
 };
 // clang-format on
 
-
 inline int kingSquareIndex(Chess::Square kingSquare, Chess::Color kingColor) {
     kingSquare = Chess::Square((56 * kingColor) ^ kingSquare);
     return KING_BUCKET[kingSquare];
@@ -170,7 +169,7 @@ struct Net {
             const auto inp = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
             const auto out = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
 
-            constexpr int blockSize = 4; // Adjust the block size for optimal cache usage
+            constexpr int blockSize = 3; // Adjust the block size for optimal cache usage
 
             if constexpr (add) {
                 for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
@@ -183,19 +182,16 @@ struct Net {
                     avx_register_type_16 sum0 = avx_add_epi16(inpPtr[0], wgtPtr[0]);
                     avx_register_type_16 sum1 = avx_add_epi16(inpPtr[1], wgtPtr[1]);
                     avx_register_type_16 sum2 = avx_add_epi16(inpPtr[2], wgtPtr[2]);
-                    avx_register_type_16 sum3 = avx_add_epi16(inpPtr[3], wgtPtr[3]);
 
-                    for (int i = 4; i < blockSize; i++) {
+                    for (int i = 3; i < blockSize; i++) {
                         sum0 = avx_add_epi16(sum0, wgtPtr[i]);
                         sum1 = avx_add_epi16(sum1, wgtPtr[i + blockSize]);
                         sum2 = avx_add_epi16(sum2, wgtPtr[i + blockSize * 2]);
-                        sum3 = avx_add_epi16(sum3, wgtPtr[i + blockSize * 3]);
                     }
 
                     outPtr[0] = sum0;
                     outPtr[1] = sum1;
                     outPtr[2] = sum2;
-                    outPtr[3] = sum3;
                 }
             } else {
                 for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
@@ -208,19 +204,16 @@ struct Net {
                     avx_register_type_16 diff0 = avx_sub_epi16(inpPtr[0], wgtPtr[0]);
                     avx_register_type_16 diff1 = avx_sub_epi16(inpPtr[1], wgtPtr[1]);
                     avx_register_type_16 diff2 = avx_sub_epi16(inpPtr[2], wgtPtr[2]);
-                    avx_register_type_16 diff3 = avx_sub_epi16(inpPtr[3], wgtPtr[3]);
 
-                    for (int i = 4; i < blockSize; i++) {
+                    for (int i = 3; i < blockSize; i++) {
                         diff0 = avx_sub_epi16(diff0, wgtPtr[i]);
                         diff1 = avx_sub_epi16(diff1, wgtPtr[i + blockSize]);
                         diff2 = avx_sub_epi16(diff2, wgtPtr[i + blockSize * 2]);
-                        diff3 = avx_sub_epi16(diff3, wgtPtr[i + blockSize * 3]);
                     }
 
                     outPtr[0] = diff0;
                     outPtr[1] = diff1;
                     outPtr[2] = diff2;
-                    outPtr[3] = diff3;
                 }
             }
         }

@@ -406,6 +406,10 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
                 }
             }
         }
+
+        if (eval - 63 + 182 * depth <= alpha){
+            return qsearch(alpha, beta, board, info, ss);
+        }
     }
 
     /* Initialize variables */

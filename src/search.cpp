@@ -573,8 +573,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
             reduction += !improving; /* Increase reduction if we're not improving. */
             reduction += !is_pvnode; /* Increase for non pv nodes */
-            reduction += is_quiet && !see(board, move, -50 * depth); /* Increase
-                                          for quiets and not winning captures */
+            reduction += is_quiet && !see(board, move, -50 * depth); /* Increase for quiet moves that lose material */
 
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 

@@ -331,7 +331,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
          * some nodes.
          */
 
-        if (eval + ((depth - improving) * 77) >= beta && ss->static_eval >= beta && board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
+        if (ss->static_eval >= (beta - 76 * improving) && eval >= beta && ss->static_eval >= beta && board.nonPawnMat(board.sideToMove) && (depth >= 3) &&
             ((ss - 1)->move != NULL_MOVE))
         {
 

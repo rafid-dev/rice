@@ -222,10 +222,6 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
 int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss)
 {
 
-    /* Initialize our pv table lenght. */
-    /* UNUSED */
-    // info.pvTable.length[ss->ply] = ss->ply;
-
     /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
      * and also end recursion.*/
     if (depth <= 0)
@@ -243,8 +239,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     bool is_root = (ss->ply == 0);
     bool in_check = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
     bool is_pvnode = (beta - alpha) > 1;
-    int eval = 0;
     bool improving = false;
+    int eval = 0;
 
     /* In check extension. We search an extra ply if we are in check. */
     if (in_check)
@@ -552,6 +548,9 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
         info.nodes_reached++;
         move_count++;
+        if (is_root && depth == 1 && move_count == 1){
+            info.bestmove = move;   
+        }
 
         /* Add quiet to quiet list if it's a quiet move. */
         if (is_quiet)
@@ -691,11 +690,21 @@ static inline bool moveExists(Board &board, Move move)
 }
 
 // Recursive implementation to fetch pv lines.
-static void getPvLines(Board &board, std::vector<U64> &positions)
+static void getPvLines(Board &board, std::vector<U64> &positions, Move bestmove = NO_MOVE)
 {
 
     if (positions.size() >= MAXPLY)
     {
+        return;
+    }
+
+    if (bestmove != NO_MOVE){
+        std::cout << " " << convertMoveToUci(bestmove);
+        positions.push_back(board.hashKey);
+        board.makeMove(bestmove);
+        getPvLines(board, positions);
+        board.unmakeMove(bestmove);
+
         return;
     }
 
@@ -711,34 +720,6 @@ static void getPvLines(Board &board, std::vector<U64> &positions)
             }
         }
         std::cout << " " << convertMoveToUci(pvMove);
-        positions.push_back(board.hashKey);
-        board.makeMove(pvMove);
-        getPvLines(board, positions);
-        board.unmakeMove(pvMove);
-    }
-    return;
-}
-
-static void getPvLinesCstr(Board &board, std::vector<U64> &positions)
-{
-
-    if (positions.size() >= MAXPLY)
-    {
-        return;
-    }
-
-    const auto pvMove = table->probeMove(board.hashKey);
-
-    if (pvMove && moveExists(board, pvMove))
-    {
-        for (auto &pos : positions)
-        {
-            if (pos == board.hashKey)
-            {
-                return;
-            }
-        }
-        printf(" %5s", convertMoveToUci(pvMove).c_str());
         positions.push_back(board.hashKey);
         board.makeMove(pvMove);
         getPvLines(board, positions);
@@ -801,7 +782,7 @@ void iterative_deepening(Board &board, SearchInfo &info)
                 std::cout << " pv";
 
                 std::vector<uint64_t> positions;
-                getPvLines(board, positions);
+                getPvLines(board, positions, bestmove);
 
                 std::cout << std::endl;
             }
@@ -814,7 +795,7 @@ void iterative_deepening(Board &board, SearchInfo &info)
                        static_cast<float>(1000.0f * info.nodes_reached / (time_elapsed + 1)) / 1000000.0f);
 
                 std::vector<uint64_t> positions;
-                getPvLinesCstr(board, positions);
+                getPvLines(board, positions, bestmove);
                 std::cout << std::endl;
             }
         }

@@ -559,7 +559,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
         }
 
         /* A condition for full search.*/
-        bool do_fullsearch = do_fullsearch = !is_pvnode || move_count > 1;
+        bool do_fullsearch = !is_pvnode || move_count > 1;
 
         /* Late move reduction
          * Later moves will be searched in a reduced depth.
@@ -581,20 +581,19 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
              * extension*/
             reduction = std::min(depth - 1, std::max(1, reduction));
 
-            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board,
-                               info, ss + 1);
-            
-
-            reduction -= history/12000;
+            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board, info, ss + 1);
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;
+
+            bool deeper = score > bestscore + 70 + 12 * (new_depth - reduction);
+
+            new_depth += deeper;
         }
 
         /* Full depth search on a zero window. */
         if (do_fullsearch) {
-            score = -negamax(-alpha - 1, -alpha, new_depth - 1, board, info,
-                               ss + 1);
+            score = -negamax(-alpha - 1, -alpha, new_depth - 1, board, info, ss + 1);
         }
 
         // Principal Variation Search (PVS)

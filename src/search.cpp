@@ -521,6 +521,12 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             if (singular_score < singular_beta)
             {
                 extension = 1;
+
+                if (!is_pvnode && singular_score < singular_beta - 20 && ss->double_extensions <= 5)
+                {
+						extension = 2;
+						ss->double_extensions = (ss - 1)->double_extensions + 1;
+                }
             }
             else if (singular_beta >= beta)
             {

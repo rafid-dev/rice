@@ -114,6 +114,7 @@ struct SearchInfo {
 struct SearchStack {
     int16_t static_eval{};
     uint8_t ply{};
+    uint8_t double_extensions{};
 
     Move excluded{NO_MOVE};
     Move move{NO_MOVE};

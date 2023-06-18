@@ -26,10 +26,10 @@ void print_tuning_parameters() {
 }
 
 static void uci_send_id() {
-    std::cout << "id name " << NAME << "\n";
-    std::cout << "id author " << AUTHOR << "\n";
-    std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << "\n";
-    std::cout << "option name Threads type spin default 1 min 1 max 1\n";
+    std::cout << "id name " << NAME << std::endl;
+    std::cout << "id author " << AUTHOR << std::endl;
+    std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
 
     if (TUNING) {
         print_tuning_parameters();
@@ -91,14 +91,12 @@ void uci_loop(int argv, char **argc) {
             info.stopped = true;
         } else if (token == "quit") {
             info.stopped = true;
-
             break;
         } else if (token == "isready") {
-            std::cout << "readyok\n";
+            std::cout << "readyok" << std::endl;
             continue;
         } else if (token == "ucinewgame") {
             table->Initialize(CurrentHashSize);
-            std::cout << "readyok\n";
             continue;
         } else if (token == "uci") {
             IsUci = true;
@@ -300,7 +298,7 @@ void uci_loop(int argv, char **argc) {
         } else if (token == "repetition") {
             std::cout << board.isRepetition() << std::endl;
         } else if (token == "side") {
-            std::cout << (board.sideToMove == White ? "White" : "Black\n") << std::endl;
+            std::cout << (board.sideToMove == White ? "White" : "Black") << std::endl;
         } else if (token == "bench") {
 
             info.depth = 13;
@@ -322,7 +320,7 @@ void uci_loop(int argv, char **argc) {
 
     table->clear();
 
-    std::cout << "\n";
+    std::cout << std::endl;
     if (!info.uci) {
         std::cout << "\u001b[0m";
     }

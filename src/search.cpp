@@ -195,6 +195,7 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
             if (score > alpha)
             {
                 alpha = score;
+                
 
                 /* Fail soft */
                 if (score >= beta)
@@ -219,8 +220,10 @@ int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss
 
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
-int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss)
+int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss, PV& pv)
 {
+
+    PV local_pv{};
 
     /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
      * and also end recursion.*/
@@ -338,7 +341,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
             (ss + 1)->ply = ss->ply + 1;
 
-            int score = -negamax(-beta, -beta + 1, depth - R, board, info, ss + 1);
+            int score = -negamax(-beta, -beta + 1, depth - R, board, info, ss + 1, local_pv);
 
             board.unmakeNullMove();
 
@@ -390,7 +393,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
                 if (score >= rbeta)
                 {
-                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss);
+                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, board, info, ss, local_pv);
                 }
 
                 board.unmakeMove(move);
@@ -515,7 +518,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = tte.move;
-            int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, board, info, ss);
+            int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, board, info, ss, local_pv);
             ss->excluded = NO_MOVE;
 
             if (singular_score < singular_beta)
@@ -587,7 +590,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
              * extension*/
             reduction = std::min(depth - 1, std::max(1, reduction));
 
-            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board, info, ss + 1);
+            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, board, info, ss + 1, local_pv);
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;
@@ -599,12 +602,12 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
         /* Full depth search on a zero window. */
         if (do_fullsearch) {
-            score = -negamax(-alpha - 1, -alpha, new_depth - 1, board, info, ss + 1);
+            score = -negamax(-alpha - 1, -alpha, new_depth - 1, board, info, ss + 1, local_pv);
         }
 
         // Principal Variation Search (PVS)
         if (is_pvnode && (move_count == 1 || (score > alpha && score < beta))) {
-            score = -negamax(-beta, -alpha, new_depth - 1, board, info, ss + 1);
+            score = -negamax(-beta, -alpha, new_depth - 1, board, info, ss + 1, local_pv);
         }
 
         // clang-format on
@@ -626,6 +629,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
                 // Record PV
                 alpha = score;
                 bestmove = move;
+                pv.load_from(move, local_pv);
 
                 // clang-format off
                 if (score >= beta) {
@@ -681,58 +685,6 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
     return bestscore;
 }
 
-static inline bool moveExists(Board &board, Move move)
-{
-    Movelist list;
-    Movegen::legalmoves<ALL>(board, list);
-
-    if (list.find(move) > -1)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-// Recursive implementation to fetch pv lines.
-static void getPvLines(Board &board, std::vector<U64> &positions, Move bestmove = NO_MOVE)
-{
-
-    if (positions.size() >= MAXPLY)
-    {
-        return;
-    }
-
-    if (bestmove != NO_MOVE){
-        std::cout << " " << convertMoveToUci(bestmove);
-        positions.push_back(board.hashKey);
-        board.makeMove(bestmove);
-        getPvLines(board, positions);
-        board.unmakeMove(bestmove);
-
-        return;
-    }
-
-    const auto pvMove = table->probeMove(board.hashKey);
-
-    if (pvMove && moveExists(board, pvMove))
-    {
-        for (auto &pos : positions)
-        {
-            if (pos == board.hashKey)
-            {
-                return;
-            }
-        }
-        std::cout << " " << convertMoveToUci(pvMove);
-        positions.push_back(board.hashKey);
-        board.makeMove(pvMove);
-        getPvLines(board, positions);
-        board.unmakeMove(pvMove);
-    }
-    return;
-}
-
 // Explicit template instantiation
 template void iterative_deepening<false>(Chess::Board &board, SearchInfo &info);
 template void iterative_deepening<true>(Chess::Board &board, SearchInfo &info);
@@ -757,15 +709,17 @@ void iterative_deepening(Board &board, SearchInfo &info)
     auto startime = info.tm.start_time;
     Move bestmove = NO_MOVE;
 
+    PV pv {};
+
     for (int current_depth = 1; current_depth <= info.depth; current_depth++)
     {
-        score = aspiration_window(score, current_depth, board, info);
+        score = aspiration_window(score, current_depth, board, info, pv);
 
         if (info.stopped == true || stop_early(info))
         {
             break;
         }
-        bestmove = info.bestmove;
+        bestmove = pv.moves[0];
         info.score = score;
 
         if (info.timeset)
@@ -785,11 +739,6 @@ void iterative_deepening(Board &board, SearchInfo &info)
                 std::cout << " nps " << static_cast<int>(1000.0f * info.nodes_reached / (time_elapsed + 1));
                 std::cout << " time " << static_cast<uint64_t>(time_elapsed);
                 std::cout << " pv";
-
-                std::vector<uint64_t> positions;
-                getPvLines(board, positions, bestmove);
-
-                std::cout << std::endl;
             }
             else
             {
@@ -799,10 +748,12 @@ void iterative_deepening(Board &board, SearchInfo &info)
                        static_cast<float>(score / 100.0f), static_cast<float>(info.nodes_reached / 1000000.0f),
                        static_cast<float>(1000.0f * info.nodes_reached / (time_elapsed + 1)) / 1000000.0f);
 
-                std::vector<uint64_t> positions;
-                getPvLines(board, positions, bestmove);
-                std::cout << std::endl;
+                
             }
+            for (int i = 0; i < pv.length; i++){
+                std::cout << " " << convertMoveToUci(pv.moves[i]);
+            }
+            std::cout << std::endl;
         }
     }
 
@@ -812,7 +763,7 @@ void iterative_deepening(Board &board, SearchInfo &info)
     }
 }
 
-int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info)
+int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info, PV& pv)
 {
     int score = 0;
 
@@ -834,7 +785,7 @@ int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info)
     while (true)
     {
 
-        score = negamax(alpha, beta, depth, board, info, ss);
+        score = negamax(alpha, beta, depth, board, info, ss, pv);
 
         if (stop_early(info))
         {

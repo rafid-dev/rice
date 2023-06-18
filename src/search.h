@@ -3,6 +3,7 @@
 #include "misc.h"
 #include "tt.h"
 #include "types.h"
+#include "pv.h"
 #include <cmath>
 
 extern TranspositionTable *table;
@@ -139,6 +140,6 @@ void clear_for_search(SearchInfo &info, TranspositionTable *table);
 
 template <bool print_info> void iterative_deepening(Board &board, SearchInfo &info);
 
-int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss);
+int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, SearchStack *ss, PV& pv);
 int qsearch(int alpha, int beta, Board &board, SearchInfo &info, SearchStack *ss);
-int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info);
+int aspiration_window(int prevEval, int depth, Board &board, SearchInfo &info, PV& pv);

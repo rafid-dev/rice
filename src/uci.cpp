@@ -1,6 +1,5 @@
 #include "uci.h"
 #include "bench.h"
-#include "datagen.h"
 #include "eval.h"
 #include "misc.h"
 #include "movescore.h"
@@ -67,11 +66,7 @@ void uci_loop(int argv, char **argc) {
     table = ttable.get();
     table->Initialize(DefaultHashSize);
 
-    if (argv > 2 && std::string{argc[1]} == "datagen") {
-        int threads = std::stoi(argc[2]);
-        table->Initialize(64 * threads);
-        generateData(1000000, threads);
-    } else if (argv > 1 && std::string{argc[1]} == "bench") {
+    if (argv > 1 && std::string{argc[1]} == "bench") {
         info.depth = 13;
         info.timeset = false;
         StartBenchmark(board, info);
@@ -305,12 +300,7 @@ void uci_loop(int argv, char **argc) {
             info.timeset = false;
             StartBenchmark(board, info);
 
-        } else if (token == "datagen") {
-
-            table->Initialize(64 * 6);
-            generateData(1000000, 6);
-
-        } else if (token == "perft") {
+        }else if (token == "perft") {
 
             is >> std::skipws >> token;
             int depth = stoi(token);

@@ -634,10 +634,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
                         ss->killers[1] = ss->killers[0];
                         ss->killers[0] = move;
 
-                        // Record history score
-                        update_hist(board, info, bestmove, quietList, depth);
-                        update_conthist(board, info, ss, bestmove, quietList, depth);
-
+                        // Update histories
+                        updateHistories(board, info, ss, bestmove, quietList, depth);
                     }
                     break;
                 }
@@ -675,6 +673,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
 
     if (alpha != oldAlpha)
     {
+
         info.bestmove = bestmove;
     }
 

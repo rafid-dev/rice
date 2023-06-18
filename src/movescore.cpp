@@ -100,35 +100,6 @@ void pick_nextmove(const int moveNum, Movelist &list) {
     list[moveNum] = list[bestnum]; // Sort the highest score move to highest.
     list[bestnum] = temp;
 }
-
-// Update History
-void update_hist(Board &board, SearchInfo &info, Move bestmove,
-                 Movelist &quietList, int depth) {
-
-    // Update best move score
-    int bonus = std::min(depth * depth, 1200);
-    int score = std::min(
-        info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] +
-            bonus,
-        MAXHISTORY);
-
-    info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] = score;
-
-    for (int i = 0; i < quietList.size; i++) {
-        Move move = quietList[i].move;
-
-        if (move == bestmove)
-            continue; // Don't give penalty to our best move
-
-        // Penalize moves that didn't cause a beta cutoff.
-        int penalty = std::max(
-            info.searchHistory[board.pieceAtB(from(move))][to(move)] - bonus,
-            -MAXHISTORY);
-
-        info.searchHistory[board.pieceAtB(from(move))][to(move)] = penalty;
-    }
-}
-
 static inline void update_ch(Board &board, SearchInfo &info, SearchStack *ss,
                              const Move move, const int score) {
 
@@ -142,14 +113,22 @@ static inline void update_ch(Board &board, SearchInfo &info, SearchStack *ss,
     }
 }
 
-void update_conthist(Board &board, SearchInfo &info, SearchStack *ss,
-                     Move bestmove, Movelist &quietList, int depth) {
-    // Update best move score
-    int bonus = std::min(depth * depth, 1200);
-    int score = bonus - get_conthist_score(board, info, ss, bestmove) *
-                            std::abs(bonus) / MAXCOUNTERHISTORY;
+void update_conthist_move(Board& board, SearchInfo& info, SearchStack *ss, Move move, int bonus){
+    int score = bonus - get_conthist_score(board, info, ss, move) * std::abs(bonus) / MAXCOUNTERHISTORY;
 
-    update_ch(board, info, ss, bestmove, score);
+    update_ch(board, info, ss, move, score);
+}
+
+void updateHistories(Board& board, SearchInfo& info, SearchStack *ss, Move bestmove, Movelist &quietList, int depth){
+    // Update best move score
+    int bonus = historyBonus(depth);
+
+
+    int hist_score = std::min( info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] + bonus, MAXHISTORY);
+
+    update_conthist_move(board, info, ss, bestmove, bonus);
+    
+    info.searchHistory[board.pieceAtB(from(bestmove))][to(bestmove)] = hist_score;
 
     for (int i = 0; i < quietList.size; i++) {
         Move move = quietList[i].move;
@@ -158,9 +137,12 @@ void update_conthist(Board &board, SearchInfo &info, SearchStack *ss,
             continue; // Don't give penalty to our best move, so skip it.
 
         // Penalize moves that didn't cause a beta cutoff.
-        int penalty = bonus - get_conthist_score(board, info, ss, move) *
-                                  std::abs(bonus) / MAXCOUNTERHISTORY;
-        update_ch(board, info, ss, move, -penalty);
+        int conthist_penalty = bonus - get_conthist_score(board, info, ss, move) * std::abs(bonus) / MAXCOUNTERHISTORY;
+        int hist_penalty = std::max( info.searchHistory[board.pieceAtB(from(move))][to(move)] - bonus, -MAXHISTORY);
+
+
+        update_ch(board, info, ss, move, -conthist_penalty);
+        info.searchHistory[board.pieceAtB(from(move))][to(move)] = hist_penalty;
     }
 }
 

@@ -507,7 +507,7 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
         /* Extensions
          * Search extra ply if move comes from tt
          */
-        if (!is_root && depth >= 7 && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
+        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
             tte.depth >= depth - 3)
         {
 
@@ -535,6 +535,8 @@ int negamax(int alpha, int beta, int depth, Board &board, SearchInfo &info, Sear
             else if (tte.score >= beta)
             {
                 extension = -2;
+            }else if (tte.score <= singular_score){
+                extension = -1;
             }
         }
 

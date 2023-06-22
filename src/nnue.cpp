@@ -5,7 +5,7 @@
 
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
-INCBIN(EVAL, "./nn.net");
+INCBIN(EVAL, "./net-epoch550-transposed.nn");
 
 using namespace Chess;
 

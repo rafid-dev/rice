@@ -17,6 +17,10 @@
 #include <intrin.h>
 #endif
 
+namespace NNUE {
+    struct Net;
+}
+
 using namespace Chess_Lookup::Fancy;
 
 namespace Chess {
@@ -761,7 +765,7 @@ class Board {
 
   public:
     /// @brief constructor for the board, loads startpos and initializes SQUARES_BETWEEN_BB array
-    Board(std::string fen = DEFAULT_POS);
+    Board(std::string fen, NNUE::Net& nnue);
 
     /// @brief Finds what piece is on the square using bitboards (slow)
     /// @param sq
@@ -780,7 +784,7 @@ class Board {
 
     /// @brief applys a new Fen to the board
     /// @param fen
-    void applyFen(const std::string &fen);
+    void applyFen(const std::string &fen, NNUE::Net& nnue);
 
     /// @brief returns a Fen string of the current board
     /// @return fen string
@@ -796,7 +800,7 @@ class Board {
 
     Square KingSQ(Color c) const;
 
-    void refresh();
+    void refresh(NNUE::Net& nnue);
 
     U64 Enemy(Color c) const;
     U64 EnemyEmpty(Color c) const;
@@ -833,11 +837,11 @@ class Board {
 
     /// @brief plays the move on the internal board
     /// @param move
-    template <bool updateNNUE = true> void makeMove(Move move);
+    template <bool updateNNUE = true> void makeMove(Move move, NNUE::Net& nnue);
 
     /// @brief unmake a move played on the internal board
     /// @param move
-    template <bool updateNNUE = true> void unmakeMove(Move move);
+    template <bool updateNNUE = true> void unmakeMove(Move move, NNUE::Net& nnue);
 
     /// @brief make a nullmove
     void makeNullMove();
@@ -850,13 +854,13 @@ class Board {
     /// @param sq
     void removePiece(Piece piece, Square sq);
 
-    template <bool updateNNUE> void removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
+    template <bool updateNNUE> void removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net& nnue);
 
     /// @brief Place a Piece on the board
     /// @param piece
     /// @param sq
     void placePiece(Piece piece, Square sq);
-    template <bool updateNNUE> void placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
+    template <bool updateNNUE> void placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net& nnue);
 
     /// @brief Move a piece on the board
     /// @param piece
@@ -865,7 +869,7 @@ class Board {
     void movePiece(Piece piece, Square fromSq, Square toSq);
 
     template <bool updateNNUE>
-    void movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black);
+    void movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black, NNUE::Net& nnue);
 
     U64 attacksByPiece(PieceType pt, Square sq, Color c) const;
 

@@ -20,17 +20,7 @@ typedef double Time;
 
 static inline bool is_capture(Board &board, Move move) { return (board.pieceAtB(to(move)) != None); }
 
-static inline bool move_gives_check(Board &board, Move move) {
-    board.makeMove(move);
-    bool in_check = board.isSquareAttacked(~board.sideToMove, board.KingSQ(board.sideToMove));
-    board.unmakeMove(move);
-
-    return in_check;
-}
-
 static inline uint32_t reduce_hash(uint32_t x, uint32_t N) { return ((uint64_t)x * (uint64_t)N) >> 32; }
-
-extern NNUE::Net *nnue;
 
 enum { HFNONE, HFBETA, HFALPHA, HFEXACT };
 

@@ -1,20 +1,19 @@
 #include "nnue.h"
 #include "types.h"
 
-NNUE::Net *nnue = new NNUE::Net();
+// Explicit template instantiation
+template void Board::makeMove<false>(Move, NNUE::Net&);
+template void Board::makeMove<true>(Move, NNUE::Net&);
+template void Board::unmakeMove<true>(Move, NNUE::Net&);
+template void Board::unmakeMove<false>(Move, NNUE::Net&);
+template void Board::placePiece<false>(Piece piece, Square, Square kSQ_White, Square kSQ_Black, NNUE::Net&);
+template void Board::placePiece<true>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net&);
+template void Board::removePiece<false>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net&);
+template void Board::removePiece<true>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net&);
+template void Board::movePiece<false>(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black, NNUE::Net&);
+template void Board::movePiece<true>(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black, NNUE::Net&);
 
-template void Board::makeMove<false>(Move);
-template void Board::makeMove<true>(Move);
-template void Board::unmakeMove<true>(Move);
-template void Board::unmakeMove<false>(Move);
-template void Board::placePiece<false>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
-template void Board::placePiece<true>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
-template void Board::removePiece<false>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
-template void Board::removePiece<true>(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black);
-template void Board::movePiece<false>(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black);
-template void Board::movePiece<true>(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black);
-
-Board::Board(std::string fen) {
+Board::Board(std::string fen, NNUE::Net& nnue) {
     initializeLookupTables();
     stateHistory.reserve(MAX_PLY);
     hashHistory.reserve(512);
@@ -34,7 +33,7 @@ Board::Board(std::string fen) {
 
     std::fill(std::begin(board), std::end(board), None);
 
-    applyFen(fen);
+    applyFen(fen, nnue);
 
     occEnemy = Enemy(sideToMove);
     occUs = Us(sideToMove);
@@ -42,7 +41,7 @@ Board::Board(std::string fen) {
     enemyEmptyBB = EnemyEmpty(sideToMove);
 }
 
-void Board::applyFen(const std::string &fen) {
+void Board::applyFen(const std::string &fen, NNUE::Net& nnue) {
     for (Piece p = WhitePawn; p < None; p++) {
         piecesBB[p] = 0ULL;
     }
@@ -112,13 +111,13 @@ void Board::applyFen(const std::string &fen) {
     hashHistory.push_back(hashKey);
     pawnKeyHistory.push_back(pawnKey);
 
-    refresh();
-    nnue->reset_accumulators();
+    refresh(nnue);
+    nnue.reset_accumulators();
 }
 
-void Board::refresh() { nnue->refresh(*this); }
+void Board::refresh(NNUE::Net& nnue) { nnue.refresh(*this); }
 
-template <bool updateNNUE> void Board::makeMove(Move move) {
+template <bool updateNNUE> void Board::makeMove(Move move, NNUE::Net& nnue) {
     PieceType pt = piece(move);
     Piece p = makePiece(pt, sideToMove);
     Square from_sq = from(move);
@@ -140,7 +139,7 @@ template <bool updateNNUE> void Board::makeMove(Move move) {
     pawnKeyHistory.emplace_back(pawnKey);
 
     if constexpr (updateNNUE) {
-        nnue->push();
+        nnue.push();
     }
 
     halfMoveClock++;
@@ -236,19 +235,19 @@ template <bool updateNNUE> void Board::makeMove(Move move) {
             placePiece(p, kingToSq);
             placePiece(rook, rookToSq);
 
-            refresh();
+            refresh(nnue);
         } else {
-            removePiece<updateNNUE>(p, from_sq, kSQ_White, kSQ_Black);
-            removePiece<updateNNUE>(rook, to_sq, kSQ_White, kSQ_Black);
+            removePiece<updateNNUE>(p, from_sq, kSQ_White, kSQ_Black, nnue);
+            removePiece<updateNNUE>(rook, to_sq, kSQ_White, kSQ_Black, nnue);
 
-            placePiece<updateNNUE>(p, kingToSq, kSQ_White, kSQ_Black);
-            placePiece<updateNNUE>(rook, rookToSq, kSQ_White, kSQ_Black);
+            placePiece<updateNNUE>(p, kingToSq, kSQ_White, kSQ_Black, nnue);
+            placePiece<updateNNUE>(rook, rookToSq, kSQ_White, kSQ_Black, nnue);
         }
 
     } else if (pt == PAWN && ep) {
         assert(pieceAtB(Square(to_sq ^ 8)) != None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8), kSQ_White, kSQ_Black);
+        removePiece<updateNNUE>(makePiece(PAWN, ~sideToMove), Square(to_sq ^ 8), kSQ_White, kSQ_Black, nnue);
 
     } else if (capture != None && !isCastling) {
         assert(pieceAtB(to_sq) != None);
@@ -257,25 +256,25 @@ template <bool updateNNUE> void Board::makeMove(Move move) {
             pawnKey ^= updateKeyPiece(capture, to_sq);
         }
 
-        removePiece<updateNNUE>(capture, to_sq, kSQ_White, kSQ_Black);
+        removePiece<updateNNUE>(capture, to_sq, kSQ_White, kSQ_Black, nnue);
     }
 
     if (promoted(move)) {
         assert(pieceAtB(to_sq) == None);
 
-        removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq, kSQ_White, kSQ_Black);
-        placePiece<updateNNUE>(p, to_sq, kSQ_White, kSQ_Black);
+        removePiece<updateNNUE>(makePiece(PAWN, sideToMove), from_sq, kSQ_White, kSQ_Black, nnue);
+        placePiece<updateNNUE>(p, to_sq, kSQ_White, kSQ_Black, nnue);
 
     } else if (!isCastling) {
         assert(pieceAtB(to_sq) == None);
 
-        movePiece<updateNNUE>(p, from_sq, to_sq, kSQ_White, kSQ_Black);
+        movePiece<updateNNUE>(p, from_sq, to_sq, kSQ_White, kSQ_Black, nnue);
     }
 
     sideToMove = ~sideToMove;
 }
 
-template <bool updateNNUE> void Board::unmakeMove(Move move) {
+template <bool updateNNUE> void Board::unmakeMove(Move move, NNUE::Net& nnue) {
     const State restore = stateHistory.back();
     stateHistory.pop_back();
 
@@ -285,7 +284,7 @@ template <bool updateNNUE> void Board::unmakeMove(Move move) {
     pawnKeyHistory.pop_back();
 
     if constexpr (updateNNUE) {
-        nnue->pull();
+        nnue.pull();
     }
 
     enPassantSquare = restore.enPassant;
@@ -384,26 +383,26 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq) {
 /// @brief For efficient updates
 /// @param piece
 /// @param sq
-template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black) {
+template <bool updateNNUE> void Board::removePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net& nnue) {
     piecesBB[piece] &= ~(1ULL << sq);
     board[sq] = None;
 
     if constexpr (updateNNUE) {
-        nnue->updateAccumulator<false>(type_of_piece(piece), piece < BlackPawn ? White : Black, sq, kSQ_White,
+        nnue.updateAccumulator<false>(type_of_piece(piece), piece < BlackPawn ? White : Black, sq, kSQ_White,
                                        kSQ_Black);
     }
 }
 
-template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black) {
+template <bool updateNNUE> void Board::placePiece(Piece piece, Square sq, Square kSQ_White, Square kSQ_Black, NNUE::Net& nnue) {
     piecesBB[piece] |= (1ULL << sq);
     board[sq] = piece;
     if constexpr (updateNNUE) {
-        nnue->updateAccumulator<true>(type_of_piece(piece), piece < BlackPawn ? White : Black, sq, kSQ_White,
+        nnue.updateAccumulator<true>(type_of_piece(piece), piece < BlackPawn ? White : Black, sq, kSQ_White,
                                       kSQ_Black);
     }
 }
 template <bool updateNNUE>
-void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black) {
+void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White, Square kSQ_Black, NNUE::Net& nnue) {
     piecesBB[piece] &= ~(1ULL << fromSq);
     piecesBB[piece] |= (1ULL << toSq);
     board[fromSq] = None;
@@ -412,9 +411,9 @@ void Board::movePiece(Piece piece, Square fromSq, Square toSq, Square kSQ_White,
     if constexpr (updateNNUE) {
         if (type_of_piece(piece) == KING && NNUE::KING_BUCKET[fromSq] != NNUE::KING_BUCKET[toSq] ||
             square_file(fromSq) + square_file(toSq) == 7) {
-            refresh();
+            refresh(nnue);
         } else {
-            nnue->updateAccumulator(type_of_piece(piece), piece < BlackPawn ? White : Black, fromSq, toSq, kSQ_White,
+            nnue.updateAccumulator(type_of_piece(piece), piece < BlackPawn ? White : Black, fromSq, toSq, kSQ_White,
                                     kSQ_Black);
         }
     }

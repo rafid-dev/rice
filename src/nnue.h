@@ -22,8 +22,8 @@
 #define HIDDEN_DSIZE (HIDDEN_SIZE * 2)
 #define OUTPUT_SIZE (1)
 
-#define INPUT_WEIGHT_MULTIPLIER (32)
-#define HIDDEN_WEIGHT_MULTIPLIER (128)
+#define INPUT_QUANTIZATION (32)
+#define HIDDEN_QUANTIZATON (128)
 
 extern std::array<int16_t, INPUT_SIZE * HIDDEN_SIZE> inputWeights;
 extern std::array<int16_t, HIDDEN_SIZE> inputBias;

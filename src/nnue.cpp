@@ -109,7 +109,7 @@ int32_t NNUE::Net::Evaluate(Color side) {
     }
 
     const auto outp = sumRegisterEpi32(res) + hiddenBias[0];
-    return outp / INPUT_WEIGHT_MULTIPLIER / HIDDEN_WEIGHT_MULTIPLIER;
+    return outp / INPUT_QUANTIZATION / HIDDEN_QUANTIZATON;
 
 #else
     int32_t output = hiddenBias[0];
@@ -128,7 +128,7 @@ int32_t NNUE::Net::Evaluate(Color side) {
         }
     }
 
-    return output / INPUT_WEIGHT_MULTIPLIER / HIDDEN_WEIGHT_MULTIPLIER;
+    return output / INPUT_QUANTIZATION / HIDDEN_QUANTIZATON;
 
 #endif
 }
@@ -151,7 +151,7 @@ void ReadBin() {
 #ifdef DEBUG
     std::cout << "Memory index: " << memoryIndex << std::endl;
     std::cout << "Size: " << gEVALSize << std::endl;
-    std::cout << "Bias: " << hiddenBias[0] / INPUT_WEIGHT_MULTIPLIER / HIDDEN_WEIGHT_MULTIPLIER << std::endl;
+    std::cout << "Bias: " << hiddenBias[0] / INPUT_QUANTIZATION / HIDDEN_QUANTIZATON << std::endl;
 
     std::cout << std::endl;
 #endif

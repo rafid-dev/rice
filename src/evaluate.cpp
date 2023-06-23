@@ -1,6 +1,6 @@
 #include "eval.h"
-#include "nnue.h"
+#include "search.h"
 
-int evaluate(Board &board) {
-    return nnue->Evaluate(board.sideToMove);
+int evaluate(SearchThread& st) {
+    return st.nnue.Evaluate(st.board.sideToMove);
 }

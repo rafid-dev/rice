@@ -1,5 +1,5 @@
 #pragma once
 
-#include "types.h"
+struct SearchThread;
 
-int evaluate(Board &board);
+int evaluate(SearchThread& st);

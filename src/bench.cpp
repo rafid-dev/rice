@@ -54,7 +54,9 @@ std::string bench_fens[] = {
     "2r2b2/5p2/5k2/p1r1pP2/P2pB3/1P3P2/K1P3R1/7R w - - 23 93",
 };
 
-void StartBenchmark(Board& board, SearchInfo& info) {
+void StartBenchmark(SearchThread& st) {
+    SearchInfo& info = st.info;
+
     info.depth            = 13;
     info.timeset          = false;
 
@@ -65,18 +67,18 @@ void StartBenchmark(Board& board, SearchInfo& info) {
     // Inspired from Koivisto
 
     for (auto& fen : bench_fens) {
-        board.applyFen(fen);
+        st.applyFen(fen);
 
         auto start = misc::tick();
-        iterative_deepening<false>(board, info);
+        iterative_deepening<false>(st);
         auto end = misc::tick();
 
         count++;
-        nodes += info.nodes_reached;
+        nodes += st.nodes_reached;
         time_elapsed += (end - start);
 
         printf("Position [%2d] -> cp %5d bestmove %s %12ld nodes %8d nps", int(count),
-               int(info.score), convertMoveToUci(info.bestmove).c_str(), nodes,
+               int(info.score), convertMoveToUci(st.bestmove).c_str(), nodes,
                static_cast<int>(1000.0f * nodes / (time_elapsed + 1)));
         std::cout << std::endl;
     }

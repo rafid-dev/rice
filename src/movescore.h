@@ -31,4 +31,4 @@ inline int historyBonus(int depth){
    return std::min(2100, 300 * depth - 300);
 }
 
-void get_history_scores(int& hus, int& ch, int& fmh, SearchThread& st, SearchStack *ss, const Move move);
+int get_history_scores(int& hus, int& ch, int& fmh, SearchThread& st, SearchStack *ss, const Move move);

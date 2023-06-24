@@ -106,18 +106,19 @@ void updateCH(int16_t& historyScore, const int bonus) {
     historyScore += bonus - historyScore * std::abs(bonus) / MAXCOUNTERHISTORY;
 }
 
-void updateH(int16_t& historyScore, const int bonus){
+void updateH(int16_t& historyScore, const int bonus)
+{
     historyScore += bonus - historyScore * std::abs(bonus) / MAXHISTORY;
 }
 
-void updateContinuationHistories(SearchStack *ss, Move move, int bonus){
+void updateContinuationHistories(SearchStack* ss, Piece piece, Move move, int bonus){
 
     if ((ss - 1)->move){
-        updateCH((ss - 1)->continuationHistory[ss->moved_piece][to(move)], bonus);
+        updateCH((ss - 1)->continuationHistory[piece][to(move)], bonus);
     }
 
     if ((ss-2)->move){
-        updateCH((ss - 2)->continuationHistory[ss->moved_piece][to(move)], bonus);   
+        updateCH((ss - 2)->continuationHistory[piece][to(move)], bonus);   
     }
 }
 
@@ -125,7 +126,7 @@ void updateHistories(SearchThread& st, SearchStack *ss, Move bestmove, Movelist 
     // Update best move score
     int bonus = historyBonus(depth);
 
-    updateContinuationHistories(ss, bestmove, bonus);
+    updateContinuationHistories(ss, st.board.pieceAtB(from(bestmove)), bestmove, bonus);
     
     updateH(st.searchHistory[st.board.pieceAtB(from(bestmove))][to(bestmove)], bonus);
 
@@ -136,7 +137,7 @@ void updateHistories(SearchThread& st, SearchStack *ss, Move bestmove, Movelist 
             continue; // Don't give penalty to our best move, so skip it.
 
         // Penalize moves that didn't cause a beta cutoff.
-        updateContinuationHistories(ss, move, -bonus);
+        updateContinuationHistories(ss, st.board.pieceAtB(from(move)), move, -bonus);
         updateH(st.searchHistory[st.board.pieceAtB(from(move))][to(move)], -bonus);
     }
 }

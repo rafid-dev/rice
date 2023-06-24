@@ -110,6 +110,7 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
         pick_nextmove(i, list);
 
         Move move = list[i].move;
+        ss->moved_piece = st.board.pieceAtB(to(move));
 
         /* SEE pruning in qsearch search */
         /* If we do not SEE a good capture move, we can skip the move.*/
@@ -117,6 +118,8 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
         {
             continue;
         }
+
+        ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
 
         /* Make move on board */
         st.makeMove<true>(move);
@@ -128,7 +131,6 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
         move_count++;
 
         ss->move = move;
-        ss->moved_piece = st.board.pieceAtB(to(move));
 
         /* Recursive call of qsearch on current position */
         score = -qsearch(-beta, -alpha, st, ss + 1);
@@ -292,6 +294,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
             int R = 3 + depth / 3 + std::min(3, (eval - beta) / 180);
 
+            ss->continuationHistory = &st.continuationHistory[None][0];
+
             board.makeNullMove();
             ss->move = NULL_MOVE;
 
@@ -332,6 +336,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
             {
                 pick_nextmove(i, list);
                 Move move = list[i].move;
+                ss->moved_piece = board.pieceAtB(from(move));
 
                 if (list[i].value < GoodCaptureScore)
                 {
@@ -342,6 +347,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
                 {
                     continue;
                 }
+
+                ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
 
                 st.makeMove<true>(move);
 
@@ -381,7 +388,6 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
     Movegen::legalmoves<ALL>(board, list);
 
     Movelist quietList;   // Quiet moves list
-    Movelist captureList; // Capture moveslist
 
     // Score moves and pass the tt move so it can be sorted highest
     score_moves(st, list, ss, tte.move);
@@ -397,6 +403,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
         // Initialize move variable
         Move move = list[i].move;
         Piece moved_piece = board.pieceAtB(from(move));
+        ss->moved_piece = moved_piece;
 
         // Skip excluded moves from extension
         if (move == ss->excluded)
@@ -404,21 +411,12 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
         bool is_quiet = (!promoted(move) && !is_capture(board, move));
         int extension = 0;
-
-        int h = 0, ch = 0, fh = 0;
-        int history = 0;
-
+        
         bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
 
         if (is_quiet && skip_quiet_moves)
         {
             continue;
-        }
-
-        if (is_quiet)
-        {
-            get_history_scores(h, ch, fh, st, ss, move);
-            history = h + ch + fh;
         }
 
         /* Various pruning techniques */
@@ -503,13 +501,14 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
         /* Initialize new depth based on extension*/
         int new_depth = depth + extension;
 
+        ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
+
         /* Make move on current board. */
         st.makeMove<true>(move);
         table->prefetch_tt(board.hashKey); // TT Prefetch
 
         /* Set stack move to current move */
         ss->move = move;
-        ss->moved_piece = moved_piece;
 
         /* Increment ply, nodes and movecount */
         (ss + 1)->ply = ss->ply + 1;
@@ -817,8 +816,6 @@ int aspiration_window(int prevEval, int depth, SearchThread& st)
             break;
         }
         delta += delta / 2;
-
-        // std::cout << "DELTA: " << delta << std::endl;
     }
 
     return score;

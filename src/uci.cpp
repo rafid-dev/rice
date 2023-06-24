@@ -6,11 +6,11 @@
 #include "search.h"
 #include "tt.h"
 #include "types.h"
+#include "thread.h"
 
 #include <chrono>
 #include <iostream>
 #include <sstream>
-#include <thread>
 
 bool TUNING = false;
 
@@ -72,6 +72,8 @@ void uci_loop(int argv, char **argc) {
         exit(0);
     }
 
+    ThreadHandler threadHandle;
+
     std::string command;
     std::string token;
 
@@ -83,19 +85,27 @@ void uci_loop(int argv, char **argc) {
 
         if (token == "stop") {
             info.stopped = true;
+            threadHandle.stop();
+
         } else if (token == "quit") {
             info.stopped = true;
+            threadHandle.stop();
+
             break;
         } else if (token == "isready") {
+
             std::cout << "readyok" << std::endl;
             continue;
+
         } else if (token == "ucinewgame") {
             table->Initialize(CurrentHashSize);
             continue;
+
         } else if (token == "uci") {
             IsUci = true;
             uci_send_id();
             continue;
+
         }
 
         /* Handle UCI position command */
@@ -235,7 +245,7 @@ void uci_loop(int argv, char **argc) {
             info.stopped = false;
             info.uci = IsUci;
 
-            iterative_deepening<true>(*searchThread);
+            threadHandle.start(*searchThread);
         }
 
         else if (token == "setoption") {

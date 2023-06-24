@@ -4,7 +4,7 @@
 #include "search.h"
 
 #define MAXHISTORY 8196
-#define MAXCOUNTERHISTORY 8196
+#define MAXCOUNTERHISTORY 16000
 
 void score_moves(SearchThread& st, Movelist &list, SearchStack *ss, Move tt_move);
 void score_moves(Board &board, Movelist &list, Move tt_move);

@@ -119,6 +119,8 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
             continue;
         }
 
+        ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
+
         /* Make move on board */
         st.makeMove<true>(move);
         table->prefetch_tt(st.board.hashKey);
@@ -292,6 +294,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
             int R = 3 + depth / 3 + std::min(3, (eval - beta) / 180);
 
+            ss->continuationHistory = &st.continuationHistory[None][0];
+
             board.makeNullMove();
             ss->move = NULL_MOVE;
 
@@ -332,6 +336,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
             {
                 pick_nextmove(i, list);
                 Move move = list[i].move;
+                ss->moved_piece = board.pieceAtB(from(move));
 
                 if (list[i].value < GoodCaptureScore)
                 {
@@ -342,6 +347,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
                 {
                     continue;
                 }
+
+                ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
 
                 st.makeMove<true>(move);
 
@@ -493,6 +500,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
         /* Initialize new depth based on extension*/
         int new_depth = depth + extension;
+
+        ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
 
         /* Make move on current board. */
         st.makeMove<true>(move);
@@ -762,11 +771,7 @@ int aspiration_window(int prevEval, int depth, SearchThread& st)
 {
     int score = 0;
 
-    // SearchStack stack[MAXPLY + 10], *ss = stack + 7;
-
-    auto heapAllocatedSearchStack = std::make_unique<std::array<SearchStack, MAXPLY+10>>();
-    SearchStack *stack = heapAllocatedSearchStack->data();
-    SearchStack *ss = stack + 7;
+    SearchStack stack[MAXPLY + 10], *ss = stack + 7;
 
     int delta = 12;
 

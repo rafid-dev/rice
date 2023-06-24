@@ -36,16 +36,13 @@ struct SearchStack {
 
     Piece moved_piece{None};
 
-    HistoryTable continuationHistory;
-
-    SearchStack(){
-        memset(continuationHistory.data(), 0, sizeof(continuationHistory));
-    }
+    HistoryTable* continuationHistory;
 };
 
 struct SearchThread{
 
     HistoryTable searchHistory;
+    HistoryTable continuationHistory[13][64];
 
     NNUE::Net nnue;
 
@@ -65,6 +62,7 @@ struct SearchThread{
         nodes_reached = 0;
 
         memset(searchHistory.data(), 0, sizeof(searchHistory));
+        memset(continuationHistory, 0, sizeof(continuationHistory));
 
         board.refresh(nnue);
 

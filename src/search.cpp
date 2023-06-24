@@ -772,7 +772,11 @@ int aspiration_window(int prevEval, int depth, SearchThread& st)
 {
     int score = 0;
 
-    SearchStack stack[MAXPLY + 10], *ss = stack + 7;
+    // SearchStack stack[MAXPLY + 10], *ss = stack + 7;
+
+    auto heapAllocatedSearchStack = std::make_unique<std::array<SearchStack, MAXPLY+10>>();
+    SearchStack *stack = heapAllocatedSearchStack->data();
+    SearchStack *ss = stack + 7;
 
     int delta = 12;
 
@@ -817,8 +821,6 @@ int aspiration_window(int prevEval, int depth, SearchThread& st)
             break;
         }
         delta += delta / 2;
-
-        // std::cout << "DELTA: " << delta << std::endl;
     }
 
     return score;

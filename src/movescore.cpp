@@ -20,12 +20,13 @@ static inline int get_conthist_score(SearchThread& st, SearchStack *ss,
 
     int score = 0;
 
-    if (ss->ply >= 1 && (ss-1)->move && (ss-1)->moved_piece != None && move){
-         score += (ss - 1)->continuationHistory[st.board.pieceAtB(from(move))][to(move)];
+    if ((ss-1)->move){
+         score += (ss - 1)->continuationHistory[ss->moved_piece][to(move)];
 
-        if (ss->ply >= 2 && (ss-2)->move && (ss-2)->moved_piece != None && move) {
-            score += (ss - 2)->continuationHistory[st.board.pieceAtB(from(move))][to(move)];
-        }
+    }
+
+    if ((ss-2)->move) {
+        score += (ss - 2)->continuationHistory[ss->moved_piece][to(move)];
     }
 
     return score;
@@ -102,12 +103,12 @@ void pick_nextmove(const int moveNum, Movelist &list) {
 static inline void update_ch(SearchThread& st, SearchStack *ss,
                              const Move move, const int score) {
 
-    if (ss->ply >= 1 && (ss - 1)->moved_piece != None){
-        (ss-1)->continuationHistory[st.board.pieceAtB(from(move))][to(move)] += score;
-
-        if (ss->ply >= 2 && (ss - 1)->moved_piece != None) {
-            (ss-2)->continuationHistory[st.board.pieceAtB(from(move))][to(move)] += score;
-        }
+    if ((ss - 1)->move){
+        (ss-1)->continuationHistory[ss->moved_piece][to(move)] += score;
+    }
+    
+    if ((ss- 2)->move) {
+        (ss-2)->continuationHistory[ss->moved_piece][to(move)] += score;
     }
 }
 
@@ -122,11 +123,11 @@ void updateHistories(SearchThread& st, SearchStack *ss, Move bestmove, Movelist 
     int bonus = historyBonus(depth);
 
 
-    int hist_score = std::min( st.searchHistory[st.board.pieceAtB(from(bestmove))][to(bestmove)] + bonus, MAXHISTORY);
+    int hist_score = std::min( st.searchHistory[ss->moved_piece][to(bestmove)] + bonus, MAXHISTORY);
 
     update_conthist_move(st, ss, bestmove, bonus);
     
-    st.searchHistory[st.board.pieceAtB(from(bestmove))][to(bestmove)] = hist_score;
+    st.searchHistory[ss->moved_piece][to(bestmove)] = hist_score;
 
     for (int i = 0; i < quietList.size; i++) {
         Move move = quietList[i].move;
@@ -136,22 +137,22 @@ void updateHistories(SearchThread& st, SearchStack *ss, Move bestmove, Movelist 
 
         // Penalize moves that didn't cause a beta cutoff.
         int conthist_penalty = bonus - get_conthist_score(st, ss, move) * std::abs(bonus) / MAXCOUNTERHISTORY;
-        int hist_penalty = std::max( st.searchHistory[st.board.pieceAtB(from(move))][to(move)] - bonus, -MAXHISTORY);
+        int hist_penalty = std::max( st.searchHistory[ss->moved_piece][to(move)] - bonus, -MAXHISTORY);
 
 
         update_ch(st, ss, move, -conthist_penalty);
-        st.searchHistory[st.board.pieceAtB(from(move))][to(move)] = hist_penalty;
+        st.searchHistory[ss->moved_piece][to(move)] = hist_penalty;
     }
 }
 
 void get_history_scores(int &his, int &ch, int &fmh, SearchThread& st, SearchStack *ss, const Move move) {
     Move previous_move = (ss - 1)->move;
     Move previous_previous_move = (ss - 2)->move;
-    Piece moved_piece = st.board.pieceAtB(from(move));
+    Piece moved_piece = ss->moved_piece;
 
-    his = st.searchHistory[st.board.pieceAtB(from(move))][to(move)];
+    his = st.searchHistory[ss->moved_piece][to(move)];
 
-    ch = previous_move && (ss-1)->moved_piece != None ? (ss - 1)->continuationHistory.at(moved_piece).at(to(move)) : 0;
+    ch = (ss - 1)->continuationHistory.at(moved_piece).at(to(move));
 
-    fmh = previous_previous_move && (ss - 2)->moved_piece != None ? (ss - 2)->continuationHistory.at(moved_piece).at(to(move)) : 0;
+    fmh = (ss - 2)->continuationHistory.at(moved_piece).at(to(move));
 }

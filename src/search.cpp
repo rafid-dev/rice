@@ -549,7 +549,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
             reduction -= refutationMove * 2; 
 
             // Reduce or Increase according to history score
-            reduction -= std::clamp(history/16384, -2, 2);
+            reduction -= history/4000;
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/

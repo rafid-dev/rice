@@ -37,6 +37,10 @@ struct SearchStack {
     Piece moved_piece{None};
 
     HistoryTable continuationHistory;
+
+    SearchStack(){
+        memset(continuationHistory.data(), 0, sizeof(continuationHistory));
+    }
 };
 
 struct SearchThread{

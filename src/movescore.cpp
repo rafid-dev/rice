@@ -2,7 +2,7 @@
 #include "eval.h"
 #include "see.h"
 
-int mvv_lva[12][12] = {
+constexpr int mvv_lva[12][12] = {
     105, 205, 305, 405, 505, 605, 105, 205, 305, 405, 505, 605, 104, 204, 304,
     404, 504, 604, 104, 204, 304, 404, 504, 604, 103, 203, 303, 403, 503, 603,
     103, 203, 303, 403, 503, 603, 102, 202, 302, 402, 502, 602, 102, 202, 302,
@@ -21,10 +21,10 @@ static inline int get_conthist_score(SearchThread& st, SearchStack *ss,
     int score = 0;
 
     if (ss->ply >= 1 && (ss-1)->move && (ss-1)->moved_piece != None && move){
-         score += st.contHist[(ss - 1)->moved_piece][to((ss - 1)->move)][st.board.pieceAtB(from(move))][to(move)];
+         score += (ss - 1)->continuationHistory[st.board.pieceAtB(from(move))][to(move)];
 
         if (ss->ply >= 2 && (ss-2)->move && (ss-2)->moved_piece != None && move) {
-            score += st.contHist[(ss - 2)->moved_piece][to((ss - 2)->move)][st.board.pieceAtB(from(move))][to(move)];
+            score += (ss - 2)->continuationHistory[st.board.pieceAtB(from(move))][to(move)];
         }
     }
 
@@ -103,11 +103,10 @@ static inline void update_ch(SearchThread& st, SearchStack *ss,
                              const Move move, const int score) {
 
     if (ss->ply >= 1 && (ss - 1)->moved_piece != None){
-        st.contHist[(ss - 1)->moved_piece][to((ss - 1)->move)]
-                         [st.board.pieceAtB(from(move))][to(move)] += score;
+        (ss-1)->continuationHistory[st.board.pieceAtB(from(move))][to(move)] += score;
+
         if (ss->ply >= 2 && (ss - 1)->moved_piece != None) {
-            st.contHist[(ss - 2)->moved_piece][to((ss - 2)->move)]
-                         [st.board.pieceAtB(from(move))][to(move)] += score;
+            (ss-2)->continuationHistory[st.board.pieceAtB(from(move))][to(move)] += score;
         }
     }
 }
@@ -152,7 +151,7 @@ void get_history_scores(int &his, int &ch, int &fmh, SearchThread& st, SearchSta
 
     his = st.searchHistory[st.board.pieceAtB(from(move))][to(move)];
 
-    ch = previous_move && (ss-1)->moved_piece != None ? st.contHist.at((ss-1)->moved_piece).at(to(previous_move)).at(moved_piece).at(to(move)) : 0;
+    ch = previous_move && (ss-1)->moved_piece != None ? (ss - 1)->continuationHistory.at(moved_piece).at(to(move)) : 0;
 
-    fmh = previous_previous_move && (ss - 2)->moved_piece != None ? st.contHist.at((ss - 2)->moved_piece).at(to(previous_previous_move)).at(moved_piece).at(to(move)) : 0;
+    fmh = previous_previous_move && (ss - 2)->moved_piece != None ? (ss - 2)->continuationHistory.at(moved_piece).at(to(move)) : 0;
 }

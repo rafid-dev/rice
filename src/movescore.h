@@ -11,7 +11,7 @@ void score_moves(Board &board, Movelist &list, Move tt_move);
 
 void pick_nextmove(const int moveNum, Movelist &list);
 
-void update_conthist_move(SearchThread& st, SearchStack *ss, Move move, int bonus);
+void updateContinuationHistories(SearchStack *ss, Move move, int bonus);
 
 void updateHistories(SearchThread& st, SearchStack *ss, Move bestmove, Movelist &quietList, int depth);
 

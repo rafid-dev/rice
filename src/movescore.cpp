@@ -139,8 +139,8 @@ int get_history_scores(int &his, int &ch, int &fmh, SearchThread& st, SearchStac
 
     his = st.searchHistory[st.board.pieceAtB(from(move))][to(move)];
 
-    ch = (*(ss - 1)->continuationHistory)[moved_piece][to(move)];
-    fmh = (*(ss - 2)->continuationHistory)[moved_piece][to(move)];
+    ch = (ss-1)->move ? (*(ss - 1)->continuationHistory)[moved_piece][to(move)] : 0;
+    fmh = (ss-2)->move ? (*(ss - 2)->continuationHistory)[moved_piece][to(move)] : 0;
 
     return his + ch + fmh;
 }

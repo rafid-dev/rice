@@ -278,7 +278,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
          * If the eval is well above beta by a margin, then we assume the eval
          * will hold above beta.
          */
-        if (depth < 9 && eval - ((depth - improving) * 77) >= beta)
+        if (depth < 9 && eval >= beta && eval - ((depth - improving) * 77) - (ss - 1)->stat_score/400 >= beta)
         {
             return eval;
         }
@@ -416,6 +416,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
         int hist = 0, counter_hist = 0, follow_up_hist = 0;
         int history = get_history_scores(hist, counter_hist, follow_up_hist, st, ss, move);
+
+        ss->stat_score = 2 * hist + counter_hist + follow_up_hist - 4000;
 
         if (is_quiet && skip_quiet_moves)
         {

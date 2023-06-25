@@ -85,7 +85,7 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 
 
 ## Acknowledgements: 
-*<a href="https://github.com/official-stockfish/Stockfish/">Stockfish</a> by the <a href="https://github.com/official-stockfish/">Stockfish Team</a> 
+* <a href="https://github.com/official-stockfish/Stockfish/">Stockfish</a> by the <a href="https://github.com/official-stockfish/">Stockfish Team</a> 
 * <a href="https://github.com/mhouppin/"> NanoPixel </a>
 * <a href="https://github.com/pgg106">Zuppa</a>
 * <a href="https://github.com/raklaptudirm">Rak</a>

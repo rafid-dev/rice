@@ -36,6 +36,8 @@ struct SearchStack {
 
     Piece moved_piece{None};
 
+    int stat_score = 0;
+
     HistoryTable* continuationHistory;
 };
 

@@ -414,6 +414,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
         
         bool refutationMove = (ss->killers[0] == move || ss->killers[1] == move);
 
+        int hist = 0, counter_hist = 0, follow_up_hist = 0;
+        int history = get_history_scores(hist, counter_hist, follow_up_hist, st, ss, move);
+
         if (is_quiet && skip_quiet_moves)
         {
             continue;
@@ -544,6 +547,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
+
+            // Reduce or Increase according to history score
+            reduction -= history/4000;
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/

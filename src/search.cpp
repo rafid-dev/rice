@@ -722,12 +722,13 @@ void iterative_deepening(SearchThread& st)
 
     for (int current_depth = 1; current_depth <= info.depth; current_depth++)
     {
-        score = aspiration_window(score, current_depth, st);
+        score = aspiration_window(score, current_depth, st, bestmove);
 
         if (st.info.stopped || st.stop_early())
         {
             break;
         }
+        
         bestmove = st.bestmove;
         info.score = score;
 
@@ -775,7 +776,7 @@ void iterative_deepening(SearchThread& st)
     }
 }
 
-int aspiration_window(int prevEval, int depth, SearchThread& st)
+int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove)
 {
     int score = 0;
 
@@ -818,6 +819,9 @@ int aspiration_window(int prevEval, int depth, SearchThread& st)
             {
                 depth--;
             }
+
+            // Idea from StockDory
+            bestmove = st.bestmove;
         }
         else
         {

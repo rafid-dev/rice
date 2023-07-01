@@ -143,4 +143,4 @@ template <bool print_info> void iterative_deepening(SearchThread& st);
 
 int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss);
 int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss);
-int aspiration_window(int prevEval, int depth, SearchThread& st);
+int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove);

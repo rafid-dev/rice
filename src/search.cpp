@@ -178,7 +178,7 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
 
 /* Function based on the Negamax framework and alpha-beta pruning */
 /* This is our main Search function , which we use to find "Good moves". */
-int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
+int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, bool cutnode)
 {
 
     /* We drop into quiescence search if depth is <= 0 to prevent horizon effect
@@ -301,7 +301,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
             (ss + 1)->ply = ss->ply + 1;
 
-            int score = -negamax(-beta, -beta + 1, depth - R, st, ss + 1);
+            int score = -negamax(-beta, -beta + 1, depth - R, st, ss + 1, !cutnode);
 
             board.unmakeNullMove();
 
@@ -356,7 +356,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
                 if (score >= rbeta)
                 {
-                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, st, ss);
+                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, st, ss, !cutnode);
                 }
 
                 st.unmakeMove<true>(move);
@@ -478,7 +478,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = tte.move;
-            int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, st, ss);
+            int singular_score = negamax(singular_beta - 1, singular_beta, singularDepth, st, ss, cutnode);
             ss->excluded = NO_MOVE;
 
             if (singular_score < singular_beta)
@@ -499,6 +499,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
             {
                 extension = -2;
             }else if (tte.score <= singular_score){
+                extension = -1;
+            }else if (cutnode){
                 extension = -1;
             }
         }
@@ -557,7 +559,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
              * extension*/
             reduction = std::min(depth - 1, std::max(1, reduction));
 
-            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, st, ss + 1);
+            score = -negamax(-alpha - 1, -alpha, new_depth - reduction, st, ss + 1, true);
 
             /* We do a full depth research if our score beats alpha. */
             do_fullsearch = score > alpha && reduction != 1;
@@ -569,12 +571,12 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss)
 
         /* Full depth search on a zero window. */
         if (do_fullsearch) {
-            score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1);
+            score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1, !cutnode);
         }
 
         // Principal Variation Search (PVS)
         if (is_pvnode && (move_count == 1 || (score > alpha && score < beta))) {
-            score = -negamax(-beta, -alpha, new_depth - 1, st, ss + 1);
+            score = -negamax(-beta, -alpha, new_depth - 1, st, ss + 1, false);
         }
 
         // clang-format on
@@ -798,7 +800,7 @@ int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove)
     while (true)
     {
 
-        score = negamax(alpha, beta, depth, st, ss);
+        score = negamax(alpha, beta, depth, st, ss, false);
 
         if (st.stop_early())
         {

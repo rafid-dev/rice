@@ -553,7 +553,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             reduction -= refutationMove * 2; 
 
             // Reduce or Increase according to history score
-            reduction -= ss->stat_score / (11124 + 4740 * (depth > 5 && depth < 22));
+            reduction -= ss->stat_score / 11124;
 
             /* Adjust the reduction so we don't drop into Qsearch or cause an
              * extension*/

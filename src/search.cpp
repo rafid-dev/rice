@@ -324,51 +324,6 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             }
         }
 
-        // Probcut
-        int rbeta = std::min(beta + 100, ISMATE - MAXPLY - 1);
-        if (depth >= probcut_depth && abs(beta) < ISMATE && (!ttHit || eval >= rbeta || tte.depth < depth - 3))
-        {
-            Movelist list;
-            Movegen::legalmoves<CAPTURE>(board, list);
-            score_moves(st, list, ss, tte.move);
-            int score = 0;
-            for (int i = 0; i < list.size; i++)
-            {
-                pick_nextmove(i, list);
-                Move move = list[i].move;
-                ss->moved_piece = board.pieceAtB(from(move));
-
-                if (list[i].value < GoodCaptureScore)
-                {
-                    continue;
-                }
-
-                if (move == tte.move)
-                {
-                    continue;
-                }
-
-                ss->continuationHistory = &st.continuationHistory[ss->moved_piece][to(move)];
-
-                st.makeMove<true>(move);
-
-                score = -qsearch(-rbeta, -rbeta + 1, st, ss);
-
-                if (score >= rbeta)
-                {
-                    score = -negamax(-rbeta, -rbeta + 1, depth - 4, st, ss, !cutnode);
-                }
-
-                st.unmakeMove<true>(move);
-
-                if (score >= rbeta)
-                {
-                    table->store(board.hashKey, HFBETA, move, depth - 3, score, ss->static_eval, ss->ply, is_pvnode);
-                    return score;
-                }
-            }
-        }
-
         // Razoring
         if (eval - 63 + 182 * depth <= alpha){
             return qsearch(alpha, beta, st, ss);

@@ -5,7 +5,10 @@
 
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
-INCBIN(EVAL, "./net-epoch550-transposed.nn");
+INCBIN(EVAL, "./aethex_lambda_epoch_550.net");
+
+#define INPUT_QUANTIZATION (128)
+#define HIDDEN_QUANTIZATON (32)
 
 using namespace Chess;
 
@@ -28,7 +31,7 @@ void NNUE::Net::updateAccumulator(Chess::PieceType pieceType, Chess::Color piece
                                   Chess::Square kingSquare_Black) {
 
     Accumulator &accumulator = accumulator_stack[currentAccumulator];
-#if defined(__AVX__) || defined(__AVX2__)
+#if defined(AMONGUS)//defined(__AVX__) || defined(__AVX2__)
     for (auto side : {White, Black}) {
         const int inputClear =
             index(pieceType, pieceColor, from_square, side, side == Chess::White ? kingSquare_White : kingSquare_Black);

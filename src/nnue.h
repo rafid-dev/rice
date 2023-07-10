@@ -16,14 +16,11 @@
     Disservin (Author of Smallbrain)
 */
 
-#define BUCKETS (4)
+#define BUCKETS (32)
 #define INPUT_SIZE (64 * 12 * BUCKETS)
-#define HIDDEN_SIZE (768)
+#define HIDDEN_SIZE (512)
 #define HIDDEN_DSIZE (HIDDEN_SIZE * 2)
 #define OUTPUT_SIZE (1)
-
-#define INPUT_QUANTIZATION (32)
-#define HIDDEN_QUANTIZATON (128)
 
 extern std::array<int16_t, INPUT_SIZE * HIDDEN_SIZE> inputWeights;
 extern std::array<int16_t, HIDDEN_SIZE> inputBias;
@@ -34,14 +31,14 @@ namespace NNUE {
 
 // clang-format off
 constexpr int KING_BUCKET[64] {
-    0, 0, 1, 1, 1, 1, 0, 0,
-    0, 0, 1, 1, 1, 1, 0, 0,
-    0, 0, 1, 1, 1, 1, 0, 0,
-    0, 0, 1, 1, 1, 1, 0, 0,
-    2, 2, 3, 3, 3, 3, 2, 2,
-    2, 2, 3, 3, 3, 3, 2, 2,
-    2, 2, 3, 3, 3, 3, 2, 2,
-    2, 2, 3, 3, 3, 3, 2, 2,
+    0,  1,  2,  3,  3,  2,  1,  0,
+    4,  5,  6,  7,  7,  6,  5,  4,
+    8,  9,  10, 11, 11, 10, 9,  8,
+    12,  13, 14, 15, 15, 14, 13, 12,
+    16, 17, 18, 19, 19, 18, 17, 16,
+    20, 21, 22, 23, 23, 22, 21, 20,
+    24, 25, 26, 27, 27, 26, 25, 24,
+    28, 29, 30, 31, 31, 30, 29, 28,
 };
 // clang-format on
 
@@ -77,45 +74,13 @@ struct Accumulator {
     std::array<int16_t, HIDDEN_SIZE> &operator[](bool side) { return side ? black : white; }
 
     inline void copy(NNUE::Accumulator &acc) {
-#if defined(__AVX__) || defined(__AVX2__)
-        for (auto side : {Chess::White, Chess::Black}) {
-            const auto inp = reinterpret_cast<avx_register_type_16 *>(acc[side].data());
-            const auto out = reinterpret_cast<avx_register_type_16 *>(this->operator[](side).data());
-
-            for (int i = 0; i < HIDDEN_SIZE / (STRIDE_16_BIT * 4); i++) {
-                const int baseIdx = i * 4;
-
-                out[baseIdx] = inp[baseIdx];
-                out[baseIdx + 1] = inp[baseIdx + 1];
-                out[baseIdx + 2] = inp[baseIdx + 2];
-                out[baseIdx + 3] = inp[baseIdx + 3];
-            }
-        }
-#else
         std::copy(std::begin(acc.white), std::end(acc.white), std::begin(white));
         std::copy(std::begin(acc.black), std::end(acc.black), std::begin(black));
-#endif
     }
 
     inline void clear() {
-#if defined(__AVX__) || defined(__AVX2__)
-        for (auto side : {Chess::White, Chess::Black}) {
-            const auto wgt = reinterpret_cast<avx_register_type_16 *>(inputBias.data());
-            const auto out = reinterpret_cast<avx_register_type_16 *>(this->operator[](side).data());
-
-            for (int i = 0; i < HIDDEN_SIZE / (STRIDE_16_BIT * 4); i++) {
-                const int baseIdx = i * 4;
-
-                out[baseIdx] = wgt[baseIdx];
-                out[baseIdx + 1] = wgt[baseIdx + 1];
-                out[baseIdx + 2] = wgt[baseIdx + 2];
-                out[baseIdx + 3] = wgt[baseIdx + 3];
-            }
-        }
-#else
         std::copy(std::begin(inputBias), std::end(inputBias), std::begin(white));
         std::copy(std::begin(inputBias), std::end(inputBias), std::begin(black));
-#endif
     }
 };
 
@@ -159,7 +124,7 @@ struct Net {
 
         Accumulator &accumulator = accumulator_stack[currentAccumulator];
 
-#if defined(__AVX__) || defined(__AVX2__)
+#if defined(AMONGUS)//defined(__AVX__) || defined(__AVX2__)
 
         for (auto side : {Chess::White, Chess::Black}) {
             const int input =

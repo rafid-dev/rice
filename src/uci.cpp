@@ -169,7 +169,7 @@ void uci_loop(int argv, char **argc) {
             while (token != "none") {
                 if (token == "infinite") {
                     depth = -1;
-                    continue;
+                    break;
                 }
                 if (token == "movestogo") {
                     is >> std::skipws >> token;

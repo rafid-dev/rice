@@ -154,7 +154,7 @@ void Net::refresh(Board &board) {
 int32_t Net::Evaluate(Color side) {
     Accumulator &accumulator = accumulator_stack[currentAccumulator];
 
-#if defined(__AVX__) || defined(__AVX2__)
+#if defined(__AVX__) || defined(__AVX2__) || defined(__AVX512F__)
 
     register_type16 reluBias{};
     register_type32 res{};

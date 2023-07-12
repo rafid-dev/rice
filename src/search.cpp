@@ -194,6 +194,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         st.check_time();
     }
 
+    (ss+2)->cutoff_cnt    = 0;
+
     Board& board = st.board;
 
     /* Initialize helper variables */
@@ -555,6 +557,10 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             // Reduce two plies if it's a counter or killer
             reduction -= refutationMove * 2; 
 
+            if ((ss+1)->cutoff_cnt > 3){
+                reduction++;
+            }
+
             // Reduce or Increase according to history score
             reduction -= history/4000;
 
@@ -604,6 +610,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
 
                 // clang-format off
                 if (score >= beta) {
+                    ss->cutoff_cnt++;
+
                     if (is_quiet) {
                         // Update killers
                         ss->killers[1] = ss->killers[0];

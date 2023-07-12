@@ -70,6 +70,9 @@ void uci_loop(int argv, char **argc) {
         info.timeset = false;
         StartBenchmark(*searchThread);
         exit(0);
+    }else if (argv > 1 && std::string{argc[1]} == "nn-bench") {
+        searchThread->nnue.Benchmark();
+        exit(0);
     }
 
     ThreadHandler threadHandle;

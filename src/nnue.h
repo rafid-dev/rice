@@ -66,56 +66,25 @@ inline int index(Chess::PieceType pieceType, Chess::Color pieceColor, Chess::Squ
 static inline int16_t relu(int16_t input) { return std::max(static_cast<int16_t>(0), input); }
 
 struct Accumulator {
-#if defined(__AVX__) || defined(__AVX2__)
+#if defined(USE_SIMD)
     alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> white;
     alignas(ALIGNMENT) std::array<int16_t, HIDDEN_SIZE> black;
 #else
     std::array<int16_t, HIDDEN_SIZE> white;
     std::array<int16_t, HIDDEN_SIZE> black;
 #endif
+
     std::array<int16_t, HIDDEN_SIZE> &operator[](Chess::Color side) { return side == Chess::White ? white : black; }
     std::array<int16_t, HIDDEN_SIZE> &operator[](bool side) { return side ? black : white; }
 
     inline void copy(NNUE::Accumulator &acc) {
-#if defined(__AVX__) || defined(__AVX2__)
-        for (auto side : {Chess::White, Chess::Black}) {
-            const auto inp = reinterpret_cast<avx_register_type_16 *>(acc[side].data());
-            const auto out = reinterpret_cast<avx_register_type_16 *>(this->operator[](side).data());
-
-            for (int i = 0; i < HIDDEN_SIZE / (STRIDE_16_BIT * 4); i++) {
-                const int baseIdx = i * 4;
-
-                out[baseIdx] = inp[baseIdx];
-                out[baseIdx + 1] = inp[baseIdx + 1];
-                out[baseIdx + 2] = inp[baseIdx + 2];
-                out[baseIdx + 3] = inp[baseIdx + 3];
-            }
-        }
-#else
         std::copy(std::begin(acc.white), std::end(acc.white), std::begin(white));
         std::copy(std::begin(acc.black), std::end(acc.black), std::begin(black));
-#endif
     }
 
     inline void clear() {
-#if defined(__AVX__) || defined(__AVX2__)
-        for (auto side : {Chess::White, Chess::Black}) {
-            const auto wgt = reinterpret_cast<avx_register_type_16 *>(inputBias.data());
-            const auto out = reinterpret_cast<avx_register_type_16 *>(this->operator[](side).data());
-
-            for (int i = 0; i < HIDDEN_SIZE / (STRIDE_16_BIT * 4); i++) {
-                const int baseIdx = i * 4;
-
-                out[baseIdx] = wgt[baseIdx];
-                out[baseIdx + 1] = wgt[baseIdx + 1];
-                out[baseIdx + 2] = wgt[baseIdx + 2];
-                out[baseIdx + 3] = wgt[baseIdx + 3];
-            }
-        }
-#else
         std::copy(std::begin(inputBias), std::end(inputBias), std::begin(white));
         std::copy(std::begin(inputBias), std::end(inputBias), std::begin(black));
-#endif
     }
 };
 
@@ -130,115 +99,25 @@ struct Net {
         accumulator_stack[currentAccumulator + 1].copy(accumulator_stack[currentAccumulator]);
         currentAccumulator++;
     }
-
-    inline void pull() { currentAccumulator--; }
-
-    inline void reset_accumulators() { currentAccumulator = 0; }
-
-    void refresh(Chess::Board &board) {
-
-        Accumulator &accumulator = accumulator_stack[currentAccumulator];
-        accumulator.clear();
-
-        U64 pieces = board.All();
-
-        const Chess::Square kingSquare_White = board.KingSQ(Chess::White);
-        const Chess::Square kingSquare_Black = board.KingSQ(Chess::Black);
-
-        while (pieces) {
-            Chess::Square sq = Chess::poplsb(pieces);
-            Chess::PieceType pt = board.pieceTypeAtB(sq);
-
-            updateAccumulator<true>(pt, board.colorOf(sq), sq, kingSquare_White, kingSquare_Black);
-        }
+    inline void pull() { 
+        currentAccumulator--; 
     }
+    inline void reset_accumulators() { 
+        currentAccumulator = 0;
+    }
+
+    void refresh(Chess::Board &board);
 
     template <bool add>
-    void updateAccumulator(Chess::PieceType pieceType, Chess::Color pieceColor, Chess::Square square,
-                           Chess::Square kingSquare_White, Chess::Square kingSquare_Black) {
-
-        Accumulator &accumulator = accumulator_stack[currentAccumulator];
-
-#if defined(__AVX__) || defined(__AVX2__)
-
-        for (auto side : {Chess::White, Chess::Black}) {
-            const int input =
-                index(pieceType, pieceColor, square, side, side == Chess::White ? kingSquare_White : kingSquare_Black);
-
-            const auto wgt = reinterpret_cast<avx_register_type_16 *>(inputWeights.data());
-            const auto inp = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
-            const auto out = reinterpret_cast<avx_register_type_16 *>(accumulator[side].data());
-
-            constexpr int blockSize = 3; // Adjust the block size for optimal cache usage
-
-            if constexpr (add) {
-                for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
-                    const int baseIdx = (input * HIDDEN_SIZE / STRIDE_16_BIT) + (block * blockSize);
-
-                    avx_register_type_16 *outPtr = out + (block * blockSize);
-                    const avx_register_type_16 *wgtPtr = wgt + baseIdx;
-                    const avx_register_type_16 *inpPtr = inp + (block * blockSize);
-
-                    avx_register_type_16 sum0 = avx_add_epi16(inpPtr[0], wgtPtr[0]);
-                    avx_register_type_16 sum1 = avx_add_epi16(inpPtr[1], wgtPtr[1]);
-                    avx_register_type_16 sum2 = avx_add_epi16(inpPtr[2], wgtPtr[2]);
-
-                    for (int i = 3; i < blockSize; i++) {
-                        sum0 = avx_add_epi16(sum0, wgtPtr[i]);
-                        sum1 = avx_add_epi16(sum1, wgtPtr[i + blockSize]);
-                        sum2 = avx_add_epi16(sum2, wgtPtr[i + blockSize * 2]);
-                    }
-
-                    outPtr[0] = sum0;
-                    outPtr[1] = sum1;
-                    outPtr[2] = sum2;
-                }
-            } else {
-                for (int block = 0; block < HIDDEN_SIZE / (STRIDE_16_BIT * blockSize); block++) {
-                    const int baseIdx = (input * HIDDEN_SIZE / STRIDE_16_BIT) + (block * blockSize);
-
-                    avx_register_type_16 *outPtr = out + (block * blockSize);
-                    const avx_register_type_16 *wgtPtr = wgt + baseIdx;
-                    const avx_register_type_16 *inpPtr = inp + (block * blockSize);
-
-                    avx_register_type_16 diff0 = avx_sub_epi16(inpPtr[0], wgtPtr[0]);
-                    avx_register_type_16 diff1 = avx_sub_epi16(inpPtr[1], wgtPtr[1]);
-                    avx_register_type_16 diff2 = avx_sub_epi16(inpPtr[2], wgtPtr[2]);
-
-                    for (int i = 3; i < blockSize; i++) {
-                        diff0 = avx_sub_epi16(diff0, wgtPtr[i]);
-                        diff1 = avx_sub_epi16(diff1, wgtPtr[i + blockSize]);
-                        diff2 = avx_sub_epi16(diff2, wgtPtr[i + blockSize * 2]);
-                    }
-
-                    outPtr[0] = diff0;
-                    outPtr[1] = diff1;
-                    outPtr[2] = diff2;
-                }
-            }
-        }
-#else
-        for (auto side : {Chess::White, Chess::Black}) {
-            const int input =
-                index(pieceType, pieceColor, square, side, side == Chess::White ? kingSquare_White : kingSquare_Black);
-            for (int chunks = 0; chunks < HIDDEN_SIZE / 256; chunks++) {
-                const int offset = chunks * 256;
-                for (int i = offset; i < 256 + offset; i++) {
-                    if constexpr (add) {
-                        accumulator[side][i] += inputWeights[input * HIDDEN_SIZE + i];
-                    } else {
-                        accumulator[side][i] -= inputWeights[input * HIDDEN_SIZE + i];
-                    }
-                }
-            }
-        }
-#endif
-    }
+    void updateAccumulator(Chess::PieceType pieceType, Chess::Color pieceColor, Chess::Square square,  Chess::Square kingSquare_White, Chess::Square kingSquare_Black);
 
     void updateAccumulator(Chess::PieceType pieceType, Chess::Color pieceColor, Chess::Square from_square,
                            Chess::Square to_square, Chess::Square kingSquare_White, Chess::Square kingSquare_Black);
 
     int32_t Evaluate(Chess::Color side);
+
+    void Benchmark();
+
     void print_n_accumulator_inputs(const Accumulator &accumulator, size_t N) {
         for (size_t i = 0; i < N; i++) {
             std::cout << accumulator.white[i] << ", ";

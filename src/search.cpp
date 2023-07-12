@@ -375,6 +375,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         }
     }
 
+    if (cutnode && depth >= 7 && tte.move == NO_MOVE) 
+        depth--;
+
     /* Initialize variables */
     int bestscore = -INF_BOUND;
     int move_count = 0;

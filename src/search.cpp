@@ -222,6 +222,11 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         {
             return 0;
         }
+
+        alpha = std::max(alpha, -ISMATE + ss->ply);
+		beta = std::min(beta, ISMATE - ss->ply - 1);
+		if (alpha >= beta)
+			return alpha;
     }
 
     /* Probe transposition table */

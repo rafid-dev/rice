@@ -35,6 +35,12 @@ void init_search()
     }
 }
 
+int score_to_tt(int score, int ply) {
+	if (score > ISMATE) score += ply;
+	else if (score < -ISMATE) score -= ply;
+	return score;
+}
+
 /* qsearch Search to prevent Horizon Effect.*/
 int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
 {
@@ -170,7 +176,7 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
     int flag = bestscore >= beta ? HFBETA : HFALPHA;
 
     /* Store transposition table entry */
-    table->store(st.board.hashKey, flag, bestmove, 0, bestscore, standing_pat, ss->ply, is_pvnode);
+    table->store(st.board.hashKey, flag, bestmove, 0, score_to_tt(bestscore, ss->ply), standing_pat, ss->ply, is_pvnode);
 
     /* Return bestscore achieved */
     return bestscore;
@@ -643,7 +649,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
 
     if (ss->excluded == NO_MOVE)
     {
-        table->store(board.hashKey, flag, bestmove, depth, bestscore, ss->static_eval, ss->ply, is_pvnode);
+        table->store(board.hashKey, flag, bestmove, depth, score_to_tt(bestscore, ss->ply), ss->static_eval, ss->ply, is_pvnode);
     }
 
     if (alpha != oldAlpha)

@@ -22,7 +22,6 @@ static inline bool is_capture(Board &board, Move move) { return (board.pieceAtB(
 
 static inline uint32_t reduce_hash(uint32_t x, uint32_t N) { return ((uint64_t)x * (uint64_t)N) >> 32; }
 
-enum { HFNONE, HFBETA, HFALPHA, HFEXACT };
 
 enum {
     NSQUARES = 64,

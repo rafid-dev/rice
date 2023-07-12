@@ -31,6 +31,8 @@ void score_moves(SearchThread& st, Movelist &list, SearchStack *ss, Move tt_move
         // Score tt move the highest
         if (list[i].move == tt_move) {
             list[i].value = PvMoveScore;
+        }else if (promoted(list[i].move) && piece(list[i].move) == QUEEN){
+            list[i].value = GoodCaptureScore + 5000;
         } else if (victim != None) {
             // If it's a capture move, we score using MVVLVA (Most valuable
             // victim, Least Valuable Attacker) and if see move that doesn't

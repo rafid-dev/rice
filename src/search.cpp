@@ -553,7 +553,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             reduction += is_quiet && !see(board, move, -50 * depth); /* Increase for quiet moves that lose material */
 
             // Reduce two plies if it's a counter or killer
-            reduction -= refutationMove * 2; 
+            reduction -= refutationMove * 2;
+            
+            reduction += cutnode;
 
             // Reduce or Increase according to history score
             reduction -= history/4000;

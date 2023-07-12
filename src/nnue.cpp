@@ -159,21 +159,20 @@ int32_t Net::Evaluate(Color side) {
     register_type16 reluBias{};
     register_type32 res{};
 
-    const auto acc_act = (register_type16 *)accumulator[side].data();
-    const auto acc_nac = (register_type16 *)accumulator[!side].data();
-    const auto wgt = (register_type16 *)(hiddenWeights.data());
+    const auto accumulator_us = reinterpret_cast<register_type16 *>(accumulator[side].data());
+    const auto accumulator_them = reinterpret_cast<register_type16 *>(accumulator[!side].data());
+    const auto weights = reinterpret_cast<register_type16 *>(hiddenWeights.data());
 
     for (int i = 0; i < HIDDEN_SIZE / STRIDE_16_BIT; i++) {
-        res = register_add_epi32(res, register_madd_epi16(register_max_epi16(acc_act[i], reluBias), wgt[i]));
+        res = register_add_epi32(res, register_madd_epi16(register_max_epi16(accumulator_us[i], reluBias), weights[i]));
     }
 
     for (int i = 0; i < HIDDEN_SIZE / STRIDE_16_BIT; i++) {
-        res = register_add_epi32(
-            res, register_madd_epi16(register_max_epi16(acc_nac[i], reluBias), wgt[i + HIDDEN_SIZE / STRIDE_16_BIT]));
+        res = register_add_epi32(res, register_madd_epi16(register_max_epi16(accumulator_them[i], reluBias), weights[i + HIDDEN_SIZE / STRIDE_16_BIT]));
     }
 
-    const auto outp = sumRegisterEpi32(res) + hiddenBias[0];
-    return outp / INPUT_QUANTIZATION / HIDDEN_QUANTIZATON;
+    const auto output = sumRegisterEpi32(res) + hiddenBias[0];
+    return output / (INPUT_QUANTIZATION * HIDDEN_QUANTIZATON);
 
 #else
     int32_t output = hiddenBias[0];

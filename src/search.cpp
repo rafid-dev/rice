@@ -36,20 +36,24 @@ void init_search()
 }
 
 int score_to_tt(int score, int ply) {
-    if (score >= ISMATE){
-        score += ply;
-    }else if (score <= ISMATE){
-        score -= ply;
+    if (score >= IS_MATE_IN_MAX_PLY){
+
+        return score - ply;
+    }else if (score <= IS_MATED_IN_MAX_PLY){
+
+        return score + ply;
     }
 
     return score;
 }
 
 int score_from_tt(int score, int ply){
-    if (score >= ISMATE){
-        score += ply;
-    }else if (score <= ISMATE){
-        score -= ply;
+    if (score >= IS_MATE_IN_MAX_PLY){
+
+        return score - ply;
+    }else if (score <= IS_MATED_IN_MAX_PLY){
+
+        return score + ply;
     }
 
     return score;
@@ -250,7 +254,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
     bool ttHit = false;
     TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
     
-    const int tt_score = ttHit ? score_from_tt(tte.score, ss->ply) : 0;
+    const int tt_score = ttHit ? score_from_tt(tte.score(), ss->ply) : 0;
 
     if (ss->excluded)
     {
@@ -272,7 +276,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
     /* We can use the tt entry's evaluation if we have a tt hit so we don't have
      * to re-evaluate from scratch */
 
-    ss->static_eval = eval = ttHit ? tte.eval : evaluate(st);
+    ss->static_eval = eval = ttHit ? tte.eval() : evaluate(st);
 
     /* If we our static evaluation is better than what it was 2 plies ago, we
      * are improving */
@@ -820,8 +824,8 @@ int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove)
 
     if (depth > 3)
     {
-        alpha = std::max(-INF_BOUND, prevEval - delta);
-        beta = std::min(INF_BOUND, prevEval + delta);
+        alpha = std::max<int>(-INF_BOUND, prevEval - delta);
+        beta = std::min<int>(INF_BOUND, prevEval + delta);
     }
 
     while (true)
@@ -843,7 +847,7 @@ int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove)
         }
         else if (score >= beta)
         {
-            beta = std::min(score + delta, INF_BOUND);
+            beta = std::min<int>(score + delta, INF_BOUND);
             if (abs(score) <= ISMATE / 2 && depth > 1)
             {
                 depth--;

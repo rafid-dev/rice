@@ -10,17 +10,24 @@ using TTKey = uint16_t;
 enum : uint8_t { HFNONE, HFBETA, HFALPHA, HFEXACT };
 
 struct TTEntry {
-    int score = 0;
-    int16_t eval = 0;
+    int16_t score16 = 0;
+    int16_t eval16 = 0;
 
-    uint8_t flag : 2;
-    uint8_t age : 6;
+    uint8_t age = 0;
+    uint8_t flag = HFNONE;
 
     uint8_t depth = 0;
 
     Move move = NO_MOVE;
     TTKey key = 0;
 
+    int score(){
+      return (int)score16;
+    }
+
+    int eval(){
+      return (int)eval16;
+    }
 };
 
 class TranspositionTable {

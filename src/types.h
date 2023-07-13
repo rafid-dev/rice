@@ -8,13 +8,18 @@ using namespace Chess;
 #define NAME "Rice"
 #define AUTHOR "Slender"
 
-#define MAXPLY 64
-#define MAXDEPTH 64
+constexpr int MAXDEPTH = 64;
+constexpr int MAXPLY = 64;
 
-#define INF_BOUND 30000
-#define ISMATE 29000
+enum Score : int{
+    ISMATE = 30000,
+    IS_MATE_IN_MAX_PLY = (ISMATE - MAXPLY),
+    IS_MATED_IN_MAX_PLY = -IS_MATE_IN_MAX_PLY,
+    INF_BOUND = 30001,
+    VALUE_NONE = 32002,
+};
 
-#define IS_DEBUG true
+#define IS_DEBUG false
 
 typedef double Time;
 

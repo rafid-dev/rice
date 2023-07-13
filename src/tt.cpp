@@ -15,13 +15,13 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
 
     bool replace = false;
 
-    if (entry.key == 0)
+    if (!entry.key)
     {
         replace = true;
     }
     else
     {
-        if (entry.age != currentAge || entry.depth <= depth){
+        if (entry.age < currentAge || entry.depth <= depth){
             replace = true;
         }
     }
@@ -41,8 +41,8 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
         entry.flag = f;
         entry.move = move;
         entry.depth = depth;
-        entry.score = score;
-        entry.eval = eval;
+        entry.score16 = (int16_t)score;
+        entry.eval16 = (int16_t)eval;
         entry.age = currentAge;
     }
 }

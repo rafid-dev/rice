@@ -48,7 +48,7 @@ endif
 ifeq ($(build), native)
 	NATIVE   = -march=native
 	ARCH     = -x86-64-native
-	CXXFLAGS += -w
+	CXXFLAGS += 
 endif
 
 ifeq ($(build), profile)

@@ -20,6 +20,7 @@ struct TTEntry {
 
     Move move = NO_MOVE;
     TTKey key = 0;
+
 };
 
 class TranspositionTable {

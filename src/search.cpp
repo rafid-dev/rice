@@ -796,8 +796,8 @@ int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove)
 
     if (depth > 3)
     {
-        alpha = std::max(-INF_BOUND, prevEval - delta);
-        beta = std::min(INF_BOUND, prevEval + delta);
+        alpha = std::max<int>(-INF_BOUND, prevEval - delta);
+        beta = std::min<int>(INF_BOUND, prevEval + delta);
     }
 
     while (true)
@@ -813,13 +813,13 @@ int aspiration_window(int prevEval, int depth, SearchThread& st, Move& bestmove)
         if (score <= alpha)
         {
             beta = (alpha + beta) / 2;
-            alpha = std::max(-INF_BOUND, score - delta);
+            alpha = std::max<int>(-INF_BOUND, score - delta);
 
             depth = initial_depth;
         }
         else if (score >= beta)
         {
-            beta = std::min(score + delta, INF_BOUND);
+            beta = std::min<int>(score + delta, INF_BOUND);
             if (abs(score) <= ISMATE / 2 && depth > 1)
             {
                 depth--;

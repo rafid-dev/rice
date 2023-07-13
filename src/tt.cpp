@@ -9,7 +9,7 @@ void TranspositionTable::Initialize(int MB)
     std::cout << "Transposition Table Initialized with " << entries.size() << " entries (" << MB << "MB)" << std::endl;
 }
 
-void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score, int16_t eval, int ply, bool pv)
+void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int score, int eval, int ply, bool pv)
 {
     TTEntry& entry = entries[reduce_hash(key, entries.size())];
 
@@ -30,11 +30,6 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
         return;
     }
 
-    if (score > ISMATE)
-        score += ply;
-    else if (score < -ISMATE)
-        score -= ply;
-
     if (move != NO_MOVE || static_cast<TTKey>(key) != entry.key)
     {
         entry.move = move;
@@ -46,7 +41,7 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
         entry.flag = f;
         entry.move = move;
         entry.depth = depth;
-        entry.score = score;
+        entry.score = (int16_t)score;
         entry.eval = eval;
         entry.age = currentAge;
     }
@@ -55,11 +50,6 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
 TTEntry& TranspositionTable::probe_entry(U64 key, bool& ttHit, int ply)
 {
     TTEntry& entry = entries[reduce_hash(key, entries.size())];
-
-    if (entry.score > ISMATE)
-        entry.score -= ply;
-    else if (entry.score < -ISMATE)
-        entry.score += ply;
 
     ttHit = (static_cast<TTKey>(key) == entry.key);
 

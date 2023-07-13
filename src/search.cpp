@@ -35,6 +35,30 @@ void init_search()
     }
 }
 
+int score_to_tt(int score, int ply) {
+    if (score >= IS_MATE_IN_MAX_PLY){
+
+        return score - ply;
+    }else if (score <= IS_MATED_IN_MAX_PLY){
+
+        return score + ply;
+    }
+
+    return score;
+}
+
+int score_from_tt(int score, int ply){
+    if (score >= IS_MATE_IN_MAX_PLY){
+
+        return score - ply;
+    }else if (score <= IS_MATED_IN_MAX_PLY){
+
+        return score + ply;
+    }
+
+    return score;
+}
+
 /* qsearch Search to prevent Horizon Effect.*/
 int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
 {
@@ -77,7 +101,7 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
     bool is_pvnode = (beta - alpha) > 1;
     TTEntry &tte = table->probe_entry(st.board.hashKey, ttHit, ss->ply);
 
-    const int tt_score = ttHit ? tte.get_score() : 0;
+    const int tt_score = ttHit ? score_from_tt(tte.get_score(), ss->ply) : 0;
 
     /* Return TT score if we found a TT entry*/
     if (!is_pvnode && ttHit)
@@ -172,7 +196,7 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
     int flag = bestscore >= beta ? HFBETA : HFALPHA;
 
     /* Store transposition table entry */
-    table->store(st.board.hashKey, flag, bestmove, 0, bestscore, standing_pat, ss->ply, is_pvnode);
+    table->store(st.board.hashKey, flag, bestmove, 0, score_to_tt(bestscore, ss->ply), standing_pat, ss->ply, is_pvnode);
 
     /* Return bestscore achieved */
     return bestscore;
@@ -237,7 +261,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
     TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
     const Move excluded_move = ss->excluded;
-    const int tt_score = ttHit ? tte.get_score() : 0;
+    const int tt_score = ttHit ? score_from_tt(tte.get_score(), ss->ply) : 0;
 
     if (excluded_move)
     {
@@ -644,7 +668,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
 
     if (excluded_move == NO_MOVE)
     {
-        table->store(board.hashKey, flag, bestmove, depth, bestscore, ss->static_eval, ss->ply, is_pvnode);
+        table->store(board.hashKey, flag, bestmove, depth, score_to_tt(bestscore, ss->ply), ss->static_eval, ss->ply, is_pvnode);
     }
 
     if (alpha != oldAlpha)

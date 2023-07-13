@@ -654,8 +654,16 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         }
     }
 
-    if (move_count == 0){
-        bestscore = ss->excluded ? alpha : in_check ? mated_in(ss->ply) : 0;
+    if (!is_root && move_count == 0)
+    {
+        if (in_check)
+        {
+            return -ISMATE + ss->ply; // Checkmate
+        }
+        else
+        {
+            return 0; // Stalemate
+        }
     }
 
     int flag = bestscore >= beta ? HFBETA : (alpha != oldAlpha) ? HFEXACT

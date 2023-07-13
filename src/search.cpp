@@ -501,7 +501,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         /* Extensions
          * Search extra ply if move comes from tt
          */
-        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tt_score) < KNOWN_WIN &&
+        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tt_score) < ISMATE &&
             tte.depth >= depth - 3)
         {
 

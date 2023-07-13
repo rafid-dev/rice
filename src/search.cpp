@@ -77,12 +77,14 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
     bool is_pvnode = (beta - alpha) > 1;
     TTEntry &tte = table->probe_entry(st.board.hashKey, ttHit, ss->ply);
 
+    const int tt_score = ttHit ? tte.get_score() : 0;
+
     /* Return TT score if we found a TT entry*/
     if (!is_pvnode && ttHit)
     {
-        if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) ||
+        if ((tte.flag == HFALPHA && tt_score <= alpha) || (tte.flag == HFBETA && tt_score >= beta) ||
             (tte.flag == HFEXACT))
-            return tte.score;
+            return tt_score;
     }
 
     /* Move generation */
@@ -235,6 +237,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
     TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
     const Move excluded_move = ss->excluded;
+    const int tt_score = ttHit ? tte.get_score() : 0;
 
     if (excluded_move)
     {
@@ -246,9 +249,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
 
     if (!is_pvnode && ttHit && tte.depth >= depth)
     {
-        if ((tte.flag == HFALPHA && tte.score <= alpha) || (tte.flag == HFBETA && tte.score >= beta) ||
+        if ((tte.flag == HFALPHA && tt_score <= alpha) || (tte.flag == HFBETA && tt_score >= beta) ||
             (tte.flag == HFEXACT))
-            return tte.score;
+            return tt_score;
     }
 
     /* Set static evaluation and evaluation to our current evaluation of the
@@ -256,7 +259,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
     /* We can use the tt entry's evaluation if we have a tt hit so we don't have
      * to re-evaluate from scratch */
 
-    ss->static_eval = eval = ttHit ? tte.eval : evaluate(st);
+    ss->static_eval = eval = ttHit ? tte.get_eval() : evaluate(st);
 
     /* If we our static evaluation is better than what it was 2 plies ago, we
      * are improving */
@@ -279,7 +282,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         /* This score is from search so this is more accurate */
         if (ttHit)
         {
-            eval = tte.score;
+            eval = tt_score;
         }
 
         /* Reverse Futility Pruning (RFP)
@@ -481,11 +484,11 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         /* Extensions
          * Search extra ply if move comes from tt
          */
-        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tte.score) < ISMATE &&
+        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tt_score) < ISMATE &&
             tte.depth >= depth - 3)
         {
 
-            int singular_beta = tte.score - depth;
+            int singular_beta = tt_score - depth;
             int singularDepth = (depth - 1) / 2;
 
             ss->excluded = tte.move;
@@ -506,10 +509,10 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             {
                 return (singular_beta); // Multicut
             }
-            else if (tte.score >= beta)
+            else if (tt_score >= beta)
             {
                 extension = -2;
-            }else if (tte.score <= singular_score){
+            }else if (tt_score <= singular_score){
                 extension = -1;
             }else if (cutnode){
                 extension = -1;
@@ -751,7 +754,7 @@ void iterative_deepening(SearchThread& st)
                 if (score >= ISMATED && score <= IS_MATED_IN_MAX_PLY){
                     std::cout << "mate " << ((ISMATED - score)/2);
                 }else if(score >= IS_MATE_IN_MAX_PLY && score <= ISMATE){
-                    std::cout << "mate " << ((ISMATE - score)/2) + 1;
+                    std::cout << "mate " << ((ISMATE - score)/2);
                 }else{
                     std::cout << "cp "<< score;
                 }

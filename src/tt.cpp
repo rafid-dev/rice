@@ -42,7 +42,7 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
         entry.move = move;
         entry.depth = depth;
         entry.score = (int16_t)score;
-        entry.eval = eval;
+        entry.eval = (int16_t)eval;
         entry.age = currentAge;
     }
 }

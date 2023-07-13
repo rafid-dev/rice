@@ -20,6 +20,14 @@ struct TTEntry {
 
     Move move = NO_MOVE;
     TTKey key = 0;
+
+    int get_score(){
+      return (int)score;
+    }
+
+    int get_eval(){
+      return (int)eval;
+    }
 };
 
 class TranspositionTable {

@@ -222,13 +222,21 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         {
             return 0;
         }
+
+        alpha = std::max(alpha, mated_in(ss->ply));
+		beta = std::min(beta, mate_in(ss->ply + 1));
+		if (alpha >= beta){
+			return alpha;
+        }
     }
 
     /* Probe transposition table */
     bool ttHit = false;
     TTEntry &tte = table->probe_entry(board.hashKey, ttHit, ss->ply);
 
-    if (ss->excluded)
+    const Move excluded_move = ss->excluded;
+
+    if (excluded_move)
     {
         ttHit = false;
     }
@@ -257,14 +265,14 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
     /* We set static evaluation to 0 if we are in check or if we have hit an
      * excluded move. */
     /* and also set improving to false. */
-    if (in_check || ss->excluded)
+    if (in_check || excluded_move)
     {
         ss->static_eval = eval = 0;
         improving = false;
     }
 
     /* Reverse Futility Pruning || Null Move Pruning */
-    if (!is_pvnode && !in_check && !is_root && !ss->excluded)
+    if (!is_pvnode && !in_check && !is_root && !excluded_move)
     {
 
         /* We can use tt entry's score as score if we hit one.*/
@@ -409,7 +417,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         ss->moved_piece = moved_piece;
 
         // Skip excluded moves from extension
-        if (move == ss->excluded)
+        if (move == excluded_move)
             continue;
 
         bool is_quiet = (!promoted(move) && !is_capture(board, move));
@@ -626,22 +634,12 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         }
     }
 
-    if (!is_root && move_count == 0)
-    {
-        if (in_check)
-        {
-            return -ISMATE + ss->ply; // Checkmate
-        }
-        else
-        {
-            return 0; // Stalemate
-        }
-    }
+    if (move_count == 0) bestscore = excluded_move ? alpha : in_check ? mated_in(ss->ply) : 0;
 
     int flag = bestscore >= beta ? HFBETA : (alpha != oldAlpha) ? HFEXACT
                                                                 : HFALPHA;
 
-    if (ss->excluded == NO_MOVE)
+    if (excluded_move == NO_MOVE)
     {
         table->store(board.hashKey, flag, bestmove, depth, bestscore, ss->static_eval, ss->ply, is_pvnode);
     }
@@ -748,7 +746,16 @@ void iterative_deepening(SearchThread& st)
             {
                 auto time_elapsed = misc::tick() - startime;
 
-                std::cout << "info score cp " << score;
+                std::cout << "info score ";
+
+                if (score >= ISMATED && score <= IS_MATED_IN_MAX_PLY){
+                    std::cout << "mate " << (ISMATED + score/2);
+                }else if(score >= IS_MATE_IN_MAX_PLY && score <= ISMATE){
+                    std::cout << "mate " << ((ISMATE - score)/2);
+                }else{
+                    std::cout << "cp "<< score;
+                }
+                
                 std::cout << " depth " << current_depth;
                 std::cout << " nodes " << st.nodes_reached;
                 std::cout << " nps " << static_cast<int>(1000.0f * st.nodes_reached / (time_elapsed + 1));

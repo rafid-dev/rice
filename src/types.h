@@ -13,6 +13,7 @@ constexpr int MAXPLY = 63;
 
 enum Score : int{
     ISMATE = 30000,
+    ISMATED = -ISMATE,
     KNOWN_WIN = 10000,
     IS_MATE_IN_MAX_PLY = (ISMATE - MAXPLY),
     IS_MATED_IN_MAX_PLY = -IS_MATE_IN_MAX_PLY,

@@ -634,7 +634,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         }
     }
 
-    if (move_count == 0) bestscore = excluded_move ? alpha : in_check ? mated_in(ss->ply) : 0;
+    if (move_count == 0) bestscore = in_check ? mated_in(ss->ply) : 0;
 
     int flag = bestscore >= beta ? HFBETA : (alpha != oldAlpha) ? HFEXACT
                                                                 : HFALPHA;
@@ -749,9 +749,9 @@ void iterative_deepening(SearchThread& st)
                 std::cout << "info score ";
 
                 if (score >= ISMATED && score <= IS_MATED_IN_MAX_PLY){
-                    std::cout << "mate " << (ISMATED + score/2);
+                    std::cout << "mate " << ((ISMATED - score)/2);
                 }else if(score >= IS_MATE_IN_MAX_PLY && score <= ISMATE){
-                    std::cout << "mate " << ((ISMATE - score)/2);
+                    std::cout << "mate " << ((ISMATE - score)/2) + 1;
                 }else{
                     std::cout << "cp "<< score;
                 }

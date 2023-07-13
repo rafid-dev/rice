@@ -19,6 +19,14 @@ enum Score : int{
     VALUE_NONE = 32002,
 };
 
+constexpr int mate_in(int ply){
+    return ISMATE - ply;
+}
+
+constexpr int mated_in(int ply){
+    return -ISMATE + ply;
+}
+
 #define IS_DEBUG false
 
 typedef double Time;

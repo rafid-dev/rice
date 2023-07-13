@@ -7,12 +7,14 @@
 
 using TTKey = uint16_t;
 
+enum : uint8_t { HFNONE, HFBETA, HFALPHA, HFEXACT };
+
 struct TTEntry {
     int16_t score = 0;
     int16_t eval = 0;
 
-    uint8_t flag;
-    uint8_t age;
+    uint8_t flag = HFNONE;
+    uint8_t age = 0;
 
     uint8_t depth = 0;
 
@@ -27,8 +29,7 @@ class TranspositionTable {
   public:
     uint8_t currentAge = 0;
     void Initialize(int usersize);
-    void store(U64 key, uint8_t f, Move move, uint8_t depth, int16_t score,
-                    int16_t eval, int ply, bool pv);
+    void store(U64 key, uint8_t f, Move move, uint8_t depth, int score, int eval, int ply, bool pv);
     TTEntry &probe_entry(U64 key, bool &ttHit, int ply);
     Move probeMove(U64 key);
     void prefetch_tt(const U64 key);

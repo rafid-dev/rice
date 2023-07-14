@@ -13,8 +13,8 @@ struct TTEntry {
     int16_t score = 0;
     int16_t eval = 0;
 
-    uint8_t flag = HFNONE;
-    uint8_t age = 0;
+    uint8_t flag : 2;
+    uint8_t age : 6;
 
     uint8_t depth = 0;
 

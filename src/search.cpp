@@ -313,7 +313,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
          * If the eval is well above beta by a margin, then we assume the eval
          * will hold above beta.
          */
-        if (depth < 9 && eval >= beta && eval - ((depth - improving) * 77) - (ss - 1)->stat_score/400 >= beta && eval < 25000)
+        if (depth < 9 && eval >= beta && eval - ((depth - improving) * 77) - (ss - 1)->stat_score/400 >= beta)
         {
             return eval;
         }
@@ -508,7 +508,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         /* Extensions
          * Search extra ply if move comes from tt
          */
-        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tt_score) < ISMATE &&
+        if (!is_root && depth >= (6 + is_pvnode) && (move == tte.move) && (tte.flag & HFBETA) && abs(tt_score) < KNOWN_WIN &&
             tte.depth >= depth - 3)
         {
 

@@ -603,8 +603,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             do_fullsearch = score > alpha && reduction != 1;
 
             bool deeper = score > bestscore + 70 + 12 * (new_depth - reduction);
+            bool shallower = score < bestscore + depth/2;
 
-            new_depth += deeper;
+            new_depth += deeper - shallower;
         }
 
         /* Full depth search on a zero window. */

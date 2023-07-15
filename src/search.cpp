@@ -743,7 +743,7 @@ void iterative_deepening(SearchThread& st)
 
     st.clear();
     st.initialize();
-    table->currentAge++;
+    table->nextAge();
 
     int score = 0;
 

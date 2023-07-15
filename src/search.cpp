@@ -244,9 +244,9 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         }
 
         /* Repetition check*/
-        if ((board.isRepetition()) && ss->ply)
+        if ((board.isRepetition()))
         {
-            return 0;
+            return 0 + (st.nodes_reached & 0x2);
         }
 
         alpha = std::max(alpha, mated_in(ss->ply));

@@ -613,8 +613,8 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         if (do_fullsearch) {
             score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1, !cutnode);
 
-            if (score >= beta){
-                updateContinuationHistories(ss, moved_piece, move, historyBonus(depth));
+            if ((score >= beta || score <= alpha) && is_quiet){
+                updateContinuationHistories(ss, moved_piece, move, score >= beta ? historyBonus(depth) : score <= alpha ? -historyBonus(depth) : 0);
             }
         }
 

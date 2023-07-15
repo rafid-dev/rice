@@ -21,7 +21,7 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
     }
     else
     {
-        if (entry.age < currentAge || entry.depth <= depth){
+        if (entry.age != currentAge || entry.depth <= depth){
             replace = true;
         }
     }

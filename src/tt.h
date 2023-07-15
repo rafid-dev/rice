@@ -36,12 +36,17 @@ class TranspositionTable {
 
   public:
     uint8_t currentAge = 0;
+
     void Initialize(int usersize);
     void store(U64 key, uint8_t f, Move move, uint8_t depth, int score, int eval, int ply, bool pv);
     TTEntry &probe_entry(U64 key, bool &ttHit, int ply);
     Move probeMove(U64 key);
     void prefetch_tt(const U64 key);
     void clear();
+
+    void nextAge(){
+      currentAge = std::min<uint8_t>(currentAge + 1, 63);
+    }
 };
 
 static inline void prefetch(const void *addr) {

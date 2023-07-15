@@ -15,27 +15,18 @@ void TranspositionTable::store(U64 key, uint8_t f, Move move, uint8_t depth, int
 
     bool replace = false;
 
-    if (entry.key == 0)
-    {
-        replace = true;
-    }
-    else
-    {
-        if (entry.age != currentAge || entry.depth <= depth){
-            replace = true;
-        }
-    }
+    replace = !entry.key || (entry.age != currentAge || entry.depth <= depth);
 
-    if (replace == false){
+    if (!replace){
         return;
     }
 
-    if (move != NO_MOVE || static_cast<TTKey>(key) != entry.key)
+    if (move || static_cast<TTKey>(key) != entry.key)
     {
         entry.move = move;
     }
 
-    if (f == HFEXACT || static_cast<TTKey>(key) != entry.key || depth + 7 + 2 * pv > entry.depth - 4)
+    if (f == HFEXACT || static_cast<TTKey>(key) != entry.key || depth + 4 > entry.depth)
     {
         entry.key = static_cast<TTKey>(key);
         entry.flag = f;

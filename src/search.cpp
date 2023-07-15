@@ -572,7 +572,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         }
 
         /* A condition for full search.*/
-        bool do_fullsearch = !is_pvnode || move_count > 1;
+        bool do_fullsearch = false;
 
         /* Late move reduction
          * Later moves will be searched in a reduced depth.
@@ -605,11 +605,17 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             bool deeper = score > bestscore + 70 + 12 * (new_depth - reduction);
 
             new_depth += deeper;
+        }else if (!is_pvnode || move_count > 1){
+            score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1, !cutnode);
         }
 
-        /* Full depth search on a zero window. */
+        /* LMR Research */
         if (do_fullsearch) {
             score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1, !cutnode);
+
+            if (score >= beta){
+                updateContinuationHistories(ss, moved_piece, move, historyBonus(depth));
+            }
         }
 
         // Principal Variation Search (PVS)

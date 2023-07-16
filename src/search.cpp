@@ -78,7 +78,7 @@ int qsearch(int alpha, int beta, SearchThread& st, SearchStack *ss)
     /* Repetition check */
     if (st.board.isRepetition())
     {
-        return -1 + (st.nodes_reached & 0x2);
+        return 0 + (st.nodes_reached & 0x2);
     }
 
     /* standing_pat is our static evaluation of the board */
@@ -246,7 +246,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
         /* Repetition check*/
         if ((board.isRepetition()))
         {
-            return -1 + (st.nodes_reached & 0x2);
+            return 0 + (st.nodes_reached & 0x2);
         }
 
         alpha = std::max(alpha, mated_in(ss->ply));

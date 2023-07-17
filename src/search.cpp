@@ -481,6 +481,11 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
                     continue;
                 }
 
+                // Continuation pruning
+                if (lmrDepth < 3 && history < -4000 * depth){
+                    continue;
+                }
+
                 // Futility pruning
                 if (lmrDepth <= 6 && !in_check && eval + 217 + 71 * depth <= alpha)
                 {
@@ -488,7 +493,6 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
                 }
 
                 // See pruning for quiets
-
                 if (depth <= 8 && !see(board, move, -70 * depth))
                 {
                     continue;

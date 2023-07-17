@@ -489,7 +489,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
 
                 // See pruning for quiets
 
-                if (depth < 6 && !see(board, move, -50 * depth))
+                if (depth <= 8 && !see(board, move, -70 * depth))
                 {
                     continue;
                 }
@@ -497,7 +497,7 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
             else
             {
                 // See pruning for noisy
-                if (depth < 4 && !see(board, move, -45 * depth))
+                if (depth <= 6 && !see(board, move, -15 * depth * depth))
                 {
                     continue;
                 }

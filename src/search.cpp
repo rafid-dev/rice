@@ -610,14 +610,15 @@ int negamax(int alpha, int beta, int depth, SearchThread& st, SearchStack *ss, b
 
             new_depth += deeper;
         }else if (!is_pvnode || move_count > 1){
+            // Zero Window Search
             score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1, !cutnode);
 
-            updateContinuationHistories(ss, moved_piece, move, score >= beta ? historyBonus(depth) : score <= alpha ? -historyBonus(depth) : 0);
         }
 
-        /* Full depth search on a zero window. */
+        // LMR Research
         if (do_fullsearch) {
             score = -negamax(-alpha - 1, -alpha, new_depth - 1, st, ss + 1, !cutnode);
+            updateContinuationHistories(ss, moved_piece, move, score >= beta ? historyBonus(depth) : score <= alpha ? -historyBonus(depth) : 0);
         }
 
         // Principal Variation Search (PVS)

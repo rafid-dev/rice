@@ -90,3 +90,4 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 * <a href="https://github.com/raklaptudirm">Rak</a>
 * <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>
 * <a href="https://github.com/archishou">Archi</a>
+Readme is heavily inspired by <a href="https://github.com/SzilBalazs/BlackCore">BlackCore</a>.

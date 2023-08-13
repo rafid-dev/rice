@@ -81,6 +81,7 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 * <a href="https://github.com/AndyGrant"> Andrew Grant </a>, author of <a href="https://github.com/AndyGrant/Ethereal/">Ethereal</a> for his clear and concise code which led to better understanding. I also thank him for contributing threads for the development of Rice.
 * <a href="https://github.com/Disservin">Disservin</a>, author of <a href="https://github.com/Disservin/Smallbrain">Smallbrain</a> for his <a href="https://github.com/Disservin/chess-library">chess library in c++</a> which is used in Rice.
 * <a href="https://github.com/Luecx/">Luecx</a>, author of <a href="https://github.com/Luecx/Koivisto/">Koivisto</a> for his enormous help for implementation of NNUE
+* Readme is heavily inspired by <a href="https://github.com/SzilBalazs/BlackCore">BlackCore</a>.
 
 ## Acknowledgements: 
 * <a href="https://github.com/Ciekce">Ciekce</a> for helping write good C++ code
@@ -90,4 +91,3 @@ LC0 employs a novel method for playing high-level chess by utilizing MCTS and ac
 * <a href="https://github.com/raklaptudirm">Rak</a>
 * <a href="https://github.com/TheBlackPlague">Shaheryar Sohail</a>
 * <a href="https://github.com/archishou">Archi</a>
-Readme is heavily inspired by <a href="https://github.com/SzilBalazs/BlackCore">BlackCore</a>.

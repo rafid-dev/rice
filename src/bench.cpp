@@ -21,7 +21,7 @@ void StartBenchmark(SearchThread& st) {
         auto end = misc::tick();
 
         count++;
-        nodes += st.nodes_reached;
+        nodes += st.info.totalNodes;
         time_elapsed += (end - start);
 
         printf("Position [%2d] -> cp %5d bestmove %s %12ld nodes %8d nps", int(count),

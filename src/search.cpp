@@ -748,6 +748,7 @@ void iterative_deepening(SearchThread& st)
     st.clear();
     st.initialize();
     table->nextAge();
+    info.totalNodes = 0;
 
     int score = 0;
 
@@ -765,16 +766,17 @@ void iterative_deepening(SearchThread& st)
         
         bestmove = st.bestmove;
         info.score = score;
+        
+        info.totalNodes += st.nodes_reached;
+        st.nodes_reached = 0;
 
         if (info.timeset)
         {
             st.tm.update_tm(bestmove);
         }
-
+        
         if constexpr (print_info)
         {
-            if (info.uci)
-            {
                 auto time_elapsed = misc::tick() - startime;
 
                 std::cout << "info score ";
@@ -788,8 +790,8 @@ void iterative_deepening(SearchThread& st)
                 }
                 
                 std::cout << " depth " << current_depth;
-                std::cout << " nodes " << st.nodes_reached;
-                std::cout << " nps " << static_cast<int>(1000.0f * st.nodes_reached / (time_elapsed + 1));
+                std::cout << " nodes " << st.info.totalNodes;
+                std::cout << " nps " << static_cast<int>(1000.0f * st.info.totalNodes / (time_elapsed + 1));
                 std::cout << " time " << static_cast<uint64_t>(time_elapsed);
                 std::cout << " pv";
 
@@ -797,19 +799,8 @@ void iterative_deepening(SearchThread& st)
                 getPvLines(st, positions, bestmove);
 
                 std::cout << std::endl;
-            }
-            else
-            {
-                auto time_elapsed = misc::tick() - startime;
+            
 
-                printf("[%2d/%2d] > eval: %-4.2f nodes: %6.2fM speed: %-5.2f MNPS", current_depth, info.depth,
-                       static_cast<float>(score / 100.0f), static_cast<float>(st.nodes_reached / 1000000.0f),
-                       static_cast<float>(1000.0f * st.nodes_reached / (time_elapsed + 1)) / 1000000.0f);
-
-                std::vector<uint64_t> positions;
-                getPvLines(st, positions, bestmove);
-                std::cout << std::endl;
-            }
         }
     }
 

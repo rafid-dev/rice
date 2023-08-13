@@ -7,11 +7,10 @@
 
 class Thread {
     public:
-    std::unique_ptr<SearchThread> searchThread;
+    SearchThread searchThread;
 
-    Thread(SearchInfo& info) : searchThread{std::make_unique<SearchThread>(info)} {}
-    Thread(const Thread& other) : searchThread(std::make_unique<SearchThread>(*other.searchThread)) {}
-    Thread(const SearchThread& other) : searchThread{std::make_unique<SearchThread>(other)} {}
+    Thread(SearchInfo& info) : searchThread(info) {}
+    Thread(SearchInfo& info, TimeMan& tm) : searchThread(info, tm) {}
 };
 
 class ThreadHandler {
@@ -37,6 +36,15 @@ class ThreadHandler {
 
         // start search
         threads.emplace_back(iterative_deepening<true>, std::ref(searchThread));
+
+        // Start other threads
+        for (int i = 1; i < thread_count; i++) {
+            searchers.emplace_back(searchThread.info, searchThread.tm);
+        }
+
+        for (auto& searcher : searchers) {
+            threads.emplace_back(iterative_deepening<false>, std::ref(searcher.searchThread));
+        }
     }
 
     void stop(){

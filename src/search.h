@@ -22,7 +22,9 @@ struct SearchInfo {
     std::atomic<bool> timeset = 0;
     std::atomic<bool> stopped = 0;
     std::atomic<bool> nodeset = 0;
-    std::atomic<bool> uci = 0;
+    std::atomic<bool> uci = false;
+
+    std::atomic<uint64_t> totalNodes = 0;
 };
 
 struct SearchStack {
@@ -43,6 +45,8 @@ struct SearchStack {
 
 struct SearchThread{
 
+    bool mainthread = false;
+
     HistoryTable searchHistory;
     HistoryTable continuationHistory[13][64];
 
@@ -56,11 +60,17 @@ struct SearchThread{
 
     Move bestmove = NO_MOVE;
 
-    SearchThread(SearchInfo& i) : info(i), board(DEFAULT_POS, nnue){
+    SearchThread(SearchInfo& i) : info(i), nnue(), board(DEFAULT_POS, nnue){
+        clear();
+    }
+
+    SearchThread(SearchInfo& i, TimeMan& t) : info(i), tm(t), nnue(), board(DEFAULT_POS, nnue){
         clear();
     }
 
     inline void clear(){
+        bestmove = NO_MOVE;
+        
         nodes_reached = 0;
 
         memset(searchHistory.data(), 0, sizeof(searchHistory));

@@ -28,7 +28,7 @@ static void uci_send_id() {
     std::cout << "id name " << NAME << std::endl;
     std::cout << "id author " << AUTHOR << std::endl;
     std::cout << "option name Hash type spin default 64 min 4 max " << MAXHASH << std::endl;
-    std::cout << "option name Threads type spin default 1 min 1 max 1" << std::endl;
+    std::cout << "option name Threads type spin default 1 min 1 max 256" << std::endl;
 
     if (TUNING) {
         print_tuning_parameters();
@@ -49,6 +49,7 @@ static void set_option(std::istream &is, std::string &token, std::string name, i
 int DefaultHashSize = 64;
 int CurrentHashSize = DefaultHashSize;
 int LastHashSize = CurrentHashSize;
+int ThreadCount = 1;
 
 bool IsUci = false;
 
@@ -167,7 +168,7 @@ void uci_loop(int argv, char **argc) {
             // Initialize variables
             int depth = -1;
 
-            uint64_t nodes = -1;
+            uint64_t nodes = 0;
 
             while (token != "none") {
                 if (token == "infinite") {
@@ -231,7 +232,7 @@ void uci_loop(int argv, char **argc) {
                 token = "none";
             }
 
-            if (nodes != -1) {
+            if (nodes) {
                 info.nodes = nodes;
                 info.nodeset = true;
             }
@@ -268,6 +269,10 @@ void uci_loop(int argv, char **argc) {
             set_option(is, token, "NMPBase", NMPBase);
             set_option(is, token, "NMPDivison", NMPDivision);
             set_option(is, token, "NMPMargin", NMPMargin);
+
+            set_option(is, token, "Threads", ThreadCount);
+
+            threadHandle.resize(ThreadCount);
 
             init_search();
 

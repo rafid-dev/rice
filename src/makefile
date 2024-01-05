@@ -1,105 +1,60 @@
-_THIS     := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
-_ROOT     := $(_THIS)
-CXX       := g++
-TARGET    := Rice
-CXXFLAGS  :=  -Wall -Wcast-qual -fno-exceptions -std=c++17 -pedantic -Wextra -Wdouble-promotion -Wformat=2 -Wnull-dereference -Wunused -Wundef -DNDEBUG
-NATIVE     = -march=native
+# Compiler and flags
+CXX := clang++-17
+ARCH := -march=native
+CXXFLAGS := -std=c++20 -flto $(ARCH) -fexceptions -Wall -Wextra
+LDFLAGS :=
+EVALFILE := src/net.nn
 
-# engine name
-NAME      := Rice
+CXXFLAGS += -DNNFILE=\"$(EVALFILE)\"
 
-# Detect Windows
-ifeq ($(OS), Windows_NT)
-	uname_S := Windows
-	SUFFIX  := .exe
+# Debug compiler flags
+DEBUG_CXXFLAGS := -g3 -O1 -DDEBUG -fsanitize=address -fsanitize=undefined 
 
-	ifeq ($(CXX),g++)
-  		FLAGS    = -pthread -lstdc++ -static
-		CXXFLAGS += -static -static-libgcc -static-libstdc++ -Wl,--whole-archive -lpthread -Wl,--no-whole-archive
-	else ifeq ($(CXX),clang++)
-  		CXXFLAGS += -static -fuse-ld=lld
-	endif
-	
-else
+BUILD_CXXFLAGS := -DNDEBUG -O3
 
-	SUFFIX  :=
-	uname_S := $(shell uname -s)
+# Directories
+SRC_DIR := ./
+BUILD_DIR := build
 
-	ifeq ($(CXX),g++)
-		FLAGS   = -lpthread -lstdc++
-	else ifeq ($(CXX),clang++)
-  		CXXFLAGS += -static -fuse-ld=lld
-	endif
+# Source files
+SRCS := $(wildcard $(SRC_DIR)/*.cpp)
+OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
+# Binary name (set to Rice)
+EXE := Rice
+
+# Append .exe to the binary name on Windows
+ifeq ($(OS),Windows_NT)
+	CXXFLAGS += -fuse-ld=lld
+    override EXE := $(EXE).exe
 endif
 
-# Different native flag for macOS
-ifeq ($(uname_S), Darwin)
-	NATIVE = -mcpu=apple-a14	
-	FLAGS = 
-endif
+# Default target
+all: CXXFLAGS += $(BUILD_CXXFLAGS)
+all: $(EXE) 
 
-# Remove native for builds
-ifdef build
-	NATIVE =
-endif
+# Rule to build the target binary
+$(EXE): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS)
 
-# SPECIFIC BUILDS
-ifeq ($(build), native)
-	NATIVE   = -march=native
-	ARCH     = -x86-64-native
-	CXXFLAGS += -w
-endif
+# Rule to build object files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-ifeq ($(build), profile)
-	NATIVE   = -march=native
-	ARCH     = -x86-64-native
-	CXXFLAGS += -w -pg
-endif
+# Create directories if they don't exist
+$(BUILD_DIR):
+	mkdir -p $@
 
-ifeq ($(build), x86-64)
-	NATIVE       = -mtune=znver1
-	INSTRUCTIONS = -msse -msse2 -mpopcnt
-	ARCH         = -x86-64
-endif
+# Debug target
+debug: CXXFLAGS += $(DEBUG_CXXFLAGS)
+debug: $(EXE)
 
-ifeq ($(build), x86-64-modern)
-	NATIVE       = -mtune=znver2
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt
-	ARCH         = -x86-64-modern
-endif
-
-ifeq ($(build), x86-64-avx2)
-	NATIVE       = -mtune=znver3
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -mssse3 -msse2
-	ARCH         = -x86-64-avx2
-endif
-
-ifeq ($(build), x86-64-bmi2)
-	NATIVE       = -mtune=znver3
-	INSTRUCTIONS = -m64 -msse -msse3 -mpopcnt -mavx -mavx2 -msse4.1 -mssse3 -msse2 -mbmi -mbmi2
-	ARCH         = -x86-64-bmi2
-endif
-
-ifeq ($(build), debug)
-	CXXFLAGS = -g3 -fno-omit-frame-pointer -std=c++20 -fsanitize=address
-	NATIVE   = -msse -msse3 -mpopcnt -mavx -mavx2
-	FLAGS    = -lpthread -lstdc++
-endif
-
-SOURCES := $(wildcard *.cpp)
-OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
-DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
-EXE     := $(NAME)$(SUFFIX)
-
-Rice: $(TARGET)
+# Clean the build
 clean:
-	rm -rf *.o $(DEPENDS)
+	rm -rf $(BUILD_DIR) $(EXE) $(PGO_DIR) 
 
-$(TARGET): $(OBJECTS)
-	$(CXX) -o $(EXE) $^ $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) $(FLAGS) -flto
+# Phony targets
+.PHONY: all debug clean pgo-generate
 
--include $(DEPENDS)
-
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) $(NATIVE) $(INSTRUCTIONS) -funroll-loops -O3 -flto -MMD -MP -c -o $@ $< $(FLAGS) -w
+# Disable built-in rules and variables
+.SUFFIXES:

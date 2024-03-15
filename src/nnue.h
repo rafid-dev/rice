@@ -16,9 +16,9 @@
     Disservin (Author of Smallbrain)
 */
 
-#define BUCKETS (4)
+#define BUCKETS (16)
 #define INPUT_SIZE (64 * 12 * BUCKETS)
-#define HIDDEN_SIZE (768)
+#define HIDDEN_SIZE (512)
 #define HIDDEN_DSIZE (HIDDEN_SIZE * 2)
 #define OUTPUT_SIZE (1)
 
@@ -33,15 +33,15 @@ extern std::array<int32_t, OUTPUT_SIZE> hiddenBias;
 namespace NNUE {
 
 // clang-format off
-constexpr int KING_BUCKET[64] {
-    0, 0, 1, 1, 1, 1, 0, 0,
-    0, 0, 1, 1, 1, 1, 0, 0,
-    0, 0, 1, 1, 1, 1, 0, 0,
-    0, 0, 1, 1, 1, 1, 0, 0,
-    2, 2, 3, 3, 3, 3, 2, 2,
-    2, 2, 3, 3, 3, 3, 2, 2,
-    2, 2, 3, 3, 3, 3, 2, 2,
-    2, 2, 3, 3, 3, 3, 2, 2,
+constexpr std::array<int, 64> KING_BUCKET {
+    0,  1,  2,  3,  3,  2,  1,  0,
+    4,  5,  6,  7,  7,  6,  5,  4,
+    8,  9,  10, 11, 11, 10, 9,  8,
+    8,  9,  10, 11, 11, 10, 9,  8,
+    12, 12, 13, 13, 13, 13, 12, 12,
+    12, 12, 13, 13, 13, 13, 12, 12,
+    14, 14, 15, 15, 15, 15, 14, 14,
+    14, 14, 15, 15, 15, 15, 14, 14,
 };
 // clang-format on
 

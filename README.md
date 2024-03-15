@@ -38,7 +38,7 @@ Rice is a powerful NNUE chess engine that combines the use of alpha-beta search 
 
 ### Evaluation
 * NNUE (Efficiently updateable neural network)
-* Net Architecture: 768 inputs with 4 buckets, 1 hidden layer of 768 size, perspective aware.
+* Net Architecture: 16 king buckets horizontally mirrored, no output buckets `(12 * 64 * 16 -> 512)x2->1`
 * NNUE Trainer: <a href="https://github.com/Luecx/Grapheus">Grapheus</a> by <a href="https://github.com/Luecx/">Luecx</a>
 * Old trainer: <a href="https://github.com/dsekercioglu/marlinflow">marlinflow</a>
 

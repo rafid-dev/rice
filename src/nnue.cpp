@@ -7,7 +7,7 @@
 
 #define INCBIN_STYLE INCBIN_STYLE_CAMEL
 #include "incbin/incbin.h"
-INCBIN(EVAL, "./hexadecane_512_v1.net");
+INCBIN(EVAL, "./hexadecane_512_v2.net");
 
 using namespace Chess;
 
